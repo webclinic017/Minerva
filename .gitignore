@@ -65,3 +65,4 @@ venv.bak/
 .vscode
 .vscode/
 .vscode/*
+batch/batch.log
