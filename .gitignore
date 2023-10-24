@@ -32,6 +32,7 @@ MANIFEST
 batch/reports/
 batch/utils/*.key
 batch/utils/__pycache__/
+batch/*.log
 
 # Database output
 database/
