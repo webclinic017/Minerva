@@ -24,15 +24,15 @@ import json
 import requests
 from bs4 import BeautifulSoup as bs
 
-import logging, logging.config, logging.handlers
+# import logging, logging.config, logging.handlers
 
-## Loads The Config File
-logging.config.fileConfig(batch_dir+'/logging.conf', disable_existing_loggers=False)
+# ## Loads The Config File
+# logging.config.fileConfig(batch_dir+'/logging.conf', disable_existing_loggers=False)
 
-# create a logger with the name from the config file. 
-# This logger now has StreamHandler with DEBUG Level and the specified format in the logging.conf file
-logger = logging.getLogger('batch')
-logger2 = logging.getLogger('report')
+# # create a logger with the name from the config file. 
+# # This logger now has StreamHandler with DEBUG Level and the specified format in the logging.conf file
+# logger = logging.getLogger('batch')
+# logger2 = logging.getLogger('report')
 
 # 'application' code
 logger.warning(sys.argv[0])

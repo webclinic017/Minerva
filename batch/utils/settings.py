@@ -27,6 +27,21 @@ sys.path.append(database_dir)
 sys.path.append(batch_dir)
 
 
+'''
+배치작업 로깅 루틴
+'''
+import logging, logging.config, logging.handlers
+
+## Loads The Config File
+logging.config.fileConfig(batch_dir+'/logging.conf', disable_existing_loggers=False)
+
+# create a logger with the name from the config file. 
+# This logger now has StreamHandler with DEBUG Level and the specified format in the logging.conf file
+logger = logging.getLogger('batch')
+logger2 = logging.getLogger('report')
+
+
+
 fred = Fred(api_key='0e836827495d195023016a96b5fe6e4a')
 bok_key = 'OLSJAN6H7R43WEYUEV5Q'
 fmp_key = 'f57bdcaa7d140c9de35806d47fbd2f91'
@@ -222,9 +237,14 @@ def get_daily_hist(ticker, from_date, to_date=today):
 
 def get_calendar(from_date, to_date=today):
     url = (f'https://financialmodelingprep.com/api/v3/economic_calendar?from={from_date}&to={to_date}&apikey={fmp_key}')
-    response = requests.get(url).json()
-    calendar = pd.DataFrame(response)
-    calendar = calendar.set_index('date')
+    try:
+        response = requests.get(url).json()
+        calendar = pd.DataFrame(response)
+        calendar = calendar.set_index('date')        
+    except Exception as e:
+        logger.error(response)
+        print("################# financilamodeling.com api error: "+ e)    
+
     # calendar = calendar.iloc[::-1]
     
     return calendar
@@ -453,3 +473,4 @@ def db_insert(M_db, M_table, M_query, M_buffer, conn, engine, logger, logger2):
 
     # 배치 프로그램 최종 종료시 Activate 후 실행
     conn.close()
+
