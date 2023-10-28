@@ -87,7 +87,7 @@ def eco_indexes(from_date, to_date):
 1. 통화/금융
 1.1 KOSPI 200 vs KRW
 '''
-def kospi200_vs_krw():
+def kospi200_vs_krw(from_date, to_date):
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m%d')
     end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m%d')
 
@@ -118,7 +118,6 @@ def kospi200_vs_krw():
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
     usd_krw = pd.Series(data=list(df['DATA_VALUE']), index=df['TIME'])
 
-    # print(usd_krw[-26::5])
     logger2.info(usd_krw[-26::5])
 
 
@@ -176,7 +175,7 @@ def kospi200_vs_fred():
 1.3 KOSPI 200 vs National Currency
 1.3.2 한국은행 기준 M1, M2, M3
 '''
-def kospi200_vs_currency():
+def kospi200_vs_currency(from_date, to_date):
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
     end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')
     # M1
@@ -225,7 +224,7 @@ def kospi200_vs_currency():
 
     df_m3_month = df.loc[df['ITEM_CODE1'] == 'X000000']
 
-    print(df_m2_month[-3:][['TIME','DATA_VALUE']])
+    logger2.info(df_m2_month[-3:][['TIME','DATA_VALUE']])
 
     # Graph
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
@@ -257,7 +256,7 @@ def kospi200_vs_currency():
 '''
 1.4 가계대출
 '''
-def loan():
+def loan(from_date, to_date):
     stat_code  = "151Y005"
     cycle_type = "M"
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
@@ -702,6 +701,7 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
     plt.legend()
     plt.savefig(reports_dir + '/s_korea_indexes_0410.png')
 
+    return ppi_mom, cpi_mom
 
 '''
 4.2 KOSPI 200(MoM) vs PPI(MoM), CPI(MoM)
@@ -802,7 +802,7 @@ def foreigner_investments(from_date, to_date):
     df_pure_long_vol = df_pure_long_vol.loc[df_pure_long_vol['ITEM_CODE2'] == 'VO']# 순매수/거래량 2
 
 
-    print(df_pure_long_vol[['TIME','DATA_VALUE']][-5:])
+    logger2.info(df_pure_long_vol[['TIME','DATA_VALUE']][-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
 
@@ -841,9 +841,9 @@ Main Fuction
 
 if __name__ == "__main__":
     cals = eco_indexes(from_date, to_date_2)  # calendars
-    kr_total_shares = kospi200_vs_krw()  # Kospi200
-    kospi200_vs_currency()
-    loan()
+    kr_total_shares = kospi200_vs_krw(from_date_MT, to_date)  # Kospi200
+    kospi200_vs_currency(from_date_MT, to_date)
+    loan(from_date_MT, to_date)
     kospi200_vs_gdp_ip(cals, kr_total_shares)
     kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
     kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
@@ -852,7 +852,7 @@ if __name__ == "__main__":
     kospi200_vs_export_import_balance(cals)
     kospi200_vs_dollar_current()
     dollar_vs_exim_(from_date_MT, to_date)
-    kospi200_vs_ppi_cpi(cals, kr_total_shares)
+    ppi_mom, cpi_mom = kospi200_vs_ppi_cpi(cals, kr_total_shares)
     kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
     stock_money_flow(from_date_MT, to_date)
     foreigner_investments(from_date_MT, to_date)
