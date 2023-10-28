@@ -841,18 +841,18 @@ Main Fuction
 
 if __name__ == "__main__":
     cals = eco_indexes(from_date, to_date_2)  # calendars
-    # kr_total_shares = kospi200_vs_krw()  # Kospi200
-    # kospi200_vs_currency()
-    # loan()
-    # kospi200_vs_gdp_ip(cals, kr_total_shares)
-    # kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
-    # kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
-    # unemployment()
-    # deflator()
-    # kospi200_vs_export_import_balance(cals)
-    # kospi200_vs_dollar_current()
-    # dollar_vs_exim_(from_date_MT, to_date)
-    # kospi200_vs_ppi_cpi(cals, kr_total_shares)
-    # kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
-    # stock_money_flow(from_date_MT, to_date)
-    # foreigner_investments(from_date_MT, to_date)
+    kr_total_shares = kospi200_vs_krw()  # Kospi200
+    kospi200_vs_currency()
+    loan()
+    kospi200_vs_gdp_ip(cals, kr_total_shares)
+    kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
+    kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
+    unemployment()
+    deflator()
+    kospi200_vs_export_import_balance(cals)
+    kospi200_vs_dollar_current()
+    dollar_vs_exim_(from_date_MT, to_date)
+    kospi200_vs_ppi_cpi(cals, kr_total_shares)
+    kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
+    stock_money_flow(from_date_MT, to_date)
+    foreigner_investments(from_date_MT, to_date)
