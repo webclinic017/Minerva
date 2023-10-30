@@ -145,7 +145,7 @@ def kospi200_vs_krw(from_date, to_date):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/s_korea_indexes_0110.png')
+    plt.savefig(reports_dir + '/s_korea_0110.png')
 
     return kr_total_shares 
 
@@ -168,7 +168,7 @@ def kospi200_vs_fred():
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/s_korea_indexes_0120.png')
+    plt.savefig(reports_dir + '/s_korea_0120.png')
     
 
 '''
@@ -250,7 +250,7 @@ def kospi200_vs_currency(from_date, to_date):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/s_korea_indexes_0130.png')
+    plt.savefig(reports_dir + '/s_korea_0130.png')
 
 
 '''
@@ -309,7 +309,7 @@ def loan(from_date, to_date):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/s_korea_indexes_0140.png')
+    plt.savefig(reports_dir + '/s_korea_0140.png')
 
 
 '''
@@ -357,7 +357,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     plt.plot(ip_yoy.index, ip_yoy['Actual/YoY'], label='Industrial Production(YoY)', linewidth=1, \
             color='orange', linestyle='--')
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0210.png')
+    plt.savefig(reports_dir + '/s_korea_0210.png')
 
 
 '''
@@ -407,7 +407,7 @@ def kospi200_mom_vs_gdp_ip(cals, kr_total_shares):
     plt.plot(ip_qoq.index, ip_qoq['Actual/MoM'], label='Industrial Production(QoQ)', linewidth=1, \
             color='orange', linestyle='--')
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0220.png')
+    plt.savefig(reports_dir + '/s_korea_0220.png')
 
 
 '''
@@ -443,7 +443,7 @@ def kospi200_vs_realty(from_date, to_date, kr_total_shares):
     plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_billa['DATA_VALUE']), label='Real home_sale_billa', linewidth=1)
     plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_apt['DATA_VALUE']), label='home_sale_apt', linewidth=1)
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0230.png')
+    plt.savefig(reports_dir + '/s_korea_0230.png')
 
 
 '''
@@ -477,7 +477,7 @@ def unemployment():
     plt.plot(df_2['TIME'], normalize(df_2['DATA_VALUE']), label='Unemployement Cost')
     # plt.plot(df_2['TIME'][-10:], df_2['DATA_VALUE'][-10:], label='real_gdp_high', linewidth=1, color='maroon')
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0240.png')
+    plt.savefig(reports_dir + '/s_korea_0240.png')
 
 
 '''
@@ -551,7 +551,7 @@ def deflator():
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns6, lns6, loc=1)
-    plt.savefig(reports_dir + '/s_korea_indexes_0250.png')
+    plt.savefig(reports_dir + '/s_korea_0250.png')
 
 
 '''
@@ -585,7 +585,7 @@ def kospi200_vs_export_import_balance(cals):
     plt.plot(kor_tb.index, normalize(kor_tb['Actual/Bil/YoY']), label='Balance', linewidth=1, color='maroon',\
             linestyle='--', marker='x', markersize=4)
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0310.png')
+    plt.savefig(reports_dir + '/s_korea_0310.png')
 
 '''
 3.2 KOSPI 200 vs Dollar Reserve, Current Account
@@ -618,13 +618,13 @@ def kospi200_vs_dollar_current():
     # plt.plot(kor_tb['Date'], normalize(kor_tb['Actual/Bil/YoY']), label='Balance', linewidth=1, color='maroon',\
     #          linestyle='--', marker='x', markersize=4)
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0320.png')
+    plt.savefig(reports_dir + '/s_korea_0320.png')
 
 
 '''
 3.3 외환보유액 vs 수출입금액
 '''
-def dollar_vs_exim_(from_date, to_date):
+def dollar_vs_eximport(from_date, to_date):
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
     end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')
 
@@ -651,7 +651,7 @@ def dollar_vs_exim_(from_date, to_date):
     plt.plot(df_reserve_total['TIME'], df_reserve_total['DATA_VALUE'], label='reserve_total', linewidth=1, color='maroon', marker='x')
     plt.plot(df_reserve_foreign_currency['TIME'], df_reserve_foreign_currency['DATA_VALUE'], label='reserve_foreign_currency', linewidth=1, color='green')
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0330.png')
+    plt.savefig(reports_dir + '/s_korea_0330.png')
 
 
 '''
@@ -699,7 +699,7 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
             color='orange', linestyle='--')
 
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0410.png')
+    plt.savefig(reports_dir + '/s_korea_0410.png')
 
     return ppi_mom, cpi_mom
 
@@ -718,7 +718,7 @@ def kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom):
             color='orange', linestyle='--')
 
     plt.legend()
-    plt.savefig(reports_dir + '/s_korea_indexes_0420.png')
+    plt.savefig(reports_dir + '/s_korea_0420.png')
 
 
 '''
@@ -772,7 +772,7 @@ def stock_money_flow(from_date, to_date):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/s_korea_indexes_0510.png')
+    plt.savefig(reports_dir + '/s_korea_0510.png')
 
 
 '''
@@ -830,7 +830,7 @@ def foreigner_investments(from_date, to_date):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/s_korea_indexes_0520.png')
+    plt.savefig(reports_dir + '/s_korea_0520.png')
 
 
 
@@ -851,7 +851,7 @@ if __name__ == "__main__":
     deflator()
     kospi200_vs_export_import_balance(cals)
     kospi200_vs_dollar_current()
-    dollar_vs_exim_(from_date_MT, to_date)
+    dollar_vs_eximport(from_date_MT, to_date)
     ppi_mom, cpi_mom = kospi200_vs_ppi_cpi(cals, kr_total_shares)
     kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
     stock_money_flow(from_date_MT, to_date)
