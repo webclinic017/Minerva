@@ -15,26 +15,11 @@ sys.path.append(utils_dir)
 
 from settings import *
 
-# '''
-# 배치작업 로깅 루틴
-# '''
-# import logging, logging.config, logging.handlers
-
-# ## Loads The Config File
-# logging.config.fileConfig(batch_dir+'/logging.conf', disable_existing_loggers=False)
-
-# # create a logger with the name from the config file. 
-# # This logger now has StreamHandler with DEBUG Level and the specified format in the logging.conf file
-# logger = logging.getLogger('batch')
-# logger2 = logging.getLogger('report')
-
-# 'application' code
+# logging
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0])
 
-'''
-시작/종료 일자 셋팅
-'''
+# 시작/종료 일자 셋팅
 to_date_2 = pd.to_datetime(today)
 three_month_days = relativedelta(weeks=12)
 from_date = (to_date_2 - three_month_days).date()

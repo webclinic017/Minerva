@@ -12,10 +12,12 @@ History
 
 '''
 
+# common area import
 import sys, os
 utils_dir = os.getcwd() + '/batch/utils'
 sys.path.append(utils_dir)
 
+# local import
 from settings import *
 from naverApi import *
 from pytrends.request import TrendReq
@@ -24,17 +26,7 @@ import json
 import requests
 from bs4 import BeautifulSoup as bs
 
-# import logging, logging.config, logging.handlers
-
-# ## Loads The Config File
-# logging.config.fileConfig(batch_dir+'/logging.conf', disable_existing_loggers=False)
-
-# # create a logger with the name from the config file. 
-# # This logger now has StreamHandler with DEBUG Level and the specified format in the logging.conf file
-# logger = logging.getLogger('batch')
-# logger2 = logging.getLogger('report')
-
-# 'application' code
+# logging
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0])
 
