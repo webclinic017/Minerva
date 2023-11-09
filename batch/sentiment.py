@@ -35,9 +35,8 @@ logger2.info(sys.argv[0])
 # 모니터링 테이블 (Sent_Crack) 생성
 ###################################################################################################
 # Connect DataBase
-database = database_dir+'/Crack_Sent.db'
-engine = 'sqlite:///' + database
-conn = create_connection(database)
+database = database_dir+'/'+'Crack_Sent.db'
+conn, engine = create_connection(database)
 
 # 감성부문 Crack 집계 모니터링
 def create_Sent_Crack(conn):

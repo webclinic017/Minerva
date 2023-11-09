@@ -136,7 +136,7 @@ def create_connection(db_file):
     except Error as e:
         print(e)
 
-    return conn
+    return conn, engine
 
 
 def include(filename):
