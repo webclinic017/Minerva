@@ -128,7 +128,7 @@ def write_table(table_name, data):
         print('Insert Count: ', count)
     except Exception as e:
         print(e)
-        
+
 
 def get_indicators(country, url, table_name):
     page = requests.get(url, allow_redirects=True)
@@ -206,10 +206,10 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    # # 테이블 생성 (최초 생성시)
-    # create_Calendars(conn)
-    # create_Markets(conn)
-    # create_Indicators(conn)
+    # 테이블 생성 (최초 생성시)
+    create_Calendars(conn)
+    create_Markets(conn)
+    create_Indicators(conn)
 
     make_calendars(from_date, to_date_2)
     make_markets()
