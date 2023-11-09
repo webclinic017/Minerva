@@ -38,7 +38,7 @@ urls = {
     'BR':'https://macrovar.com/brazil/'
 }
 to_date_2 = pd.to_datetime(today)
-term_days = relativedelta(weeks=12)
+term_days = relativedelta(weeks=1)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적!
 from_date = (to_date_2 - term_days).date()
 to_date_2 = to_date_2.date()
 
@@ -110,7 +110,7 @@ def create_Indicators(conn):
 
     return conn
 
-
+# 테이블 데이터 read
 def read_table(table_name):
     M_table = table_name
     M_query = f"SELECT * from {M_table}"
@@ -121,7 +121,7 @@ def read_table(table_name):
         print('Exception: {}'.format(e))
     return buf
 
-
+# 테이블 데이터 insert
 def write_table(table_name, data):
     try:
         count = data.to_sql(table_name, con=engine, if_exists='append', chunksize=1000, index=False, method=None)
@@ -129,7 +129,7 @@ def write_table(table_name, data):
     except Exception as e:
         print(e)
 
-
+# macro economics indication 페이지 읽어오기 
 def get_indicators(country, url, table_name):
     page = requests.get(url, allow_redirects=True)
     soup = bs(page.text, "html.parser")
@@ -168,7 +168,7 @@ def get_indicators(country, url, table_name):
 def make_calendars(from_date, to_date_2):
     table_name = 'Calendars'
     cals = pd.DataFrame()
-    for i in range(2):  # 검증용 2, 실전용 30 ㅎ
+    for i in range(1):  # 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
         buf = get_calendar(from_date=from_date, to_date=to_date_2)
         for i in range(len(nations)):
             buf2 = buf[buf['country'] == nations[i]]
