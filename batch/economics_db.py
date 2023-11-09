@@ -140,7 +140,7 @@ def get_indicators(country, url, table_name):
 
     # 2. Macroeconomic Indicators
     indicators = pd.read_html(str(table))[1]
-    indicators['Country'] = 'South Korea'
+    indicators['Country'] = [country] *  len(indicators)
     indicators['Date'] = pd.to_datetime(indicators['Update'])
 
     buf = pd.DataFrame()
