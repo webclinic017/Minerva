@@ -64,8 +64,8 @@ def eco_calendars(from_date, to_date):
         result['date'] = result['date'].apply(parse_date)
         plt.subplot(len(events), 1, i + 1)
         plt.plot(result['date'], result['actual'])
-        plt.title(events)
-        plt.xlabel('Date')
+        plt.title(event)
+        plt.xlabel('date')
         plt.ylabel('actual')
         plt.tight_layout()  # 서브플롯 간 간격 조절
         plt.savefig(reports_dir + '/s_korea_0000.png')
