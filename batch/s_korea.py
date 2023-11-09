@@ -35,9 +35,10 @@ conn, engine = create_connection(database)
 
 
 '''
-경제지표 그래프
+0. 경제지표 그래프
+0.1 calendar 정보(from financialmodeling.com) 를 기반으로 그래프 만들기
 '''
-def eco_indexes(from_date, to_date):
+def eco_calendars(from_date, to_date):
 
     # 날짜 및 시간 문자열을 날짜로 변환하는 함수
     def parse_date(date_str):
@@ -51,28 +52,13 @@ def eco_indexes(from_date, to_date):
     try:
         cals = pd.read_sql_query(M_query, conn)
         logger2.info(cals[:30])
-    #     fig = plt.figure(figsize=(18,4))
-    #     plt.plot(M_db['date'], M_db['country'], M_db['event'])
-    #     plt.grid()
     except Exception as e:
         print('Exception: {}'.format(e))
 
-
-    # buf = pd.DataFrame()
-    # l = []
-    # for x in cals['event']:
-    #     t = x.split('(')[0]
-    #     l.append(t)
-    # unique_list = list(set(l))
-    # print(unique_list)
-
     events = ['Interest Rate Decision', 'PPI MoM ', 'Exports YoY ', 'GDP Growth Rate QoQ ', 'CPI ', 'Industrial Production MoM ', 'Business Confidence ', 'GDP Growth Rate QoQ Adv ', 'Construction Output YoY ', 'Unemployment Rate ', 'Foreign Exchange Reserves ', 'Import Prices YoY ', 'GDP Growth Rate YoY Adv ', 'Retail Sales YoY ', 'Consumer Confidence ', 'Markit Manufacturing PMI ', 'GDP Growth Rate YoY ', 'Current Account ', 'Inflation Rate YoY ', 'Retail Sales MoM ', 'Balance of Trade ', 'Manufacturing Production YoY ', 'S&P Global Manufacturing PMI ', 'Imports YoY ', 'Inflation Rate MoM ', 'Export Prices YoY ', 'Industrial Production YoY ', 'PPI YoY ']
-
-
 
     # 전체 그림의 크기를 설정
     plt.figure(figsize=(18, 4*len(events)))
-
     for i, event in enumerate(events):
         result = cals[cals['event'].str.contains(event, case=False, na=False)]
         result['date'] = result['date'].apply(parse_date)
@@ -86,6 +72,54 @@ def eco_indexes(from_date, to_date):
 
     return cals
 
+
+'''
+0.2 indicators 정보(from marcovar.com) 를 기반으로 그래프 만들기
+'''
+def eco_indicators(from_date, to_date):
+
+    # 날짜 및 시간 문자열을 날짜로 변환하는 함수
+    def parse_date2(date_str):
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f").date()
+
+    # 2) Economics database 에서 쿼리후 시작하는 루틴
+    M_table = 'Indicators'
+    M_country = 'KR'
+    M_query = f"SELECT * from {M_table} WHERE country = '{M_country}'"
+
+    try:
+        indis = pd.read_sql_query(M_query, conn)
+        logger2.info(indis[:30])
+    except Exception as e:
+        print('Exception: {}'.format(e))
+
+    indicators = ['balance of trade', 'bank lending rate', 'business confidence', 'capacity utilization', 'capital flows',\
+                  'car registrations', 'central bank balance sheet', 'consumer confidence', 'consumer price index',\
+                  'core inflation rate', 'current account', 'current account to gdp', 'deposit interest rate',\
+                  'exports', 'external debt', 'fiscal expenditure', 'foreign direct investment', 'foreign exchange reserves',\
+                  'gdp', 'Real GDP', 'gdp growth', 'gdp growth annual', 'gold reserves', 'government budget',\
+                  'Government budget', 'government debt to gdp', 'government revenues', 'housing index', 'imports', \
+                  'industrial production', 'industrial production mom', 'inflation cpi', 'interbank rate',\
+                  'interest rate', 'loans to private sector', 'Manufacturing PMI', 'money supply m0', 'money supply m1',\
+                  'money supply m2', 'money supply m3', 'Producer Price Index', 'PPI Index', 'retail sales MoM',\
+                  'retail sales', 'unemployment rate', 'youth unemployment rate']
+
+    # 전체 그림의 크기를 설정
+    plt.figure(figsize=(18, 4*len(indicators)))
+    for i, indicator in enumerate(indicators):
+        result = indis[indis['Indicator'].str.contains(indicator, case=False, na=False)]
+        result['Date'] = result['Date'].apply(parse_date2)
+        plt.subplot(len(indicators), 1, i + 1)
+        plt.plot(result['Date'], result['Actual'])
+        plt.title(indicator)
+        plt.xlabel('Date')
+        plt.ylabel('Actual')
+
+    plt.tight_layout()  # 서브플롯 간 간격 조절
+    plt.tight_layout()  # 서브플롯 간 간격 조절
+    plt.savefig(reports_dir + '/s_korea_0001.png')
+
+    return indis
 
 
 '''
@@ -845,19 +879,20 @@ Main Fuction
 '''
 
 if __name__ == "__main__":
-    cals = eco_indexes(from_date, to_date_2)  # calendars
-    # kr_total_shares = kospi200_vs_krw(from_date_MT, to_date)  # Kospi200
-    # kospi200_vs_currency(from_date_MT, to_date)
-    # loan(from_date_MT, to_date)
-    # kospi200_vs_gdp_ip(cals, kr_total_shares)
-    # kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
-    # kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
-    # unemployment()
-    # deflator()
-    # kospi200_vs_export_import_balance(cals)
-    # kospi200_vs_dollar_current()
-    # dollar_vs_eximport(from_date_MT, to_date)
-    # ppi_mom, cpi_mom = kospi200_vs_ppi_cpi(cals, kr_total_shares)
-    # kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
-    # stock_money_flow(from_date_MT, to_date)
-    # foreigner_investments(from_date_MT, to_date)
+    cals = eco_calendars(from_date, to_date_2)  # calendars
+    indis = eco_indicators(from_date, to_date_2) # marcovar
+    kr_total_shares = kospi200_vs_krw(from_date_MT, to_date)  # Kospi200
+    kospi200_vs_currency(from_date_MT, to_date)
+    loan(from_date_MT, to_date)
+    kospi200_vs_gdp_ip(cals, kr_total_shares)
+    kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
+    kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
+    unemployment()
+    deflator()
+    kospi200_vs_export_import_balance(cals)
+    kospi200_vs_dollar_current()
+    dollar_vs_eximport(from_date_MT, to_date)
+    ppi_mom, cpi_mom = kospi200_vs_ppi_cpi(cals, kr_total_shares)
+    kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
+    stock_money_flow(from_date_MT, to_date)
+    foreigner_investments(from_date_MT, to_date)
