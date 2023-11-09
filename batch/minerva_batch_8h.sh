@@ -10,4 +10,5 @@ python ./batch/japan.py >> /home/jarvis/logs/cronError.log 2>&1
 python ./batch/india.py >> /home/jarvis/logs/cronError.log 2>&1
 python ./batch/germany.py >> /home/jarvis/logs/cronError.log 2>&1
 python ./batch/usa.py >> /home/jarvis/logs/cronError.log 2>&1
+python ./batch/economics_db.py >> /home/jarvis/logs/cronError.log 2>&1
 conda deactivate
