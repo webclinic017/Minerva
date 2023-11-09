@@ -144,7 +144,7 @@ def get_indicators(country, url, table_name):
     indicators['Date'] = pd.to_datetime(indicators['Update'])
 
     buf = pd.DataFrame()
-    buf['Country'] = [country] * len(indicators)
+    buf['Country'] = [country] *  len(indicators)
     buf['Indicator'] = indicators.Indicator
     buf['Date'] = pd.to_datetime(indicators.Update)
     buf['Symbol'] = indicators.Symbol
