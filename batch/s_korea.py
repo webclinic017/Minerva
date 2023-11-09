@@ -15,6 +15,10 @@ sys.path.append(utils_dir)
 
 from settings import *
 
+'''
+0. 공통영역 설정
+'''
+
 # logging
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0])
@@ -25,25 +29,34 @@ three_month_days = relativedelta(weeks=12)
 from_date = (to_date_2 - three_month_days).date()
 to_date_2 = to_date_2.date()
 
+# Connect DataBase
+database = database_dir+'/'+'Economics.db'
+conn, engine = create_connection(database)
+
+
 '''
 경제지표 그래프
 '''
 def eco_indexes(from_date, to_date):
 
-    cals = pd.DataFrame()
-    for i in range(10):  # 10 -> 2 for test
-        buf = get_calendar(from_date=from_date, to_date=to_date_2)
-        buf = buf[buf['country'] == 'KR']
-        cals = pd.concat([cals, buf], axis=0)
-        to_date_2 = pd.to_datetime(from_date)
-        from_date = (to_date_2 - three_month_days).date()
-        to_date_2 = to_date_2.date()
-        
-    temp = pd.to_datetime(cals.index)
-    temp2 = temp.date
-    cals.set_index(temp2, inplace=True)
-    cals.index.name = 'date'
-    logger2.info(cals[:30])
+    # 날짜 및 시간 문자열을 날짜로 변환하는 함수
+    def parse_date(date_str):
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").date()
+
+    # 2) Economics database 에서 쿼리후 시작하는 루틴
+    M_table = 'Calendars'
+    M_country = 'KR'
+    M_query = f"SELECT * from {M_table} WHERE country = '{M_country}'"
+
+    try:
+        cals = pd.read_sql_query(M_query, conn)
+        logger2.info(cals[:30])
+    #     fig = plt.figure(figsize=(18,4))
+    #     plt.plot(M_db['date'], M_db['country'], M_db['event'])
+    #     plt.grid()
+    except Exception as e:
+        print('Exception: {}'.format(e))
+
 
     # buf = pd.DataFrame()
     # l = []
@@ -55,14 +68,21 @@ def eco_indexes(from_date, to_date):
 
     events = ['Interest Rate Decision', 'PPI MoM ', 'Exports YoY ', 'GDP Growth Rate QoQ ', 'CPI ', 'Industrial Production MoM ', 'Business Confidence ', 'GDP Growth Rate QoQ Adv ', 'Construction Output YoY ', 'Unemployment Rate ', 'Foreign Exchange Reserves ', 'Import Prices YoY ', 'GDP Growth Rate YoY Adv ', 'Retail Sales YoY ', 'Consumer Confidence ', 'Markit Manufacturing PMI ', 'GDP Growth Rate YoY ', 'Current Account ', 'Inflation Rate YoY ', 'Retail Sales MoM ', 'Balance of Trade ', 'Manufacturing Production YoY ', 'S&P Global Manufacturing PMI ', 'Imports YoY ', 'Inflation Rate MoM ', 'Export Prices YoY ', 'Industrial Production YoY ', 'PPI YoY ']
 
+
+
+    # 전체 그림의 크기를 설정
+    plt.figure(figsize=(18, 4*len(events)))
+
     for i, event in enumerate(events):
         result = cals[cals['event'].str.contains(event, case=False, na=False)]
+        result['date'] = result['date'].apply(parse_date)
         plt.subplot(len(events), 1, i + 1)
-        result['actual'].plot(figsize=(18,100), title=event)    
+        plt.plot(result['date'], result['actual'])
+        plt.title(events)
         plt.xlabel('Date')
         plt.ylabel('actual')
-    plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/s_korea_0000.png')
+        plt.tight_layout()  # 서브플롯 간 간격 조절
+        plt.savefig(reports_dir + '/s_korea_0000.png')
 
     return cals
 
@@ -826,18 +846,18 @@ Main Fuction
 
 if __name__ == "__main__":
     cals = eco_indexes(from_date, to_date_2)  # calendars
-    kr_total_shares = kospi200_vs_krw(from_date_MT, to_date)  # Kospi200
-    kospi200_vs_currency(from_date_MT, to_date)
-    loan(from_date_MT, to_date)
-    kospi200_vs_gdp_ip(cals, kr_total_shares)
-    kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
-    kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
-    unemployment()
-    deflator()
-    kospi200_vs_export_import_balance(cals)
-    kospi200_vs_dollar_current()
-    dollar_vs_eximport(from_date_MT, to_date)
-    ppi_mom, cpi_mom = kospi200_vs_ppi_cpi(cals, kr_total_shares)
-    kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
-    stock_money_flow(from_date_MT, to_date)
-    foreigner_investments(from_date_MT, to_date)
+    # kr_total_shares = kospi200_vs_krw(from_date_MT, to_date)  # Kospi200
+    # kospi200_vs_currency(from_date_MT, to_date)
+    # loan(from_date_MT, to_date)
+    # kospi200_vs_gdp_ip(cals, kr_total_shares)
+    # kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
+    # kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
+    # unemployment()
+    # deflator()
+    # kospi200_vs_export_import_balance(cals)
+    # kospi200_vs_dollar_current()
+    # dollar_vs_eximport(from_date_MT, to_date)
+    # ppi_mom, cpi_mom = kospi200_vs_ppi_cpi(cals, kr_total_shares)
+    # kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
+    # stock_money_flow(from_date_MT, to_date)
+    # foreigner_investments(from_date_MT, to_date)
