@@ -19,7 +19,7 @@ from settings import *
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0])
 
-# 시작/종료 일자 셋팅
+# 3개월단위로 순차적으로 읽어오는 경우의 시작/종료 일자 셋팅
 to_date_2 = pd.to_datetime(today)
 three_month_days = relativedelta(weeks=12)
 from_date = (to_date_2 - three_month_days).date()
@@ -32,7 +32,7 @@ def eco_indexes(from_date, to_date):
 
     cals = pd.DataFrame()
     for i in range(10):  # 10 -> 2 for test
-        buf = get_calendar(from_date=from_date, to_date=to_date)
+        buf = get_calendar(from_date=from_date, to_date=to_date_2)
         buf = buf[buf['country'] == 'KR']
         cals = pd.concat([cals, buf], axis=0)
         to_date_2 = pd.to_datetime(from_date)
