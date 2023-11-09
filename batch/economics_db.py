@@ -123,7 +123,6 @@ def read_table(table_name):
         logger2.info(buf)
     except Exception as e:
         print('Exception: {}'.format(e))
-    return buf
 
 # 테이블 데이터 insert
 def write_table(table_name, data):
