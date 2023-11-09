@@ -18,14 +18,17 @@ from bs4 import BeautifulSoup as bs
 import yfinance as yf
 import os
 
-# logging
-logger.warning(sys.argv[0])
-logger2.info(sys.argv[0])
+
 
 
 '''
 공통 영역
 '''
+# logging
+logger.warning(sys.argv[0])
+logger2.info(sys.argv[0])
+
+# 주요 관찰 대상국 설정
 nations = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR']
 urls = {
     'CN':'https://macrovar.com/china/',
@@ -37,6 +40,7 @@ urls = {
     'DE':'https://macrovar.com/germany/', 
     'BR':'https://macrovar.com/brazil/'
 }
+# 검색기간 설정
 to_date_2 = pd.to_datetime(today)
 term_days = relativedelta(weeks=1)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적!
 from_date = (to_date_2 - term_days).date()
@@ -77,7 +81,7 @@ def create_Markets(conn):
         cur.execute('CREATE TABLE if not exists Markets (\
         Country TEXT NOT NULL,\
         Security TEXT NOT NULL,\
-        date TEXT NOT NULL,\
+        Date TEXT NOT NULL,\
         Symbol TEXT,\
         Last_value NUMERIC, \
         Momentum NUMERIC, \
@@ -168,7 +172,7 @@ def get_indicators(country, url, table_name):
 def make_calendars(from_date, to_date_2):
     table_name = 'Calendars'
     cals = pd.DataFrame()
-    for i in range(1):  # 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
+    for i in range(20):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
         buf = get_calendar(from_date=from_date, to_date=to_date_2)
         for i in range(len(nations)):
             buf2 = buf[buf['country'] == nations[i]]
@@ -206,10 +210,10 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    # # 테이블 생성 (최초 생성시)
-    # create_Calendars(conn)
-    # create_Markets(conn)
-    # create_Indicators(conn)
+    # 테이블 생성 (최초 생성시)
+    create_Calendars(conn)
+    create_Markets(conn)
+    create_Indicators(conn)
 
     make_calendars(from_date, to_date_2)
     make_markets()
