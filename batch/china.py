@@ -8,6 +8,7 @@ History
 20220907  Create
 20221116  Calendars.db 로부터 지표정보 읽어오기(FreeStockMarket API 로 전환)
 20231020  financialmodeling API 로 다시 전환
+20231110  Economics 테이블 쿼리문으로 변경, 기존 url 읽기에서.
 '''
 
 import sys, os
@@ -20,61 +21,63 @@ import requests
 from bs4 import BeautifulSoup as bs
 import yfinance as yf
 
-# 'application' code
+'''
+0. 공통영역 설정
+'''
+
+# logging
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0])
 
-
-'''
-시작/종료 일자 셋팅
-'''
+# 3개월단위로 순차적으로 읽어오는 경우의 시작/종료 일자 셋팅
 to_date_2 = pd.to_datetime(today)
 three_month_days = relativedelta(weeks=12)
 from_date = (to_date_2 - three_month_days).date()
 to_date_2 = to_date_2.date()
 
+# Connect DataBase
+database = database_dir+'/'+'Economics.db'
+conn, engine = create_connection(database)
+
+
 '''
 경제지표 그래프
 '''
-def eco_indexes(from_date, to_date):
-    to_date_2 = pd.to_datetime(today)
-    three_month_days = relativedelta(weeks=12)
-    from_date = (to_date_2 - three_month_days).date()
-    to_date_2 = to_date_2.date()
-    cals = pd.DataFrame()
+def eco_calendars(from_date, to_date):
+    # 날짜 및 시간 문자열을 날짜로 변환하는 함수
+    def parse_date(date_str):
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").date()
 
-    for i in range(10):  # 10 -> 2 for test
-        buf = get_calendar(from_date=from_date, to_date=to_date_2)
-        buf = buf[buf['country'] == 'CN']
-        cals = pd.concat([cals, buf], axis=0)
-        to_date_2 = pd.to_datetime(from_date)
-        from_date = (to_date_2 - three_month_days).date()
-        to_date_2 = to_date_2.date()
+    # 2) Economics database 에서 쿼리후 시작하는 루틴
+    M_table = 'Calendars'
+    M_country = 'CN'
+    M_query = f"SELECT * from {M_table} WHERE country = '{M_country}'"
 
-    temp = pd.to_datetime(cals.index)
-    temp2 = temp.date
-    cals.set_index(temp2, inplace=True)
-    cals.index.name = 'date'
-    logger2.info(cals[:30])
+    try:
+        cals = pd.read_sql_query(M_query, conn)
+        logger2.info(cals[:30])
+    except Exception as e:
+        print('Exception: {}'.format(e))
 
-    # buf = pd.DataFrame()
-    # l = []
-    # for x in cals['event']:
-    #     t = x.split('(')[0]
-    #     l.append(t)
-    # unique_list = list(set(l))
-    # print(unique_list)
+    events = ['Loan Prime Rate 5Y', 'Caixin Composite PMI ', 'GDP Growth Rate QoQ ', 'New Yuan Loans ', 'Caixin Services PMI ', \
+            'M2 Money Supply YoY ', 'Outstanding Loan Growth YoY ', 'NBS General PMI ', 'Caixin Manufacturing PMI ', 'Loan Prime Rate 5Y ', \
+            'Industrial Profits YoY ', 'Total Social Financing ', 'Industrial Production YoY ', 'Industrial Capacity Utilization ', \
+            'NBS Manufacturing PMI ', 'NBS Non Manufacturing PMI ', 'Unemployment Rate ', 'Foreign Exchange Reserves ', \
+            'House Price Index YoY ', 'Imports YoY ', 'Current Account ', 'Exports YoY ', 'Balance of Trade ', 'PPI YoY ', 'FDI ', \
+            'Inflation Rate MoM ', 'Inflation Rate YoY ', 'PBoC 1-Year MLF Announcement', 'Fixed Asset Investment ', 'Loan Prime Rate 1Y', \
+            'Retail Sales YoY ', 'GDP Growth Rate YoY ', 'Vehicle Sales YoY ', 'Industrial Profits ']
 
-    events = ['Loan Prime Rate 5Y', 'Caixin Composite PMI ', 'GDP Growth Rate QoQ ', 'New Yuan Loans ', 'Caixin Services PMI ', 'M2 Money Supply YoY ', 'Outstanding Loan Growth YoY ', 'NBS General PMI ', 'Caixin Manufacturing PMI ', 'Loan Prime Rate 5Y ', 'Industrial Profits YoY ', 'Total Social Financing ', 'Industrial Production YoY ', 'Industrial Capacity Utilization ', 'NBS Manufacturing PMI ', 'NBS Non Manufacturing PMI ', 'Unemployment Rate ', 'Foreign Exchange Reserves ', 'House Price Index YoY ', 'Imports YoY ', 'Current Account ', 'Exports YoY ', 'Balance of Trade ', 'PPI YoY ', 'FDI ', 'Inflation Rate MoM ', 'Inflation Rate YoY ', 'PBoC 1-Year MLF Announcement', 'Fixed Asset Investment ', 'Loan Prime Rate 1Y', 'Retail Sales YoY ', 'GDP Growth Rate YoY ', 'Vehicle Sales YoY ', 'Industrial Profits ']
-
+    # 전체 그림의 크기를 설정
+    plt.figure(figsize=(18, 4*len(events)))
     for i, event in enumerate(events):
         result = cals[cals['event'].str.contains(event, case=False, na=False)]
+        result['date'] = result['date'].apply(parse_date)
         plt.subplot(len(events), 1, i + 1)
-        result['actual'].plot(figsize=(18,100), title=event)    
-        plt.xlabel('Date')
+        plt.plot(result['date'], result['actual'])
+        plt.title(event)
+        plt.xlabel('date')
         plt.ylabel('actual')
-    #     plt.show()
-            
+
     plt.tight_layout()  # 서브플롯 간 간격 조절
     plt.savefig(reports_dir + '/china_0000.png')
 
@@ -591,7 +594,7 @@ Main Fuction
 '''
 
 if __name__ == "__main__":
-    cals = eco_indexes(from_date, to_date_2)  # calendars
+    cals = eco_calendars(from_date, to_date_2)  # calendars
     shanghai_shares, szse_shares = shanghai_szse_vs_yuan(from_date_MT, to_date)
     shanghai_vs_loan(cals)
     shanghai_vs_m2(cals)

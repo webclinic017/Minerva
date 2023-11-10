@@ -29,7 +29,7 @@ logger.warning(sys.argv[0])
 logger2.info(sys.argv[0])
 
 # 주요 관찰 대상국 설정
-nations = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR']
+nations = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR', 'IN', 'VN']
 urls = {
     'CN':'https://macrovar.com/china/',
     'EU':'https://macrovar.com/europe/', 
@@ -38,7 +38,9 @@ urls = {
     'US':'https://macrovar.com/united-states/', 
     'SG':'https://macrovar.com/singapore/', 
     'DE':'https://macrovar.com/germany/', 
-    'BR':'https://macrovar.com/brazil/'
+    'BR':'https://macrovar.com/brazil/',
+    'IN':'https://macrovar.com/india/',
+    'VN':'https://macrovar.com/vietnam/',
 }
 # 검색기간 설정
 to_date_2 = pd.to_datetime(today)

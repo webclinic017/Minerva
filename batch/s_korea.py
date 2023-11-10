@@ -67,8 +67,9 @@ def eco_calendars(from_date, to_date):
         plt.title(event)
         plt.xlabel('date')
         plt.ylabel('actual')
-        plt.tight_layout()  # 서브플롯 간 간격 조절
-        plt.savefig(reports_dir + '/s_korea_0000.png')
+        
+    plt.tight_layout()  # 서브플롯 간 간격 조절
+    plt.savefig(reports_dir + '/s_korea_0000.png')
 
     return cals
 
@@ -115,7 +116,6 @@ def eco_indicators(from_date, to_date):
         plt.xlabel('Date')
         plt.ylabel('Actual')
 
-    plt.tight_layout()  # 서브플롯 간 간격 조절
     plt.tight_layout()  # 서브플롯 간 간격 조절
     plt.savefig(reports_dir + '/s_korea_0001.png')
 
