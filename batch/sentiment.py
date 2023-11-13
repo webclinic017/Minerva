@@ -76,7 +76,7 @@ def news_sp500_corr():
     fig, ax1 = plt.subplots(figsize=(15,5))
     ax1.plot(sp500, color='green', label='S&P 500')
     ax2 = ax1.twinx()
-    ax2.plot(news, color='blue', label='News')
+    ax2.plot(news, color='royalblue', label='News')
     plt.title(f"News vs SP500 Earning Correlation", fontdict={'fontsize':20, 'color':'g'})
     ax1.grid()
     ax1.legend(loc=1)
@@ -247,7 +247,7 @@ def kor_esi_new_index():
     plt.grid()
     plt.plot(df_esi_origin['TIME'], df_esi_origin['DATA_VALUE'], label='esi_origin', linewidth=0.5, color='gray')
     plt.plot(df_esi_Coincident['TIME'], df_esi_Coincident['DATA_VALUE'], label='esi_Coincident', linewidth=1, color='green')
-    plt.plot(df2_news['TIME'], df2_news['DATA_VALUE'], label='news', linewidth=1, color='blue', marker='o')
+    plt.plot(df2_news['TIME'], df2_news['DATA_VALUE'], label='news', linewidth=1, color='royalblue', marker='o')
     plt.legend()
     plt.savefig(reports_dir + "/sentiments_0050.png")
 

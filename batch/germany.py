@@ -39,7 +39,7 @@ conn, engine = create_connection(database)
 
 
 '''
-경제지표 그래프
+0. 경제지표 그래프
 '''
 def eco_calendars(from_date, to_date):
 
@@ -91,9 +91,30 @@ def eco_calendars(from_date, to_date):
 
     return cals
 
+'''
+4. Risk
+4.1 [EURO] 10-Year Treasury Constant Maturity Minus 3-Month Treasury Constant Maturity
+why 1~2년: 미국 성장이 멈추는 시점(장기 침체, 단기 성장중)은 징후이고, 실제 폭탄은 다른 취약국가에서 외환위기 발생하며 증시폭락
+wall street 는 이 시점에 외환위기 발생한 나라에서 12년마다 열리는 대축제를 즐기고 귀한함: 양털깍기
+'''
+def y10minusm3():
+    bond_10y = fred.get_series(series_id='IRLTLT01EZM156N', observation_start=from_date_MT)
+    bond_3m = fred.get_series(series_id='IR3TIB01EZM156N', observation_start=from_date_MT)
+    bond_10y3m = bond_10y - bond_3m
+    bond_us_10y3m = fred.get_series(series_id='T10Y3M', observation_start=from_date_MT)
+    crack = 0
+    logger2.info('##### 10Y Minus 3M Treasury Constant Maturity #####')
+    logger2.info('10Y Minus 3M: \n' + str(bond_10y3m[-16::5]))
 
-
-
+    plt.figure(figsize=(19,5))
+    plt.title(f"[US vs EURO] 10-Year minus 3-Month Treasury Constant Maturity", fontdict={'fontsize':20, 'color':'g'})
+    plt.grid()
+    plt.axhline(y=crack, linestyle='--', color='red', linewidth=1, label=f"{crack} % Target Rate")
+    plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)# Covid-19 Crisis
+    plt.plot(bond_10y3m, label='[EURO] Resession Indicator after 1~2year: 10y - 3m', linewidth=1, color='maroon')
+    plt.plot(bond_us_10y3m, label='[USA] Resession Indicator after 1~2year: 10y - 3m', linewidth=1, color='royalblue')
+    plt.legend()
+    plt.savefig(reports_dir + '/germany_0400.png')
 
 
 
@@ -105,19 +126,13 @@ Main Fuction
 '''
 
 if __name__ == "__main__":
+
+    # 1. 경제전망
     cals = eco_calendars(from_date, to_date_2)  # calendars
-    # shanghai_shares, szse_shares = shanghai_szse_vs_yuan(from_date_MT, to_date)
-    # shanghai_vs_loan(cals)
-    # shanghai_vs_m2(cals)
-    # house_loan(cals)
-    # yuan_exchange_rate(from_date_MT)
-    # gdp_yoy, gdp_qoq = shanghai_vs_gpd(cals)
-    # shanghai_vs_ip(cals, gdp_yoy, gdp_qoq)
-    # shanghai_vs_house(cals)
-    # shanghai_vs_eximport(cals)
-    # shanghai_vs_dollar(cals)
-    # shanghai_vs_cpi_ppi(cals)   
-    # pmi(cals)
-    # indu_profit(cals)
-    # foreign_invest(cals)
-    # fixed_asset_invest(cals)
+
+    # 2. Indicators
+
+    # 3. Markets
+
+    # 4. Risks
+    y10minusm3()

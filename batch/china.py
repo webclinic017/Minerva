@@ -200,7 +200,7 @@ def house_loan(cals):
                     linestyle='-', color='maroon')
     ax2 = ax1.twinx()
     lns2 = ax2.plot(loan_growth['Date'], loan_growth['Actual'], label='Outstanding Loan Growth', linewidth=1,\
-                    linestyle='-', color='blue')
+                    linestyle='-', color='royalblue')
     plt.title(f"New Loans vs Outstanding Loan Growth", fontdict={'fontsize':20, 'color':'g'})
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
@@ -216,7 +216,7 @@ def house_loan(cals):
     # Graph: Shanghai vs Outstanding Loan Growth (미결제대출 증가율)
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(loan_growth['Date'], loan_growth['Actual'], label='New Loans', linewidth=1,\
-                    linestyle='-', color='blue')
+                    linestyle='-', color='royalblue')
     ax2 = ax1.twinx()
     lns2 = ax2.plot(shanghai_shares.index, shanghai_shares['Close'], label='Shanghai', linewidth=1, linestyle='-', color='green')
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)# Covid-19 Crisis

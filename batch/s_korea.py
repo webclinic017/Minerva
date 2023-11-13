@@ -390,11 +390,11 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     plt.title(f"KOSPI 200(YoY) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
-    plt.plot(kr_total_shares.pct_change(periods=260)*10, label='KOSPI 200(YoY)', linewidth=1, color='green', linestyle='--')
-    plt.plot(gdp_yoy.index, gdp_yoy['Actual/YoY'], label='GDP(YoY)', linewidth=1, color='maroon',\
+    plt.plot(kr_total_shares.pct_change(periods=260)*10, label='KOSPI 200(YoY)', linewidth=1, color='royalblue', linestyle='--')
+    plt.plot(gdp_yoy.index, gdp_yoy['Actual/YoY'], label='GDP(YoY)', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
     plt.plot(ip_yoy.index, ip_yoy['Actual/YoY'], label='Industrial Production(YoY)', linewidth=1, \
-            color='orange', linestyle='--')
+            linestyle='--')
     plt.legend()
     plt.savefig(reports_dir + '/s_korea_0210.png')
 
@@ -436,15 +436,15 @@ def kospi200_mom_vs_gdp_ip(cals, kr_total_shares):
 
 
     plt.figure(figsize=(18,6))
-    plt.title(f"KOSPI 200(MoM) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'g'})
+    plt.title(f"KOSPI 200(MoM) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'royalblue'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
-    plt.plot(kr_total_shares.pct_change(periods=21)*10, label='KOSPI 200(YoY)', linewidth=1, color='green', linestyle='--')
+    plt.plot(kr_total_shares.pct_change(periods=21)*10, label='KOSPI 200(YoY)', linewidth=1, linestyle='--')
 
-    plt.plot(gdp_qoq.index, gdp_qoq['Actual/QoQ'], label='GDP(QoQ)', linewidth=1, color='maroon',\
+    plt.plot(gdp_qoq.index, gdp_qoq['Actual/QoQ'], label='GDP(QoQ)', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
     plt.plot(ip_qoq.index, ip_qoq['Actual/MoM'], label='Industrial Production(QoQ)', linewidth=1, \
-            color='orange', linestyle='--')
+            linestyle='--')
     plt.legend()
     plt.savefig(reports_dir + '/s_korea_0220.png')
 
@@ -476,7 +476,7 @@ def kospi200_vs_realty(from_date, to_date, kr_total_shares):
     plt.title(f"KOSPI 200 vs Real Residential Property Prices", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
-    plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='green', linestyle='--')
+    plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='royalblue', linestyle='--')
     plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_tot['DATA_VALUE']), label='home_sale_tot', linewidth=2, marker='o', markersize=4)
     plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_house['DATA_VALUE']), label='home_sale_house', linewidth=2)
     plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_billa['DATA_VALUE']), label='Real home_sale_billa', linewidth=1)
@@ -614,14 +614,14 @@ def kospi200_vs_export_import_balance(cals):
     plt.title(f"KOSPI 200 vs Export/Import/Balance", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
-    plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='green', linestyle='--')
+    plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='royalblue', linestyle='--')
     # plt.plot(kospi_yoy, label='KOSPI 200/YoY', linewidth=1, color='green', linestyle='--')
 
-    plt.plot(kor_epi.index, normalize(kor_epi['Actual/YoY']), label='Export', linewidth=1, color='royalblue',\
+    plt.plot(kor_epi.index, normalize(kor_epi['Actual/YoY']), label='Export', linewidth=1, \
             linestyle='--')
-    plt.plot(kor_ipi.index, normalize(kor_ipi['Actual/YoY']), label='Import', linewidth=1, color='orange',\
+    plt.plot(kor_ipi.index, normalize(kor_ipi['Actual/YoY']), label='Import', linewidth=1, \
             linestyle='--')
-    plt.plot(kor_tb.index, normalize(kor_tb['Actual/Bil/YoY']), label='Balance', linewidth=1, color='maroon',\
+    plt.plot(kor_tb.index, normalize(kor_tb['Actual/Bil/YoY']), label='Balance', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
     plt.legend()
     plt.savefig(reports_dir + '/s_korea_0310.png')
@@ -648,7 +648,7 @@ def kospi200_vs_dollar_current():
     plt.title(f"KOSPI 200 vs Dollar Reserve, Current Account", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
-    plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='green', linestyle='--')
+    plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='royalblue', linestyle='--')
 
     plt.plot(fx_res['Date'], normalize(fx_res['Actual(Bil)']), label='Dollar Reserve', linewidth=1, color='maroon',\
             linestyle='--', marker='x', markersize=4)
@@ -731,8 +731,8 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
     plt.title(f"KOSPI 200(YoY) vs PPI(YoY), CPI(YoY)", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
-    plt.plot(kr_total_shares.pct_change(periods=260)*20, label='KOSPI 200(YoY)', linewidth=1, color='green', linestyle='--')
-    plt.plot(cpi_yoy['Date'], cpi_yoy['Actual/YoY'], label='CPI(YoY)', linewidth=1, color='maroon',\
+    plt.plot(kr_total_shares.pct_change(periods=260)*20, label='KOSPI 200(YoY)', linewidth=1, color='royalblue', linestyle='--')
+    plt.plot(cpi_yoy['Date'], cpi_yoy['Actual/YoY'], label='CPI(YoY)', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
     plt.plot(ppi_yoy['Date'], ppi_yoy['Actual/YoY'], label='PPI(YoY)', linewidth=1, \
             color='orange', linestyle='--')
@@ -750,8 +750,8 @@ def kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom):
     plt.title(f"KOSPI 200(MoM) vs PPI(MoM), CPI(MoM)", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
-    plt.plot(kr_total_shares.pct_change(periods=21)*20, label='KOSPI 200(MoM)', linewidth=1, color='green', linestyle='--')
-    plt.plot(cpi_mom.index, cpi_mom['Actual/MoM'], label='CPI(MoM)', linewidth=1, color='maroon',\
+    plt.plot(kr_total_shares.pct_change(periods=21)*20, label='KOSPI 200(MoM)', linewidth=1, color='royalblue', linestyle='--')
+    plt.plot(cpi_mom.index, cpi_mom['Actual/MoM'], label='CPI(MoM)', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
     plt.plot(ppi_mom.index, ppi_mom['Actual/MoM'], label='PPI(MoM)', linewidth=1, \
             color='orange', linestyle='--')
