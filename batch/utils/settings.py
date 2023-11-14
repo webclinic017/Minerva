@@ -32,8 +32,21 @@ sys.path.append(batch_dir)
 '''
 import logging, logging.config, logging.handlers
 
+# 로그파일 텍스트의 길이 조정
+class MaxLengthFilter(logging.Filter):
+    def __init__(self, max_length):
+        self.max_length = max_length
+
+    def filter(self, record):
+        record.msg = record.msg[:self.max_length]
+        return True
 ## Loads The Config File
 logging.config.fileConfig(batch_dir+'/logging.conf', disable_existing_loggers=False)
+
+# 최대 길이 필터 설정 (예: 50자)
+max_length = 3000
+max_length_filter = MaxLengthFilter(max_length)
+logging.getLogger().addFilter(max_length_filter)
 
 # create a logger with the name from the config file. 
 # This logger now has StreamHandler with DEBUG Level and the specified format in the logging.conf file
