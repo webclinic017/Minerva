@@ -22,6 +22,7 @@ from settings import *
 '''
 import yfinance as yf
 import pandas_ta as ta
+from scipy import signal
 
 # logging
 logger.warning(sys.argv[0])
@@ -389,20 +390,35 @@ def get_cot_data(senti_file, SYMBOLS_SD_TO_MERGE, SYMBOL_SD, ticker_file, ticker
         df_sd = df_sd.rename(columns={'Report_Date_as_YYYY-MM-DD':'report_date'})
         df_sd = df_sd.drop('Market_and_Exchange_Names', axis=1)
 
+        # # Read / Get & Save Market Data
+        # if not os.path.exists(ticker_file):
+        #     ticker = yf.Ticker(ticker)
+        #     df = ticker.history(
+        #         interval='1d',
+        #         start=min(df_sd['report_date']),
+        #         end=max(df_sd['report_date']))
+        #     df = df.reset_index()
+        #     df['Date'] = df['Date'].dt.date
+        #     df = df[['Date','Close']]
+        #     df.columns = ['date', 'close']
+        #     if len(df) > 0: df.to_csv(ticker_file, index=False)
+        # else:
+        #     df = pd.read_csv(ticker_file)
+        
+        # 어제 만들어진 ticker file 은 오늘 다시 업데이트 되지 않을텐데... 이상함...
         # Read / Get & Save Market Data
-        if not os.path.exists(ticker_file):
-            ticker = yf.Ticker(ticker)
-            df = ticker.history(
-                interval='1d',
-                start=min(df_sd['report_date']),
-                end=max(df_sd['report_date']))
-            df = df.reset_index()
-            df['Date'] = df['Date'].dt.date
-            df = df[['Date','Close']]
-            df.columns = ['date', 'close']
-            if len(df) > 0: df.to_csv(ticker_file, index=False)
-        else:
-            df = pd.read_csv(ticker_file)
+        ticker = yf.Ticker(ticker)
+        df = ticker.history(
+            interval='1d',
+            start=min(df_sd['report_date']),
+            end=max(df_sd['report_date']))
+        df = df.reset_index()
+        df['Date'] = df['Date'].dt.date
+        df = df[['Date','Close']]
+        df.columns = ['date', 'close']
+        if len(df) > 0: df.to_csv(ticker_file, index=False)
+        df = pd.read_csv(ticker_file)
+
         df['date'] = pd.to_datetime(df['date'])
         # Merge Market Sentiment Data And Market Data
         tolerance = pd.Timedelta('7 day')
@@ -452,7 +468,7 @@ def cot_report_bat(ticker):
     SYMBOLS_SD_TO_MERGE = ['E-MINI S&P 500 STOCK INDEX - CHICAGO MERCANTILE EXCHANGE']
     senti_file = data_dir + f'/market_sentiment_data.csv'
     ticker_file = data_dir + f'/{ticker}.csv'
-    CASH = 10000
+    CASH = 10_000
     BB_LENGTH = 20
     MIN_BANDWIDTH = 0
     MAX_BUY_PCT = 0.25
@@ -469,8 +485,41 @@ def cot_report_bat(ticker):
         print(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
         
 
-def cot_report_on(symbols):
-    get_oct_by_symbol(COT_SYMBOLS)
+# def cot_report_on(symbols):
+#     # get_oct_by_symbol(COT_SYMBOLS)
+#     continue
+
+
+'''
+1.7 ControlChartStrategy
+https://wire.insiderfinance.io/trading-the-stock-market-in-an-unconventional-way-using-control-charts-f6e9aca3d8a0
+these seven rules proposed by Mark Allen Durivage
+Rule 1 — One Point Beyond the 3σ Control Limit
+Rule 2 — Eight or More Points on One Side of the Centerline Without Crossing
+Rule 3 — Four out of five points in zone B or beyond
+Rule 4 — Six Points or More in a Row Steadily Increasing or Decreasing
+Rule 5 — Two out of three points in zone A
+Rule 6–14 Points in a Row Alternating Up and Down
+Rule 7 — Any noticeable/predictable pattern, cycle, or trend
+'''
+def get_control_data(ticker_file):
+    df = pd.read_csv(ticker_file)
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date').resample('5T').agg('last')
+    df = df.dropna()
+    df['feature'] = signal.detrend(df['close'])
+
+    return df.reset_index(drop=True)
+
+
+def control_chart_strategy(ticker):
+    # Constants
+    ticker_file
+    default_window = 10
+    CASH = 10_000
+    # Configuration
+    np.set_printoptions(suppress=True)
+    pd.options.mode.chained_assignment = None
 
 
 
@@ -485,6 +534,7 @@ if __name__ == "__main__":
     timing_strategy(gtta.keys(), 1, 200) # 200일 이평 vs 어제 종가
     max_dd_strategy(WATCH_TICKERS) # max draw down strategy : 바닥에서 분할 매수구간 찾기
 
+    # 아래와 같은 형태의 루프는 티커별로 함수를 돌리고, 해당 함수 안에서 루프를 더 돌리는 2차원 루프를 위한 구조임.
     for ticker in WATCH_TICKERS:
         get_stock_history(ticker, TIMEFRAMES)
     
@@ -504,10 +554,16 @@ if __name__ == "__main__":
     for ticker in COT_TICKERS:
         cot_report_bat(ticker)
 
-    
-    # for symbol in COT_SYMBOLS:
-    #     cot_report_on(symbol)
+    # for symbol in COT_SYMBOLS:  # financialmodeling.com 에서 해당 API 에 대한 비용을 요구하고 있음.
+    #     cot_report_on(symbol)   # 유로화후 적용 예정
         
+    
+    for ticker in WATCH_TICKERS:
+        control_chart_strategy(ticker)
+        
+    
+        
+    
 
 
 

@@ -50,8 +50,8 @@ def issue_monitoring():
 
 
 def sp500_stock(date):
-    SP500 = fred.get_series(series_id='SP500', observation_start=date)
-    return SP500
+    sp500 = fred.get_series(series_id='SP500', observation_start=date)
+    return sp500
 
 
 '''
@@ -697,7 +697,7 @@ def high_yield_spread(CONF_INTVL):
     plt.axhline(y=crack_, linestyle='--', color='red', linewidth=1, label=f"{crack_} % Target Rate")
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)# Covid-19 Crisis
     plt.plot(high_yield_spread, label='high_yield_spread', linewidth=1)
-    plt.plot(normalize(SP500)*10, label='S&P 500')
+    plt.plot(normalize(sp500)*10, label='S&P 500')
     plt.legend()
 
     # Detailed high_yield_spread
@@ -707,7 +707,7 @@ def high_yield_spread(CONF_INTVL):
     plt.axhline(y=crack, linestyle='--', color='red', linewidth=1, label=f"{crack} % Target Rate")
     plt.axhline(y=crack_, linestyle='--', color='red', linewidth=1, label=f"{crack_} % Target Rate")
     plt.plot(high_yield_spread[-24:], label='high_yield_spread')
-    plt.plot(normalize(SP500[-24:])*10, label='S&P 500')
+    plt.plot(normalize(sp500[-24:])*10, label='S&P 500')
     plt.legend()
 
     # 이미지 파일로 저장
@@ -961,35 +961,35 @@ Main Fuction
 if __name__ == "__main__":
 
     # 1. Projections: Summary of Economic Projections (SEP)
-    # cals = eco_calendars(from_date, to_date_2)  # calendars
-    # key_indicators()
-    # realGDP_projection()
-    # unemployment_projection()
-    # pce_projection()
-    # effective_rate()
+    cals = eco_calendars(from_date, to_date_2)  # calendars
+    key_indicators()
+    realGDP_projection()
+    unemployment_projection()
+    pce_projection()
+    effective_rate()
 
     # 2. Indicators
-    # Leading Indicators OECD: component_series()
-    # nonfarm_payroll()
-    # hires_vs_jobopen()
-    # sp500_profits_realgdp()
-    # m2v_vs_m2s()
-    # unemploy_ahead_retail()
-    # expect_vs_10yminus5y()
+    component_series()
+    nonfarm_payroll()
+    hires_vs_jobopen()
+    sp500_profits_realgdp()
+    m2v_vs_m2s()
+    unemploy_ahead_retail()
+    expect_vs_10yminus5y()
 
     
     # 3. Markets
 
 
     # 4. Risks
-    # smoothed_recession_prob()
-    # sahm_recession()
-    # high_yield_spread(CONF_INTVL)
-    # y10minusy2()
-    # y10minusm3()
-    # total_assets_and_rp()
-    # y10_crak_line()
-    # rp_total()
-    # total_bank_reserves()
-    # loans()
+    smoothed_recession_prob()
+    sahm_recession()
+    high_yield_spread(CONF_INTVL)
+    y10minusy2()
+    y10minusm3()
+    total_assets_and_rp()
+    y10_crak_line()
+    rp_total()
+    total_bank_reserves()
+    loans()
     when_is_the_day()
