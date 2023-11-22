@@ -12,25 +12,29 @@ import requests
 import sqlite3
 from time import sleep
 from fredapi import Fred
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlite3 import Error
 from dateutil.relativedelta import relativedelta
+from tabulate import tabulate
 
 utils_dir = os.getcwd() + '/batch/Utils'
 reports_dir = os.getcwd() + '/batch/reports'
+data_dir = os.getcwd() + '/batch/reports/data'
 database_dir = os.getcwd() + '/database'
 batch_dir = os.getcwd() + '/batch'
 sys.path.append(utils_dir)
 sys.path.append(reports_dir)
+sys.path.append(data_dir)
 sys.path.append(database_dir)
 sys.path.append(batch_dir)
 
 
 '''
-배치작업 로깅 루틴
+0. 공통영역 설정
 '''
 import logging, logging.config, logging.handlers
+
 
 # 로그파일 텍스트의 길이 조정
 class MaxLengthFilter(logging.Filter):
@@ -62,28 +66,36 @@ fmp_key = 'f57bdcaa7d140c9de35806d47fbd2f91'
 warnings.filterwarnings('ignore')
 
 now = datetime.today()
-global to_date
+global to_date, to_date2, to_date3
 to_date = now.strftime('%d/%m/%Y')
+to_date2 = now.strftime('%Y-%m-%d')
+to_date3 = now.strftime('%Y%m%d')
 print('to_date: ', to_date)
+print('to_date2: ', to_date2)
+print('to_date3: ', to_date3)
 
-global today
-today = now.strftime('%Y-%m-%d')
-print('today: ', today)
-
-global from_date_LT, from_date_MT, from_date_ST
+global from_date_LT, from_date_MT, from_date_ST, from_date_LT2, from_date_MT2, from_date_ST2, from_date_LT3, from_date_MT3, from_date_ST3
 # Used to analyze during 3 months for short term
 _date = now + relativedelta(months=-3)
-from_date_ST = _date.strftime('%d/%m/%Y') 
+from_date_ST = _date.strftime('%d/%m/%Y')
+from_date_ST2 = _date.strftime('%Y-%m-%d')
+from_date_ST3 = _date.strftime('%Y%m%d')
 
 # Used to analyze during 5 years for middle term (half of 10year Economic cycle)
 _date = now + relativedelta(years=-5)
-from_date_MT = _date.strftime('%d/%m/%Y') 
+from_date_MT = _date.strftime('%d/%m/%Y')
+from_date_MT2 = _date.strftime('%Y-%m-%d')
+from_date_MT3 = _date.strftime('%Y%m%d')
 
 # Used to analyze during 50 years for long term (5times of 10year Economic cycle)
 _date = now + relativedelta(years=-50)
 from_date_LT = _date.strftime('%d/%m/%Y') 
+from_date_LT2 = _date.strftime('%Y-%m-%d')
+from_date_LT3 = _date.strftime('%Y%m%d')
 
 print('Short: ' + from_date_ST + '   Middle: ' + from_date_MT + '    Long: ' + from_date_LT)
+# print('Short: ' + from_date_ST2 + '   Middle: ' + from_date_MT2 + '    Long: ' + from_date_LT2)
+# print('Short: ' + from_date_ST3 + '   Middle: ' + from_date_MT3 + '    Long: ' + from_date_LT3)
 
 
 
@@ -180,14 +192,14 @@ def convert_to_float(x, type=0):
             return float(x)
 
 # 트렌드 디텍터
-def trend_detector(data, col, tp_date_from, tp_date_to=today, order=1):
+def trend_detector(data, col, tp_date_from, tp_date_to=to_date2, order=1):
     buf = np.polyfit(np.arange(len(data[tp_date_from:tp_date_to].index)), data[col][tp_date_from:tp_date_to], order)
     slope = buf[-2]
     
     return float(slope)
 
 # Tipping Point 인자 추자: 20220913
-def trend_detector_for_series(df, tp_date_from, tp_date_to=today, order=1):
+def trend_detector_for_series(df, tp_date_from, tp_date_to=to_date2, order=1):
     data = df[df.index >= tp_date_from.strftime('%Y-%m-%d')]
     buf = np.polyfit(np.arange(len(data[tp_date_from:tp_date_to].index)), data[tp_date_from:tp_date_to], order)
     slope = buf[-2]
@@ -219,9 +231,9 @@ def turning_point_for_series(data):
     return result
 
 
-def delete_Crack_By_Date(conn, table, date=today):
+def delete_Crack_By_Date(conn, table, date=to_date2):
     """
-    Delete a Curr_Crack by Date (default=today)
+    Delete a Curr_Crack by Date (default=to_date)
     :param conn:  Connection to the SQLite database
     :param id: Date of the Curr_Crack (%Y-%m-%d)
     :return:
@@ -237,30 +249,6 @@ def normalize(data):
     result = (data-min(data))/(max(data)-min(data))
     
     return result
-
-
-def get_daily_hist(ticker, from_date, to_date=today):
-    url = (f'https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?from={from_date}&to={to_date}&apikey={fmp_key}')
-    response = requests.get(url).json()
-    # Flatten data
-    symbol = response.get('symbol')
-    df = pd.json_normalize(response, record_path =['historical'])
-    
-    return symbol, df
-
-def get_calendar(from_date, to_date=today):
-    url = (f'https://financialmodelingprep.com/api/v3/economic_calendar?from={from_date}&to={to_date}&apikey={fmp_key}')
-    try:
-        response = requests.get(url).json()
-        calendar = pd.DataFrame(response)
-        calendar = calendar.set_index('date')        
-    except Exception as e:
-        logger.error(response)
-        print("################# financilamodeling.com api error: "+ e)    
-
-    # calendar = calendar.iloc[::-1]
-    
-    return calendar
 
 
 
@@ -470,13 +458,13 @@ def db_insert(M_db, M_table, M_query, M_buffer, conn, engine, logger, logger2):
     M_buffer['Tot_Count'] =  M_buffer.iloc[:, 3:].sum(axis=1)
     M_buffer['Tot_Percent'] = M_buffer['Tot_Count']/(len(M_buffer.columns) - 3) * 100
     try:
-        if M_db['Date'].str.contains(today).any():
+        if M_db['Date'].str.contains(to_date2).any():
             buf = 'Duplicated: ' + M_db['Date']
             logger.error(buf)
-            delete_Crack_By_Date(conn, 'Sent_Crack', date=today)
+            delete_Crack_By_Date(conn, 'Sent_Crack', date=to_date2)
         M_buffer.to_sql(M_table, con=engine, if_exists='append', chunksize=1000, index=False, method='multi')
     except Exception as e:
-        print("################# Check Please: "+ e)
+        print("################# Check Please: " + e)
     try:
         # display(pd.read_sql_query(M_query, conn)[-5:])
         buf = pd.read_sql_query(M_query, conn)[-5:]
@@ -487,3 +475,58 @@ def db_insert(M_db, M_table, M_query, M_buffer, conn, engine, logger, logger2):
     # 배치 프로그램 최종 종료시 Activate 후 실행
     conn.close()
 
+
+'''
+financialmodeling.com API 연계
+US Economics & Markets 관련 데이터 수집해오는 API
+'''
+
+def get_daily_hist(ticker, from_date, to_date=to_date2):
+    url = (f'https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?from={from_date}&to={to_date}&apikey={fmp_key}')
+    response = requests.get(url).json()
+    # Flatten data
+    symbol = response.get('symbol')
+    df = pd.json_normalize(response, record_path =['historical'])
+    
+    return symbol, df
+
+def get_calendar(from_date, to_date=to_date2):
+    url = (f'https://financialmodelingprep.com/api/v3/economic_calendar?from={from_date}&to={to_date}&apikey={fmp_key}')
+    try:
+        response = requests.get(url).json()
+        calendar = pd.DataFrame(response)
+        calendar = calendar.set_index('date')        
+    except Exception as e:
+        logger.error(response)
+        print("################# financilamodeling.com api error: "+ e)    
+
+    # calendar = calendar.iloc[::-1]
+    
+    return calendar
+
+
+# settings.py에 있는 financial modeling 에서 stock hitory 가져와 csv 파일로 저장하기까지. 
+def get_stock_history(ticker:str, periods:list):  # period: 1min, 5min, 15min, 30min, 1hour, 4hour, 1day
+    for period in periods:
+        url = f'https://financialmodelingprep.com/api/v3/historical-chart/{period}/{ticker}?from={from_date_ST2}&to={to_date2}&apikey={fmp_key}'
+        try:
+            buf = requests.get(url).json()
+            df = pd.DataFrame(buf, columns=['date', 'open', 'low','high','close','volume'])
+            df['ticker'] = ticker
+            df.to_csv(data_dir + f'/us_d0130_{period}.csv', index=False)
+        except Exception as e:
+            print('Exception: {}'.format(e))
+
+# settings.py에 있는 financial modeling 에서 OCT Report 를 심볼로 가져오기
+def get_oct_by_symbol(symbols:list):  # period: 1min, 5min, 15min, 30min, 1hour, 4hour, 1day
+    for symbol in symbols:
+        url = f'https://financialmodelingprep.com/api/v4/commitment_of_traders_report_analysis/{symbol}?apikey={fmp_key}'        
+        try:
+            buf = requests.get(url).json()
+            df = pd.DataFrame(buf, columns=['symbol', 'date', 'sector', 'currentLongMarketSituation', \
+                                            'currentShortMarketSituation', 'marketSituation',\
+                                            'previousLongMarketSituation', 'previousShortMarketSituation', \
+                                            'previousMarketSituation', 'netPostion','previousNetPosition', \
+                                            'changeInNetPosition', 'marketSentiment', 'reversalTrend', 'name', 'exchange'])
+        except Exception as e:
+            print('Exception: {}'.format(e))

@@ -17,12 +17,16 @@ from settings import *
 '''
 0. 공통영역 설정
 '''
+
+import requests
+from bs4 import BeautifulSoup as bs
+
 # logging
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0])
 
 # 3개월단위로 순차적으로 읽어오는 경우의 시작/종료 일자 셋팅
-to_date_2 = pd.to_datetime(today)
+to_date_2 = pd.to_datetime(to_date2)
 three_month_days = relativedelta(weeks=12)
 from_date = (to_date_2 - three_month_days).date()
 to_date_2 = to_date_2.date()
@@ -144,6 +148,28 @@ def cpi():
     plt.savefig(reports_dir + '/global_0300.png')
 
 
+'''
+1.4 Sovereign CDS
+'''
+def cds():
+    page = requests.get("https://www.worldgovernmentbonds.com/sovereign-cds/")
+    soup = bs(page.text, "html.parser")
+
+    # 제거하려는 태그 선택
+    tag_to_remove = soup.find('tfoot')
+    # 태그 제거
+    tag_to_remove.decompose()
+
+    tables = soup.find_all('table')
+    # 멀티 헤더의 첫번째 헤더 제거
+    cdses = pd.read_html(str(tables))[0]
+    column_to_remove = cdses.columns[0]
+    cdses.drop(columns=column_to_remove, inplace=True)
+    cdses.columns = cdses.columns.droplevel(0)
+
+    logger2.info('##### Sovereign CDS (Credit Default Swap) #####')
+    logger2.info('cdses: \n' + str(cdses))
+
 
 
 
@@ -157,3 +183,4 @@ if __name__ == "__main__":
     cli()
     m1()
     cpi()
+    cds()

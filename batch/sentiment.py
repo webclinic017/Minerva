@@ -55,7 +55,7 @@ M_query = f"SELECT * from {M_table}"
 try:
     # 오늘자 Dataframe, db는 테이블에 있는 Dataframe 읽어온거.
     M_db = pd.read_sql_query(M_query, conn)
-    buf = [today, 0,0,0,0,0,0,0,0,0,0,0,0]
+    buf = [to_date2, 0,0,0,0,0,0,0,0,0,0,0,0]
     M_buffer = pd.DataFrame(data=[buf], columns=M_db.columns)
     logger2.info(M_db[-5:])
 except Exception as e:
@@ -119,7 +119,7 @@ def naver_trend_search():
     client_secret = "1p6jC1WBe5"
 
     from_date= str(date.today() - relativedelta(years = 3))
-    to_date= today
+    to_date= to_date2
     time_unit='date'
     device=''
     ages=[]
@@ -258,10 +258,10 @@ def kor_esi_new_index():
 #     M_buffer['Tot_Count'] =  M_buffer.iloc[:, 3:].sum(axis=1)
 #     M_buffer['Tot_Percent'] = M_buffer['Tot_Count']/(len(M_buffer.columns) - 3) * 100
 #     try:
-#         if M_db['Date'].str.contains(today).any():
+#         if M_db['Date'].str.contains(to_date2).any():
 #             buf = 'Duplicated: ' + M_db['Date']
 #             logger.error(buf)
-#             delete_Crack_By_Date(conn, 'Sent_Crack', date=today)
+#             delete_Crack_By_Date(conn, 'Sent_Crack', date=to_date2)
 #         M_buffer.to_sql(M_table, con=engine, if_exists='append', chunksize=1000, index=False, method='multi')
 #     except Exception as e:
 #         print("################# Check Please: "+ e)
