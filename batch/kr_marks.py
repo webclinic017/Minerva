@@ -67,15 +67,14 @@ yesterday = _yest.date().strftime('%Y%m%d')
 1.1 PER / PBR
 '''
 def per_pbr():
-    from tabulate import tabulate
 
     df = stock.get_index_fundamental(yesterday, 'KOSPI')[:18]
     logger2.info('##### KOSPI Fundamentals #####')
-    logger2.info(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
+    logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
     df = stock.get_index_fundamental(yesterday, 'KOSDAQ')[:10]
     logger2.info('##### KOSDAQ Fundamentals #####')
-    logger2.info(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
+    logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
     from_day = change_date_type(from_date_MT)
     plt.figure(figsize=(16, 4*len(core_tickers)))
@@ -198,7 +197,7 @@ def ticket_short_selling(own_tickers:list):
 def get_yields():
     df = bond.get_otc_treasury_yields(yesterday)
     logger2.info('##### treasury_yields #####')
-    logger2.info(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
+    logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
     plt.figure(figsize=(16, 4*2))
 
