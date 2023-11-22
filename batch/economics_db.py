@@ -43,10 +43,10 @@ urls = {
     'VN':'https://macrovar.com/vietnam/',
 }
 # 검색기간 설정
-to_date_2 = pd.to_datetime(today)
+_to_date = pd.to_datetime(to_date)
 term_days = relativedelta(weeks=1)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적!
-from_date = (to_date_2 - term_days).date()
-to_date_2 = to_date_2.date()
+from_date = (_to_date - term_days).date()
+to_date = _to_date.date()
 
 
 
@@ -170,17 +170,17 @@ def get_indicators(country, url, table_name):
 '''
 1. Calendars 테이블 데이터 구성
 '''
-def make_calendars(from_date, to_date_2):
+def make_calendars(from_date, to_date):
     table_name = 'Calendars'
     cals = pd.DataFrame()
     for i in range(1):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
-        buf = get_calendar(from_date=from_date, to_date=to_date_2)
+        buf = get_calendar(from_date=from_date, to_date=to_date)
         for i in range(len(nations)):
             buf2 = buf[buf['country'] == nations[i]]
             cals = pd.concat([cals, buf2], axis=0)
-        to_date_2 = pd.to_datetime(from_date)
-        from_date = (to_date_2 - term_days).date()
-        to_date_2 = to_date_2.date()
+        to_date = pd.to_datetime(from_date)
+        from_date = (to_date - term_days).date()
+        to_date = to_date.date()
     cals = cals.reset_index()
     logger2.info(cals)
     read_table(table_name)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     # create_Markets(conn)
     # create_Indicators(conn)
 
-    make_calendars(from_date, to_date_2)
+    make_calendars(from_date, to_date)
     make_markets()
     make_indicators(**urls)
 
