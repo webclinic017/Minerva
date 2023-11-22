@@ -69,11 +69,11 @@ yesterday = _yest.date().strftime('%Y%m%d')
 def per_pbr():
     from tabulate import tabulate
 
-    df = stock.get_index_fundamental(today, 'KOSPI')[:18]
+    df = stock.get_index_fundamental(yesterday, 'KOSPI')[:18]
     logger2.info('##### KOSPI Fundamentals #####')
     logger2.info(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
 
-    df = stock.get_index_fundamental(today, 'KOSDAQ')[:10]
+    df = stock.get_index_fundamental(yesterday, 'KOSDAQ')[:10]
     logger2.info('##### KOSDAQ Fundamentals #####')
     logger2.info(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False))
 
