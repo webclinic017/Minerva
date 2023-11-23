@@ -513,14 +513,14 @@ def get_control_data(ticker_file):
     return df.reset_index(drop=True)
 
 
-def control_chart_strategy(ticker):
-    # Constants
-    ticker_file
-    default_window = 10
-    CASH = 10_000
-    # Configuration
-    np.set_printoptions(suppress=True)
-    pd.options.mode.chained_assignment = None
+# def control_chart_strategy(ticker):
+#     # Constants
+#     ticker_file
+#     default_window = 10
+#     CASH = 10_000
+#     # Configuration
+#     np.set_printoptions(suppress=True)
+#     pd.options.mode.chained_assignment = None
 
 
 
@@ -559,8 +559,8 @@ if __name__ == "__main__":
     #     cot_report_on(symbol)   # 유로화후 적용 예정
         
     
-    for ticker in WATCH_TICKERS:
-        control_chart_strategy(ticker)
+    # for ticker in WATCH_TICKERS:
+    #     control_chart_strategy(ticker)
         
     
         
