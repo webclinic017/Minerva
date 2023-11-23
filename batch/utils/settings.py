@@ -4,7 +4,7 @@ import sys, os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import investpy as inv
+import investpy as inv # 20231123 삭제예정
 import warnings
 import time
 import requests
@@ -97,7 +97,17 @@ print('Short: ' + from_date_ST + '   Middle: ' + from_date_MT + '    Long: ' + f
 # print('Short: ' + from_date_ST2 + '   Middle: ' + from_date_MT2 + '    Long: ' + from_date_LT2)
 # print('Short: ' + from_date_ST3 + '   Middle: ' + from_date_MT3 + '    Long: ' + from_date_LT3)
 
-
+# 중요도에 따라 1,2,3 부여
+# 3등급은 대륙단위의 이벤트 대상: 전쟁, 트렌드,
+# 2등급은 국가단위의 거시경제 지표들로 구성: 기준금리, M2,
+# 1등급은 기업단위의 미시경제 지표들로 구성: 
+IMPACT = 0
+# 매 체크루틴에서 중요도에 따라 -5점부터 +5점까지중 2점단위로 부여
+# 강력매도 -5, 매도 -3, 하락징후 -1, 상승징후 1, 매수 3, 강력매수 5
+STOCK_SIGNAL = 0
+BOND_SIGNAL = 0
+CMDT_SIGNAL = 0  # Commodity
+CASH_SIGNAL = 0
 
 # 신뢰구간
 global CONF_INTVL

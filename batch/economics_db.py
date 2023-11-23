@@ -26,7 +26,7 @@ import os
 '''
 # logging
 logger.warning(sys.argv[0])
-logger2.info(sys.argv[0])
+logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # 주요 관찰 대상국 설정
 nations = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR', 'IN', 'VN']
@@ -122,14 +122,24 @@ def read_table(table_name):
     M_query = f"SELECT * from {M_table}"
     try:
         buf = pd.read_sql_query(M_query, conn)
-        logger2.info(buf)
+        # logger2.info(buf)
+        return buf
     except Exception as e:
         print('Exception: {}'.format(e))
 
 # 테이블 데이터 insert
 def write_table(table_name, data):
     try:
-        count = data.to_sql(table_name, con=engine, if_exists='append', chunksize=1000, index=False, method=None)
+        df = read_table(table_name)
+        merged_df = pd.concat([data, df])
+        if table_name == 'Calendars':
+            result_df = merged_df.drop_duplicates(subset=['date', 'country', 'event'])
+        elif table_name == 'Indicators':
+            result_df = merged_df.drop_duplicates(subset=['Country', 'Indicator', 'Date'])
+            result_df['Date'] = str(result_df.Date)
+        else:
+            print('Exception: Table Name Not found.')
+        count = result_df.to_sql(table_name, con=engine, if_exists='replace', chunksize=1000, index=False)
         print('Insert Count: ', count)
     except Exception as e:
         print(e)
@@ -161,8 +171,7 @@ def get_indicators(country, url, table_name):
     buf['Slope'] = indicators.Slope
     buf['ZS5Y'] = indicators.ZS5Y
 
-    write_table(table_name, buf)
-    read_table(table_name)
+    return buf
 
     
 
@@ -182,10 +191,11 @@ def make_calendars(from_date, to_date):
         from_date = (to_date - term_days).date()
         to_date = to_date.date()
     cals = cals.reset_index()
+    logger2.info('##### 최근 1주일동안의 cals ####')
     logger2.info(cals)
-    read_table(table_name)
+    
     write_table(table_name, cals)
-    read_table(table_name)
+    # read_table(table_name)
 
 
 '''
@@ -199,8 +209,13 @@ def make_markets():
 '''
 def make_indicators(**kwargs):
     table_name = 'Indicators'
+    df = pd.DataFrame()
     for key, value in kwargs.items():
-        get_indicators(key, value, table_name)
+        buf = get_indicators(key, value, table_name)
+        print(buf)
+        df = pd.concat([df, buf])
+
+    write_table(table_name, df)
 
 
 
@@ -217,7 +232,7 @@ if __name__ == "__main__":
     # create_Indicators(conn)
 
     make_calendars(from_date, to_date)
-    make_markets()
+    # make_markets()
     make_indicators(**urls)
 
 

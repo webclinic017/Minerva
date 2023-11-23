@@ -24,6 +24,7 @@ import yfinance as yf
 import pandas_ta as ta
 from scipy import signal
 
+
 # logging
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
