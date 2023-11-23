@@ -98,7 +98,6 @@ def timing_strategy(tickers, short_sma, long_sma):
         buf = result[result['Ticker'] == t].tail(3)
         df = pd.concat([df, buf])
     logger2.debug(df) # 검증시 사용
-    print(df)
 
 
 '''
@@ -189,13 +188,13 @@ def show_vb_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    print(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} for timeframe {timeframe} '.center(60, '*'))
-    print(f'* Profit/Loss: {profit:.2f}')
-    print(f"* Wins: {wins} - Losses: {losses}")
+    logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} for timeframe {timeframe} '.center(60, '*'))
+    logger2.info(f'* Profit/Loss: {profit:.2f}')
+    logger2.info(f"* Wins: {wins} - Losses: {losses}")
     try:
-        print(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")
+        logger2.info(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")
     except Exception as e:
-        print('Exception: {}'.format(e))
+        logger.error('Exception: {}'.format(e))
 
 def volatility_bollinger_strategy(ticker:str, TIMEFRAMES:list):
     # Iterate over each timeframe, apply the strategy and show the result
@@ -242,13 +241,13 @@ def show_reversal_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    print(f'********** Reversal Strategy: Result of {ticker} for timeframe {timeframe} '.center(60, '*'))
-    print(f'* Profit/Loss: {profit:.2f}')
-    print(f"* Wins: {wins} - Losses: {losses}")
+    logger2.info(f'********** Reversal Strategy: Result of {ticker} for timeframe {timeframe} '.center(60, '*'))
+    logger2.info(f'* Profit/Loss: {profit:.2f}')
+    logger2.info(f"* Wins: {wins} - Losses: {losses}")
     try:
-        print(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")  # if wins + losses == 0
+        logger2.info(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")  # if wins + losses == 0
     except Exception as e:
-        print('Exception: {}'.format(e))
+        logger.error('Exception: {}'.format(e))
 
 def reversal_strategy(ticker:str, TIMEFRAMES:list):
     # Iterate over each timeframe, apply the strategy and show the result
@@ -334,8 +333,8 @@ def trend_following_strategy(ticker:str, df):
         shares = 0
         open_price = 0
 
-    print(f'********** Trend Following Strategy: RESULT of {ticker} '.center(76, '*'))
-    print(f"Cash after Trade: {round(cash, 2):8}")
+    logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} '.center(76, '*'))
+    logger2.info(f"Cash after Trade: {round(cash, 2):8}")
 
 '''
 1.6 The Commitment of Traders (COT) Report
@@ -461,7 +460,6 @@ def get_cot_result(df, field, bb_length, min_bandwidth, max_buy_pct, min_sell_pc
 
 def cot_report_bat(ticker):
     # Configuration
-    print('Bolenger Band Length: 20')
     np.set_printoptions(suppress=True)
     pd.options.mode.chained_assignment = None
     # Constants
@@ -480,10 +478,10 @@ def cot_report_bat(ticker):
     # Get Result Based Calculating the BB on Each Field to Check Which is the Most Accurate
     for field in ['dealer_long', 'dealer_short', 'lev_money_long', 'lev_money_short']:
         total_reward, wins, losses = get_cot_result(df, field, BB_LENGTH, MIN_BANDWIDTH, MAX_BUY_PCT, MIN_SELL_PCT, CASH)
-        print(f' Result of {ticker} for (Field: {field}) '.center(60, '*'))
-        print(f"* Profit / Loss  : {total_reward:.2f}")
-        print(f"* Wins / Losses  : {wins} / {losses}")
-        print(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
+        logger2.info(f' Result of {ticker} for (Field: {field}) '.center(60, '*'))
+        logger2.info(f"* Profit / Loss           : {total_reward:.2f}")
+        logger2.info(f"* Wins / Losses           : {wins} / {losses}")
+        logger2.info(f"* Win Rate (BB length=20) : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
         
 
 # def cot_report_on(symbols):
