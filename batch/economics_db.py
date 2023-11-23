@@ -19,8 +19,6 @@ import yfinance as yf
 import os
 
 
-
-
 '''
 공통 영역
 '''

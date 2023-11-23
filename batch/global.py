@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup as bs
 
 # logging
 logger.warning(sys.argv[0])
-logger2.info(sys.argv[0])
+logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # 3개월단위로 순차적으로 읽어오는 경우의 시작/종료 일자 셋팅
 to_date_2 = pd.to_datetime(to_date2)

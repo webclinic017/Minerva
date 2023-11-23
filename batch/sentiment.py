@@ -28,7 +28,7 @@ from bs4 import BeautifulSoup as bs
 
 # logging
 logger.warning(sys.argv[0])
-logger2.info(sys.argv[0])
+logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 
 ###################################################################################################
