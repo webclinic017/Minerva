@@ -291,24 +291,25 @@ def trend_following_strategy(ticker:str):
         cash = CASH
         shares = 0
         last_bar = None
-        operation_last = 'WAIT'
+        operation_last = 'SELL'
         ts_trigger = 0
         sl_price = 0
+        operation_last_old = None
 
-        reversed_df = df[::-1] # 시작일자부터 Long/WAIT 를 정해서 계산해 올라와야 맞을듯. 
+        reversed_df = df[::-1] # 시작일자부터 BUY/SELL 를 정해서 계산해 올라와야 맞을듯. 
 
         # Generate operations
         for index, row in reversed_df.iterrows():
             date = row['date']
             # If there is no operation
-            if operation_last == 'WAIT':
+            if operation_last == 'SELL':
                 if row['close'] == 0:
                     continue
                 if last_bar is None:
                     last_bar = row
                     continue
                 if row['bar_count'] >= GREEN_BARS_TO_OPEN:
-                    operation_last = 'LONG'
+                    operation_last = 'BUY'
                     open_price = row['close']
                     ts_trigger = open_price * (1 + (TRAILING_STOP_TRIGGER / 100))
                     sl_price = open_price * (1 + (STOP_LOSS_PERC / 100))
@@ -318,9 +319,9 @@ def trend_following_strategy(ticker:str):
                     last_bar = None
                     continue        
             # If the last operation was a purchase
-            elif operation_last == 'LONG':
+            elif operation_last == 'BUY':
                 if row['close'] < sl_price:
-                    operation_last = 'WAIT'
+                    operation_last = 'SELL'
                     cash += shares * row['close']
                     shares = 0
                     open_price = 0
@@ -332,7 +333,11 @@ def trend_following_strategy(ticker:str):
                         if sl_price_tmp > sl_price:
                             sl_price = sl_price_tmp
 
-            logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
+            if timeframe == '1day':
+                if operation_last != operation_last_old:
+                    logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
+                operation_last_old = operation_last
+            
             last_bar = row
 
         if shares > 0:
@@ -342,8 +347,7 @@ def trend_following_strategy(ticker:str):
 
         logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} for {timeframe}'.center(76, '*'))
         logger2.info(f"Cash after Trade: {round(cash, 2):8}")
-        logger2.info('   ')
-        logger2.info('   ')        
+        logger2.info('  ')
 
 
 
