@@ -97,6 +97,11 @@ print('Short: ' + from_date_ST + '   Middle: ' + from_date_MT + '    Long: ' + f
 # print('Short: ' + from_date_ST2 + '   Middle: ' + from_date_MT2 + '    Long: ' + from_date_LT2)
 # print('Short: ' + from_date_ST3 + '   Middle: ' + from_date_MT3 + '    Long: ' + from_date_LT3)
 
+
+'''
+훗날 전체 경기전망과 전략의 점수를 산정하고 총 합으로 종합분석을 하고자 할때 사용하려고 만들어둠.
+
+global IMPACT, STOCK_SIGNAL, BOND_SIGNAL, CASH_SIGNAL
 # 중요도에 따라 1,2,3 부여
 # 3등급은 대륙단위의 이벤트 대상: 전쟁, 트렌드,
 # 2등급은 국가단위의 거시경제 지표들로 구성: 기준금리, M2,
@@ -108,6 +113,8 @@ STOCK_SIGNAL = 0
 BOND_SIGNAL = 0
 CMDT_SIGNAL = 0  # Commodity
 CASH_SIGNAL = 0
+'''
+
 
 # 신뢰구간
 global CONF_INTVL
@@ -518,14 +525,15 @@ def get_calendar(from_date, to_date=to_date2):
 # settings.py에 있는 financial modeling 에서 stock hitory 가져와 csv 파일로 저장하기까지. 
 def get_stock_history(ticker:str, periods:list):  # period: 1min, 5min, 15min, 30min, 1hour, 4hour, 1day
     for period in periods:
-        url = f'https://financialmodelingprep.com/api/v3/historical-chart/{period}/{ticker}?from={from_date_ST2}&to={to_date2}&apikey={fmp_key}'
+        url = f'https://financialmodelingprep.com/api/v3/historical-chart/{period}/{ticker}?from={from_date_MT2}&to={to_date2}&apikey={fmp_key}'
         try:
             buf = requests.get(url).json()
             df = pd.DataFrame(buf, columns=['date', 'open', 'low','high','close','volume'])
             df['ticker'] = ticker
-            df.to_csv(data_dir + f'/us_d0130_{period}.csv', index=False)
+            df.to_csv(data_dir + f'/{ticker}_hist_{period}.csv', index=False)
         except Exception as e:
             print('Exception: {}'.format(e))
+
 
 # settings.py에 있는 financial modeling 에서 OCT Report 를 심볼로 가져오기
 def get_oct_by_symbol(symbols:list):  # period: 1min, 5min, 15min, 30min, 1hour, 4hour, 1day

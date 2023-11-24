@@ -133,8 +133,10 @@ def write_table(table_name, data):
         if table_name == 'Calendars':
             result_df = merged_df.drop_duplicates(subset=['date', 'country', 'event'])
         elif table_name == 'Indicators':
-            result_df = merged_df.drop_duplicates(subset=['Country', 'Indicator', 'Date'])
-            result_df['Date'] = str(result_df.Date)
+            # 중복된 행을 찾습니다.
+            duplicates = merged_df.duplicated()
+            # 중복된 행을 제거합니다.
+            result_df = merged_df[~duplicates]
         else:
             print('Exception: Table Name Not found.')
         count = result_df.to_sql(table_name, con=engine, if_exists='replace', chunksize=1000, index=False)
@@ -154,12 +156,12 @@ def get_indicators(country, url, table_name):
     # 2. Macroeconomic Indicators
     indicators = pd.read_html(str(table))[1]
     indicators['Country'] = [country] *  len(indicators)
-    indicators['Date'] = pd.to_datetime(indicators['Update'])
+    indicators['Date'] = pd.to_datetime(indicators['Update']).dt.date
 
     buf = pd.DataFrame()
     buf['Country'] = [country] *  len(indicators)
     buf['Indicator'] = indicators.Indicator
-    buf['Date'] = pd.to_datetime(indicators.Update)
+    buf['Date'] = pd.to_datetime(indicators.Update).dt.date
     buf['Symbol'] = indicators.Symbol
     buf['Actual'] = indicators.Actual
     buf['Previous'] = indicators.Previous
