@@ -140,7 +140,7 @@ def write_table(table_name, data):
         else:
             print('Exception: Table Name Not found.')
         count = result_df.to_sql(table_name, con=engine, if_exists='replace', chunksize=1000, index=False)
-        print('Insert Count: ', count)
+        logger2.info(f'{table_name} insert Count: ' + str({count}))
     except Exception as e:
         print(e)
 

@@ -41,36 +41,43 @@ conn, engine = create_connection(database)
 '''
 def eco_calendars(from_date, to_date):
 
-    # 날짜 및 시간 문자열을 날짜로 변환하는 함수
-    def parse_date(date_str):
-        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").date()
-
-    # 2) Economics database 에서 쿼리후 시작하는 루틴
+    # Economics database 에서 쿼리후 시작하는 루틴
     M_table = 'Calendars'
     M_country = 'KR'
     M_query = f"SELECT * from {M_table} WHERE country = '{M_country}'"
 
     try:
         cals = pd.read_sql_query(M_query, conn)
+        logger2.info('Calendar 경제지표'.center(60, '*'))
         logger2.info(cals[:30])
     except Exception as e:
-        print('Exception: {}'.format(e))
+        logger.error('Exception: {}'.format(e))
 
-    events = ['Interest Rate Decision', 'PPI MoM ', 'Exports YoY ', 'GDP Growth Rate QoQ ', 'CPI ', 'Industrial Production MoM ', 'Business Confidence ', 'GDP Growth Rate QoQ Adv ', 'Construction Output YoY ', 'Unemployment Rate ', 'Foreign Exchange Reserves ', 'Import Prices YoY ', 'GDP Growth Rate YoY Adv ', 'Retail Sales YoY ', 'Consumer Confidence ', 'Markit Manufacturing PMI ', 'GDP Growth Rate YoY ', 'Current Account ', 'Inflation Rate YoY ', 'Retail Sales MoM ', 'Balance of Trade ', 'Manufacturing Production YoY ', 'S&P Global Manufacturing PMI ', 'Imports YoY ', 'Inflation Rate MoM ', 'Export Prices YoY ', 'Industrial Production YoY ', 'PPI YoY ']
+    events = ['Interest Rate Decision', 'PPI MoM ', 'Exports YoY ', 'GDP Growth Rate QoQ ', 'CPI ', \
+            'Industrial Production MoM ', 'Business Confidence ', 'GDP Growth Rate QoQ Adv ', \
+            'Construction Output YoY ', 'Unemployment Rate ', 'Foreign Exchange Reserves ', 'Import Prices YoY ', \
+            'GDP Growth Rate YoY Adv ', 'Retail Sales YoY ', 'Consumer Confidence ', 'Markit Manufacturing PMI ', \
+            'GDP Growth Rate YoY ', 'Current Account ', 'Inflation Rate YoY ', 'Retail Sales MoM ', 'Balance of Trade ', \
+            'Manufacturing Production YoY ', 'S&P Global Manufacturing PMI ', 'Imports YoY ', 'Inflation Rate MoM ', \
+            'Export Prices YoY ', 'Industrial Production YoY ', 'PPI YoY ']
 
     # 전체 그림의 크기를 설정
     plt.figure(figsize=(18, 4*len(events)))
     for i, event in enumerate(events):
         result = cals[cals['event'].str.contains(event, case=False, na=False)]
-        result['date'] = result['date'].apply(parse_date)
+        result['Date'] = pd.to_datetime(result.date).dt.date
+        result['Actual'] = result['actual'].astype('float')
+        result = result.dropna(subset=['Actual'])
+        result['Date'].reset_index()  
+
         plt.subplot(len(events), 1, i + 1)
-        plt.plot(result['date'], result['actual'])
+        plt.plot(result['Date'], result['Actual'])
         plt.title(event)
-        plt.xlabel('date')
-        plt.ylabel('actual')
+        plt.xlabel('Date')
+        plt.ylabel('Actual')
         
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_e0000.png')
+    plt.savefig(reports_dir + '/kr_e0000.png')
 
     return cals
 
@@ -80,20 +87,17 @@ def eco_calendars(from_date, to_date):
 '''
 def eco_indicators(from_date, to_date):
 
-    # 날짜 및 시간 문자열을 날짜로 변환하는 함수
-    def parse_date2(date_str):
-        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f").date()
-
-    # 2) Economics database 에서 쿼리후 시작하는 루틴
+    # Economics database 에서 쿼리후 시작하는 루틴
     M_table = 'Indicators'
     M_country = 'KR'
     M_query = f"SELECT * from {M_table} WHERE country = '{M_country}'"
 
     try:
         indis = pd.read_sql_query(M_query, conn)
+        logger2.info('Indicator 경제지표'.center(60, '*'))
         logger2.info(indis[:30])
     except Exception as e:
-        print('Exception: {}'.format(e))
+        logger.error('Exception: {}'.format(e))
 
     indicators = ['balance of trade', 'bank lending rate', 'business confidence', 'capacity utilization', 'capital flows',\
                   'car registrations', 'central bank balance sheet', 'consumer confidence', 'consumer price index',\
@@ -110,7 +114,11 @@ def eco_indicators(from_date, to_date):
     plt.figure(figsize=(18, 4*len(indicators)))
     for i, indicator in enumerate(indicators):
         result = indis[indis['Indicator'].str.contains(indicator, case=False, na=False)]
-        result['Date'] = result['Date'].apply(parse_date2)
+        result['Date'] = pd.to_datetime(result.Date).dt.date
+        result['Actual'] = result['Actual'].astype('float')
+        result = result.dropna(subset=['Actual'])
+        result['Date'].reset_index()  
+
         plt.subplot(len(indicators), 1, i + 1)
         plt.plot(result['Date'], result['Actual'])
         plt.title(indicator)
@@ -118,7 +126,7 @@ def eco_indicators(from_date, to_date):
         plt.ylabel('Actual')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_e0001.png')
+    plt.savefig(reports_dir + '/kr_e0001.png')
 
     return indis
 
@@ -140,7 +148,7 @@ def kospi200_vs_krw(from_date, to_date):
 
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
     df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
 
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
     kr_total_shares = pd.Series(data=list(df['DATA_VALUE']), index=df['TIME'])
@@ -154,12 +162,13 @@ def kospi200_vs_krw(from_date, to_date):
 
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
     df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+
     usd_krw = pd.Series(data=list(df['DATA_VALUE']), index=df['TIME'])
 
+    logger2.info(f"KRW".center(60, '*'))
     logger2.info(usd_krw[-26::5])
-
 
     fig, ax1 = plt.subplots(figsize=(18,4))
     lns1 = ax1.plot(kr_total_shares, label='KOSPI 200', linewidth=1, linestyle='--', color='royalblue')
@@ -172,7 +181,7 @@ def kospi200_vs_krw(from_date, to_date):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/korea_e0100.png')    
+    plt.savefig(reports_dir + '/kr_e0100.png')    
 
     # 세부 확대
     fig, ax1 = plt.subplots(figsize=(18,4))
@@ -185,7 +194,7 @@ def kospi200_vs_krw(from_date, to_date):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/korea_e0110.png')
+    plt.savefig(reports_dir + '/kr_e0110.png')
 
     return kr_total_shares 
 
@@ -195,6 +204,7 @@ def kospi200_vs_krw(from_date, to_date):
 '''
 def kospi200_vs_fred():
     Federal_Rate =  fred.get_series('DFF', observation_start=from_date_MT)
+    logger2.info(f"FED Rates".center(60, '*'))    
     logger2.info(Federal_Rate[-91::30])
 
     fig, ax1 = plt.subplots(figsize=(18,4))
@@ -208,7 +218,7 @@ def kospi200_vs_fred():
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/korea_e0120.png')
+    plt.savefig(reports_dir + '/kr_e0120.png')
     
 
 '''
@@ -226,9 +236,9 @@ def kospi200_vs_currency(from_date, to_date):
     item_3 = [ ]
 
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
-    df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
+    df.dropna(subset=['DATA_VALUE'], axis=0, inplace=True)
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME'],).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
 
     df_m1_month = df.loc[df['ITEM_CODE1'] == 'BBKA00']
@@ -242,9 +252,9 @@ def kospi200_vs_currency(from_date, to_date):
     item_3 = [ ]
 
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
-    df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
+    df.dropna(subset=['DATA_VALUE'], axis=0, inplace=True)
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
 
     df_m2_month = df.loc[df['ITEM_CODE1'] == 'BBGA00']
@@ -257,13 +267,14 @@ def kospi200_vs_currency(from_date, to_date):
     item_3 = [ ]
 
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
-    df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
+    df.dropna(subset=['DATA_VALUE'], axis=0, inplace=True)
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
 
     df_m3_month = df.loc[df['ITEM_CODE1'] == 'X000000']
 
+    logger2.info('한국은행 m2'.center(60, '*'))
     logger2.info(df_m2_month[-3:][['TIME','DATA_VALUE']])
 
     # Graph
@@ -290,7 +301,7 @@ def kospi200_vs_currency(from_date, to_date):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_e0130.png')
+    plt.savefig(reports_dir + '/kr_e0130.png')
 
 
 '''
@@ -306,26 +317,37 @@ def loan(from_date, to_date):
     item_3 = []
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
 
+    df.dropna(subset=['DATA_VALUE'], axis=0, inplace=True)
+    df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
+    df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+
     df_1 = df.loc[df['ITEM_CODE1'] == '11110A0'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE1']]
     df_2 = df.loc[df['ITEM_CODE1'] == '11A00A0'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE1']]
     df_3 = df.loc[df['ITEM_CODE1'] == '11110B0'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE1']]
     df_4 = df.loc[df['ITEM_CODE1'] == '11A00B0'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE1']]
 
-    df_1.set_index('TIME')
-    df_2.set_index('TIME')
-    df_3.set_index('TIME')
-    df_4.set_index('TIME')
-
-    pd.to_datetime(df_1['TIME'], format='%Y%m', errors='coerce').dropna()
-    pd.to_datetime(df_2['TIME'], format='%Y%m', errors='coerce').dropna()
-    pd.to_datetime(df_3['TIME'], format='%Y%m', errors='coerce').dropna()
-    pd.to_datetime(df_4['TIME'], format='%Y%m', errors='coerce').dropna()
-
-    df_1['DATA_VALUE'] = df_1['DATA_VALUE'].astype('float')
-    df_2['DATA_VALUE'] = df_2['DATA_VALUE'].astype('float')
-    df_3['DATA_VALUE'] = df_3['DATA_VALUE'].astype('float')
-    df_4['DATA_VALUE'] = df_4['DATA_VALUE'].astype('float')
+    df_1 = df_1.dropna(subset=['DATA_VALUE'], axis=0)
+    df_2 = df_2.dropna(subset=['DATA_VALUE'], axis=0)
+    df_3 = df_3.dropna(subset=['DATA_VALUE'], axis=0)
+    df_4 = df_4.dropna(subset=['DATA_VALUE'], axis=0)
+    df_1['TIME'] = pd.to_datetime(df_1['TIME'], format='%Y%m', errors='coerce')
+    df_2['TIME'] = pd.to_datetime(df_2['TIME'], format='%Y%m', errors='coerce')
+    df_3['TIME'] = pd.to_datetime(df_3['TIME'], format='%Y%m', errors='coerce')
+    df_4['TIME'] = pd.to_datetime(df_4['TIME'], format='%Y%m', errors='coerce')
+    df_1['DATA_VALUE'] = (df_1['DATA_VALUE']).astype('float')
+    df_2['DATA_VALUE'] = (df_2['DATA_VALUE']).astype('float')
+    df_3['DATA_VALUE'] = (df_3['DATA_VALUE']).astype('float')
+    df_4['DATA_VALUE'] = (df_4['DATA_VALUE']).astype('float')
     df_1['DATA_VALUE_TOT'] = df_1['DATA_VALUE']+df_2['DATA_VALUE']+df_3['DATA_VALUE']+df_4['DATA_VALUE']
+
+    logger2.info('가계대출'.center(60, '*'))
+    logger2.info('은행 가계 가계대출 중 주담대, 주담대 제외'.center(60, '*'))
+    logger2.info(df_1[:5])
+    logger2.info(df_2[:5])
+    logger2.info('비은행 가계 가계대출 중 주담대, 주담대 제외'.center(60, '*'))
+    logger2.info(df_3[:5])
+    logger2.info(df_4[:5])    
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
     # 서브플롯 설정
@@ -346,10 +368,8 @@ def loan(from_date, to_date):
     plt.plot(df_3['TIME'][-13:], normalize(df_3['DATA_VALUE'][-13:]), label='Other Loan-Bank')
     plt.plot(df_4['TIME'][-13:], normalize(df_4['DATA_VALUE'][-13:]), label='Other Loan-Exclusive Bank', linestyle='--')
     plt.legend()
-
-    # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_e0140.png')
+    plt.savefig(reports_dir + '/kr_e0140.png')
 
 
 '''
@@ -359,45 +379,44 @@ def loan(from_date, to_date):
 def kospi200_vs_gdp_ip(cals, kr_total_shares):
     # GDP (Gross domestic product) : Not Real, just Value
     gdp = cals.loc[cals['event'].str.contains('GDP')]
-    # gdp['Date'] = pd.to_datetime(gdp['date'], dayfirst=True)
+
+    gdp.dropna(subset=['actual'], axis=0, inplace=True)
+    gdp['Date'] = pd.to_datetime(gdp['date']).dt.date
+    gdp['Actual'] = (gdp['actual']).astype('float')
 
     gdp_yoy = gdp.loc[gdp['event'].str.contains('YoY')]
     gdp_qoq = gdp.loc[gdp['event'].str.contains('QoQ')]
+    gdp_yoy['Actual/YoY'] = gdp_yoy['Actual']
+    gdp_qoq['Actual/QoQ'] = gdp_qoq['Actual']
 
-    # gdp_yoy['Actual/YoY'] = gdp_yoy['actual'].str.rstrip('%').astype('float')
-    # gdp_qoq['Actual/QoQ'] = gdp_qoq['actual'].str.rstrip('%').astype('float')
-    gdp_yoy['Actual/YoY'] = gdp_yoy['actual']
-    gdp_qoq['Actual/QoQ'] = gdp_qoq['actual']
+    logger2.info('GDP (Gross domestic product)'.center(60, '*'))
+    logger2.info(gdp_yoy[:4])    
 
     # Industrial Production
     ip = cals.loc[cals['event'].str.contains('Industrial Production')]
-    # ip['Date'] = pd.to_datetime(ip['date'], dayfirst=True)
+    ip.dropna(subset=['actual'], axis=0, inplace=True)
+    ip['Date'] = pd.to_datetime(ip['date']).dt.date
+    ip['Actual'] = (ip['actual']).astype('float')
 
     ip_yoy = ip.loc[ip['event'].str.contains('YoY')]
     ip_qoq = ip.loc[ip['event'].str.contains('MoM')]
+    ip_yoy['Actual/YoY'] = ip_yoy['Actual']
+    ip_qoq['Actual/MoM'] = ip_qoq['Actual']
 
-    # ip_yoy['Actual/YoY'] = ip_yoy['actual'].str.rstrip('%').astype('float')
-    # ip_qoq['Actual/MoM'] = ip_qoq['actual'].str.rstrip('%').astype('float')
-    ip_yoy['Actual/YoY'] = ip_yoy['actual']
-    ip_qoq['Actual/MoM'] = ip_qoq['actual']
-
-    logger2.info('GDP (Gross domestic product)')
-    logger2.info(gdp_yoy[:4][['Actual/YoY']])
-
-    logger2.info('Industrial Production')
-    logger2.info(ip_yoy[:4][['Actual/YoY']])
+    logger2.info('Industrial Production (YoY)'.center(60, '*'))
+    logger2.info(ip_yoy[:4])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200(YoY) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
     plt.plot(kr_total_shares.pct_change(periods=260)*10, label='KOSPI 200(YoY)', linewidth=1, color='royalblue', linestyle='--')
-    plt.plot(gdp_yoy.index, gdp_yoy['Actual/YoY'], label='GDP(YoY)', linewidth=1, \
+    plt.plot(gdp_yoy['Date'], gdp_yoy['Actual/YoY'], label='GDP(YoY)', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
-    plt.plot(ip_yoy.index, ip_yoy['Actual/YoY'], label='Industrial Production(YoY)', linewidth=1, \
+    plt.plot(ip_yoy['Date'], ip_yoy['Actual/YoY'], label='Industrial Production(YoY)', linewidth=1, \
             linestyle='--')
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0210.png')
+    plt.savefig(reports_dir + '/kr_e0210.png')
 
 
 '''
@@ -407,34 +426,24 @@ def kospi200_mom_vs_gdp_ip(cals, kr_total_shares):
 
     # GDP (Gross domestic product) : Not Real, just Value
     gdp = cals.loc[cals['event'].str.contains('GDP')]
-    # gdp['Date'] = pd.to_datetime(gdp['date'], dayfirst=True)
+    gdp['Date'] = pd.to_datetime(gdp['date']).dt.date
 
     gdp_yoy = gdp.loc[gdp['event'].str.contains('YoY')]
     gdp_qoq = gdp.loc[gdp['event'].str.contains('QoQ')]
-
-    # gdp_yoy['Actual/YoY'] = gdp_yoy['actual'].str.rstrip('%').astype('float')
-    # gdp_qoq['Actual/QoQ'] = gdp_qoq['actual'].str.rstrip('%').astype('float')
     gdp_yoy['Actual/YoY'] = gdp_yoy['actual']
     gdp_qoq['Actual/QoQ'] = gdp_qoq['actual']
 
     # Industrial Production
     ip = cals.loc[cals['event'].str.contains('Industrial Production')]
-    # ip['Date'] = pd.to_datetime(ip['date'], dayfirst=True)
+    ip['Date'] = pd.to_datetime(ip['date']).dt.date
 
     ip_yoy = ip.loc[ip['event'].str.contains('YoY')]
     ip_qoq = ip.loc[ip['event'].str.contains('MoM')]
-
-    # ip_yoy['Actual/YoY'] = ip_yoy['actual'].str.rstrip('%').astype('float')
-    # ip_qoq['Actual/MoM'] = ip_qoq['actual'].str.rstrip('%').astype('float')
     ip_yoy['Actual/YoY'] = ip_yoy['actual']
     ip_qoq['Actual/MoM'] = ip_qoq['actual']
 
-    logger2.info('GDP (Gross domestic product)')
-    logger2.info(gdp_yoy[:4][['Actual/YoY']])
-
-    logger2.info('Industrial Production')
-    logger2.info(ip_yoy[:4][['Actual/YoY']])
-
+    logger2.info('GDP (Gross domestic product)'.center(60, '*'))
+    logger2.info(gdp_yoy[:4])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200(MoM) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'royalblue'})
@@ -442,12 +451,12 @@ def kospi200_mom_vs_gdp_ip(cals, kr_total_shares):
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
     plt.plot(kr_total_shares.pct_change(periods=21)*10, label='KOSPI 200(YoY)', linewidth=1, linestyle='--')
 
-    plt.plot(gdp_qoq.index, gdp_qoq['Actual/QoQ'], label='GDP(QoQ)', linewidth=1, \
+    plt.plot(gdp_qoq['Date'], gdp_qoq['Actual/QoQ'], label='GDP(QoQ)', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
-    plt.plot(ip_qoq.index, ip_qoq['Actual/MoM'], label='Industrial Production(QoQ)', linewidth=1, \
+    plt.plot(ip_qoq['Date'], ip_qoq['Actual/MoM'], label='Industrial Production(QoQ)', linewidth=1, \
             linestyle='--')
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0220.png')
+    plt.savefig(reports_dir + '/kr_e0220.png')
 
 
 '''
@@ -463,11 +472,11 @@ def kospi200_vs_realty(from_date, to_date, kr_total_shares):
     item_3 = [ ]
 
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
-    df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
-    df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+
+    df.dropna(subset=['DATA_VALUE'], axis=0, inplace=True)
+    df['TIME'] = pd.to_datetime(df['TIME'], format='%Y%m', errors='coerce')
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
-            
+
     df_home_sale_tot = df.loc[df['ITEM_CODE1'] == 'P63AD']
     df_home_sale_house = df.loc[df['ITEM_CODE1'] == 'P63AA']
     df_home_sale_billa = df.loc[df['ITEM_CODE1'] == 'P63AB']
@@ -479,11 +488,11 @@ def kospi200_vs_realty(from_date, to_date, kr_total_shares):
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
     plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='royalblue', linestyle='--')
     plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_tot['DATA_VALUE']), label='home_sale_tot', linewidth=2, marker='o', markersize=4)
-    plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_house['DATA_VALUE']), label='home_sale_house', linewidth=2)
-    plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_billa['DATA_VALUE']), label='Real home_sale_billa', linewidth=1)
-    plt.plot(df_home_sale_tot['TIME'], normalize(df_home_sale_apt['DATA_VALUE']), label='home_sale_apt', linewidth=1)
+    plt.plot(df_home_sale_house['TIME'], normalize(df_home_sale_house['DATA_VALUE']), label='home_sale_house', linewidth=2)
+    plt.plot(df_home_sale_billa['TIME'], normalize(df_home_sale_billa['DATA_VALUE']), label='Real home_sale_billa', linewidth=1)
+    plt.plot(df_home_sale_apt['TIME'], normalize(df_home_sale_apt['DATA_VALUE']), label='home_sale_apt', linewidth=1)
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0230.png')
+    plt.savefig(reports_dir + '/kr_e0230.png')
 
 
 '''
@@ -498,16 +507,17 @@ def unemployment():
     item_2 = ['P', 'A']
     item_3 = [ ]
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3)
-    df.drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
+
+    df.dropna(subset=['DATA_VALUE'], axis=0, inplace=True)
+    df['TIME'] = pd.to_datetime(df['TIME'], format='%Y%m', errors='coerce')
+    df['DATA_VALUE'] = (df['DATA_VALUE']).astype('int')
 
     df_1 = df.loc[df['ITEM_CODE2'] == 'P'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE2']]
     df_2 = df.loc[df['ITEM_CODE2'] == 'A'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE2']]
     df_1.set_index('TIME')
     df_2.set_index('TIME')
-    pd.to_datetime(df_1['TIME'], format='%Y%m', errors='coerce').dropna()
-    pd.to_datetime(df_2['TIME'], format='%Y%m', errors='coerce').dropna()
-    df_1['DATA_VALUE'] = df_1['DATA_VALUE'].astype('int')
-    df_2['DATA_VALUE'] = df_2['DATA_VALUE'].astype('int')
+
+    logger2.info('실업급여수급실적'.center(60, '*'))
     logger2.info(df_1[-3:])
 
     plt.figure(figsize=(18,6))
@@ -515,9 +525,8 @@ def unemployment():
     plt.grid()
     plt.plot(df_1['TIME'], normalize(df_1['DATA_VALUE']), label='Unemployement')
     plt.plot(df_2['TIME'], normalize(df_2['DATA_VALUE']), label='Unemployement Cost')
-    # plt.plot(df_2['TIME'][-10:], df_2['DATA_VALUE'][-10:], label='real_gdp_high', linewidth=1, color='maroon')
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0240.png')
+    plt.savefig(reports_dir + '/kr_e0240.png')
 
 
 '''
@@ -558,7 +567,7 @@ def deflator():
     df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
     if cycle_type == 'M':    
         df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-        df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+        df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     elif (cycle_type == 'Q') or (cycle_type == 'Y'):
         df['TIME'] = df['TIME']
         
@@ -570,6 +579,7 @@ def deflator():
     df_gdp_exp = df.loc[df['ITEM_CODE1'] == '10601']# 국내총생산 지출
     df_deflator = df_consumption[['TIME','DATA_VALUE']]+df_gross_capital[['TIME','DATA_VALUE']]+df_export[['TIME','DATA_VALUE']]+df_gdp_exp[['TIME','DATA_VALUE']]+df_import[['TIME','DATA_VALUE']]*(-1)
 
+    logger2.info('GDP Deflator'.center(60, '*'))
     logger2.info(df_consumption[['TIME','DATA_VALUE']][-4:]+df_gross_capital[['TIME','DATA_VALUE']][-4:]+df_export[['TIME','DATA_VALUE']][-4:]+df_gdp_exp[['TIME','DATA_VALUE']][-4:]+df_import[['TIME','DATA_VALUE']][-4:]*(-1))
 
     # Graph
@@ -591,7 +601,7 @@ def deflator():
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns6, lns6, loc=1)
-    plt.savefig(reports_dir + '/korea_e0250.png')
+    plt.savefig(reports_dir + '/kr_e0250.png')
 
 
 '''
@@ -599,49 +609,53 @@ def deflator():
 3.1 KOSPI 200 vs Export/Import/Balance
 '''
 def kospi200_vs_export_import_balance(cals):
-    kospi_yoy = (kr_total_shares - kr_total_shares.shift(260))/kr_total_shares.shift(260)
+
     # Export
     kor_epi = cals.loc[cals['event'].str.contains('Export Prices')]
+    kor_epi['Date'] = pd.to_datetime(kor_epi['date']).dt.date
     kor_epi['Actual/YoY'] = kor_epi['actual']
     # Import
     kor_ipi = cals.loc[cals['event'].str.contains('Import Prices')]
+    kor_ipi['Date'] = pd.to_datetime(kor_ipi['date']).dt.date    
     kor_ipi['Actual/YoY'] = kor_ipi['actual']
     # Trade Balance
     kor_tb = cals.loc[cals['event'].str.contains('Balance')]
+    kor_tb['Date'] = pd.to_datetime(kor_tb['date']).dt.date     
     kor_tb['Actual/Bil/YoY'] = kor_tb['actual']
-    logger2.info(kor_tb[kor_tb['Actual/Bil/YoY'] < 0])
+
+    logger2.info('환율/통관수출입/외환'.center(60, '*'))
+    logger2.info(kor_tb['Actual/Bil/YoY'][:5])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200 vs Export/Import/Balance", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
     plt.plot(normalize(kr_total_shares), label='KOSPI 200', linewidth=1, color='royalblue', linestyle='--')
-    # plt.plot(kospi_yoy, label='KOSPI 200/YoY', linewidth=1, color='green', linestyle='--')
 
-    plt.plot(kor_epi.index, normalize(kor_epi['Actual/YoY']), label='Export', linewidth=1, \
+    plt.plot(kor_epi['Date'], normalize(kor_epi['Actual/YoY']), label='Export', linewidth=1, \
             linestyle='--')
-    plt.plot(kor_ipi.index, normalize(kor_ipi['Actual/YoY']), label='Import', linewidth=1, \
+    plt.plot(kor_ipi['Date'], normalize(kor_ipi['Actual/YoY']), label='Import', linewidth=1, \
             linestyle='--')
-    plt.plot(kor_tb.index, normalize(kor_tb['Actual/Bil/YoY']), label='Balance', linewidth=1, \
+    plt.plot(kor_tb['Date'], normalize(kor_tb['Actual/Bil/YoY']), label='Balance', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0310.png')
+    plt.savefig(reports_dir + '/kr_e0310.png')
 
 '''
 3.2 KOSPI 200 vs Dollar Reserve, Current Account
 '''
 def kospi200_vs_dollar_current():
     fx_res = cals.loc[cals['event'].str.contains('Foreign Exchange')]
-    fx_res['Date'] = pd.to_datetime(fx_res.index, dayfirst=True)
-    # fx_res['Actual(Bil)'] = fx_res['actual'].str.rstrip('B').astype('float')
+
+    fx_res['Date'] = pd.to_datetime(fx_res['date']).dt.date
     fx_res['Actual(Bil)'] = fx_res['actual']
     fx_res['Change(Bil)'] = fx_res['Actual(Bil)'] - fx_res['Actual(Bil)'].shift(1)
 
     cur_account = cals.loc[cals['event'].str.contains('Current Account')]
-    cur_account['Date'] = pd.to_datetime(cur_account.index, dayfirst=True)
-    # cur_account['Actual(Bil)'] = cur_account['actual'].str.rstrip('B').astype('float')
+    cur_account['Date'] = pd.to_datetime(cur_account['date']).dt.date
     cur_account['Actual(Bil)'] = cur_account['actual']
 
+    logger2.info('Dollar Reserve, Current Account'.center(60, '*'))
     logger2.info(fx_res[-5:])
     logger2.info(cur_account[cur_account['Actual(Bil)'] < 0])
 
@@ -655,10 +669,8 @@ def kospi200_vs_dollar_current():
             linestyle='--', marker='x', markersize=4)
     plt.plot(cur_account['Date'], normalize(cur_account['Actual(Bil)']), label='Current Account', linewidth=1, \
             color='royalblue', linestyle='--')
-    # plt.plot(kor_tb['Date'], normalize(kor_tb['Actual/Bil/YoY']), label='Balance', linewidth=1, color='maroon',\
-    #          linestyle='--', marker='x', markersize=4)
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0320.png')
+    plt.savefig(reports_dir + '/kr_e0320.png')
 
 
 '''
@@ -678,10 +690,12 @@ def dollar_vs_eximport(from_date, to_date):
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
     df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
     df_reserve_total = df.loc[df['ITEM_CODE1'] == '99']
     df_reserve_foreign_currency = df.loc[df['ITEM_CODE1'] == '04']
+
+    logger2.info('외환 보유액'.center(60, '*'))
     logger2.info(df_reserve_foreign_currency[['TIME','DATA_VALUE']][-5:])
 
     # Graph
@@ -691,7 +705,7 @@ def dollar_vs_eximport(from_date, to_date):
     plt.plot(df_reserve_total['TIME'], df_reserve_total['DATA_VALUE'], label='reserve_total', linewidth=1, color='maroon', marker='x')
     plt.plot(df_reserve_foreign_currency['TIME'], df_reserve_foreign_currency['DATA_VALUE'], label='reserve_foreign_currency', linewidth=1, color='green')
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0330.png')
+    plt.savefig(reports_dir + '/kr_e0330.png')
 
 
 '''
@@ -701,7 +715,7 @@ def dollar_vs_eximport(from_date, to_date):
 def kospi200_vs_ppi_cpi(cals, kr_total_shares):
     # PPI: The Producer Price Index (PPI)
     ppi = cals.loc[cals['event'].str.contains('PPI')]
-    ppi['Date'] = pd.to_datetime(ppi.index, dayfirst=True)
+    ppi['Date'] = pd.to_datetime(ppi['date']).dt.date
 
     ppi_yoy = ppi.loc[ppi['event'].str.contains('YoY')]
     ppi_mom = ppi.loc[ppi['event'].str.contains('MoM')]
@@ -713,7 +727,7 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
 
     # The Consumer Price Index (CPI) 
     cpi = cals.loc[cals['event'].str.contains('Industrial Production')]
-    cpi['Date'] = pd.to_datetime(cpi.index, dayfirst=True)
+    cpi['Date'] = pd.to_datetime(cpi['date']).dt.date
 
     cpi_yoy = cpi.loc[cpi['event'].str.contains('YoY')]
     cpi_mom = cpi.loc[cpi['event'].str.contains('MoM')]
@@ -723,9 +737,9 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
     # cpi_mom['Actual/YoY'] = cpi_mom['actual'].str.rstrip('%').astype('float')
     cpi_mom['Actual/MoM'] = cpi_mom['actual']
 
-    logger2.info('PPI')
+    logger2.info('PPI(YoY)'.center(60, '*'))
     logger2.info(cpi_yoy.sort_values(by='Date',ascending=False)[:5])
-    logger2.info('CPI')
+    logger2.info('CPI(YoY)'.center(60, '*'))
     logger2.info(ppi_yoy.sort_values(by='Date',ascending=False)[:5])
 
     plt.figure(figsize=(18,6))
@@ -739,7 +753,7 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
             color='orange', linestyle='--')
 
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0410.png')
+    plt.savefig(reports_dir + '/kr_e0410.png')
 
     return ppi_mom, cpi_mom
 
@@ -752,13 +766,13 @@ def kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom):
     plt.grid()
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)
     plt.plot(kr_total_shares.pct_change(periods=21)*20, label='KOSPI 200(MoM)', linewidth=1, color='royalblue', linestyle='--')
-    plt.plot(cpi_mom.index, cpi_mom['Actual/MoM'], label='CPI(MoM)', linewidth=1, \
+    plt.plot(cpi_mom['Date'], cpi_mom['Actual/MoM'], label='CPI(MoM)', linewidth=1, \
             linestyle='--', marker='x', markersize=4)
-    plt.plot(ppi_mom.index, ppi_mom['Actual/MoM'], label='PPI(MoM)', linewidth=1, \
+    plt.plot(ppi_mom['Date'], ppi_mom['Actual/MoM'], label='PPI(MoM)', linewidth=1, \
             color='orange', linestyle='--')
 
     plt.legend()
-    plt.savefig(reports_dir + '/korea_e0420.png')
+    plt.savefig(reports_dir + '/kr_e0420.png')
 
 
 '''
@@ -779,13 +793,15 @@ def stock_money_flow(from_date, to_date):
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
     df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
 
     df_customer_deposits = df.loc[df['ITEM_CODE1'] == 'S23A']# 고객예탁금
     df_deposits_future_option = df.loc[df['ITEM_CODE1'] == 'S23B']# 선물옵션예탁금
     df_money_loans_credit = df.loc[df['ITEM_CODE1'] == 'S23E']# 신용융자잔고
     df_stock_loans_credit = df.loc[df['ITEM_CODE1'] == 'S23F']# 신용대주잔고
+
+    logger2.info('증시주변자금 동향'.center(60, '*'))
     logger2.info(df_customer_deposits[['TIME','DATA_VALUE']][-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
@@ -812,7 +828,7 @@ def stock_money_flow(from_date, to_date):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_e0510.png')
+    plt.savefig(reports_dir + '/kr_e0510.png')
 
 
 '''
@@ -831,7 +847,7 @@ def foreigner_investments(from_date, to_date):
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
     df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
-    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
 
     df_long_vol = df.loc[df['ITEM_CODE1'] == 'S22AC']#매도/거래량 1
@@ -841,11 +857,10 @@ def foreigner_investments(from_date, to_date):
     df_pure_long_vol = df.loc[df['ITEM_CODE1'] == 'S22CC']# 순매수/거래량 1
     df_pure_long_vol = df_pure_long_vol.loc[df_pure_long_vol['ITEM_CODE2'] == 'VO']# 순매수/거래량 2
 
-
+    logger2.info('외국인 투자동향'.center(60, '*'))
     logger2.info(df_pure_long_vol[['TIME','DATA_VALUE']][-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
-
     # 서브플롯 설정
     plt.subplot(2, 1, 1)
     plt.title(f"Foreigner's Investments", fontdict={'fontsize':20, 'color':'g'})
@@ -870,7 +885,7 @@ def foreigner_investments(from_date, to_date):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_e0520.png')
+    plt.savefig(reports_dir + '/kr_e0520.png')
 
 
 
@@ -883,6 +898,7 @@ if __name__ == "__main__":
     cals = eco_calendars(from_date, to_date_2)  # calendars
     indis = eco_indicators(from_date, to_date_2) # marcovar
     kr_total_shares = kospi200_vs_krw(from_date_MT, to_date)  # Kospi200
+    kospi200_vs_fred()
     kospi200_vs_currency(from_date_MT, to_date)
     loan(from_date_MT, to_date)
     kospi200_vs_gdp_ip(cals, kr_total_shares)

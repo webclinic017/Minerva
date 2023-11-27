@@ -79,7 +79,7 @@ def eco_calendars(from_date, to_date):
         plt.ylabel('actual')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/china_0000.png')
+    plt.savefig(reports_dir + '/cn_e0000.png')
 
     return cals
 
@@ -121,7 +121,7 @@ def shanghai_szse_vs_yuan(from_date, to_date):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/china_0110.png')
+    plt.savefig(reports_dir + '/cn_e0110.png')
 
     return shanghai_shares, szse_shares
 
@@ -130,12 +130,13 @@ def shanghai_szse_vs_yuan(from_date, to_date):
 '''
 def shanghai_vs_loan(cals):
     buf = cals.loc[cals['event'].str.contains('Loan Prime Rate 1Y')]
-    buf['Date'] = pd.to_datetime(buf.index)
-    # buf['Actual'] = buf['actual'].str.rstrip('%').astype('float')
+    buf['Date'] = pd.to_datetime(buf.date).dt.date
     buf['Actual'] = buf['actual'].astype('float')
+    buf = buf.dropna(subset=['Actual'])
+    buf['Date'].reset_index()
+    logger2.info(f"Shanghai vs PBoC Loan Prime Rate".center(60, '*'))
     logger2.info(buf[:5])
 
-    # Graph
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(buf['Date'], buf['Actual'], label='PBoC Loan Prime Rate', linewidth=2,\
                     linestyle='-', marker='x', color='maroon')
@@ -146,7 +147,7 @@ def shanghai_vs_loan(cals):
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0120.png')
+    plt.savefig(reports_dir + '/cn_e0120.png')
 
 
 '''
@@ -154,11 +155,12 @@ def shanghai_vs_loan(cals):
 '''
 def shanghai_vs_m2(cals):
     buf = cals.loc[cals['event'].str.contains('M2')]
-    buf['Date'] = pd.to_datetime(buf.index)
+    buf['Date'] = pd.to_datetime(buf.date).dt.date
     buf['Actual'] = buf['actual'].astype('float')
+    buf = buf.dropna(subset=['Actual'])
+    buf['Date'].reset_index()    
     logger2.info(buf[:10:2])
 
-    # Graph
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(buf['Date'], buf['Actual'], label='M2(YoY)', linewidth=2,\
                     linestyle='-', marker='x', color='maroon')
@@ -169,7 +171,7 @@ def shanghai_vs_m2(cals):
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
     ax2.legend(lns2, lns2, loc=4)
-    plt.savefig(reports_dir + '/china_0130.png')
+    plt.savefig(reports_dir + '/cn_e0130.png')
 
 
 '''
@@ -178,19 +180,18 @@ def shanghai_vs_m2(cals):
 def house_loan(cals):
     # New Loans
     new_loans = cals.loc[cals['event'].str.contains('New Yuan Loans')]
-    new_loans['Date'] = pd.to_datetime(new_loans.index)
+    new_loans['Date'] = pd.to_datetime(new_loans.date).dt.date
     new_loans['Actual'] = new_loans['actual'].astype('float')
-    # new_loans['Date'] = pd.to_datetime(new_loans['date'], dayfirst=True)
-    # new_loans['Actual'] = new_loans['actual'].str.replace(',','').str.rstrip('B').astype('float')*1000000000
-    # new_loans['Actual'] = new_loans['Actual']
+    new_loans = new_loans.dropna(subset=['Actual'])
+    new_loans['Date'].reset_index()      
     logger2.info(new_loans[:10:2])
 
     # Outstanding Loan Growth (미결제대출 증가율)
     loan_growth = cals.loc[cals['event'].str.contains('Outstanding Loan Growth YoY')]
-    loan_growth['Date'] = pd.to_datetime(loan_growth.index)
+    loan_growth['Date'] = pd.to_datetime(loan_growth.date).dt.date
     loan_growth['Actual'] = loan_growth['actual'].astype('float')
-    # loan_growth['Date'] = pd.to_datetime(loan_growth['date'], dayfirst=True)
-    # loan_growth['Actual'] = loan_growth['actual'].str.rstrip('%').astype('float')
+    loan_growth = loan_growth.dropna(subset=['Actual'])
+    loan_growth['Date'].reset_index()   
     logger2.info(loan_growth[:10:2])
 
 
@@ -205,7 +206,7 @@ def house_loan(cals):
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0140.png')
+    plt.savefig(reports_dir + '/cn_e0140.png')
 
     logger2.info('***************************************************************')
     logger2.info('월단위로 미결제 대출이 증가를 시작하면 항상 신규대출이 늘었으며, ')
@@ -224,7 +225,7 @@ def house_loan(cals):
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0141.png')
+    plt.savefig(reports_dir + '/cn_e0141.png')
 
 
 '''
@@ -247,7 +248,7 @@ def yuan_exchange_rate(from_date):
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns4, lns4, loc=1)
-    plt.savefig(reports_dir + '/china_0150.png')
+    plt.savefig(reports_dir + '/cn_e0150.png')
 
 
 '''
@@ -256,12 +257,16 @@ def yuan_exchange_rate(from_date):
 '''
 def shanghai_vs_gpd(cals):
     gdp_yoy = cals.loc[cals['event'].str.contains('GDP Growth Rate YoY', regex=False)]
-    gdp_yoy['Date'] = pd.to_datetime(gdp_yoy.index)
+    gdp_yoy['Date'] = pd.to_datetime(gdp_yoy.date).dt.date
     gdp_yoy['Actual/YoY'] = gdp_yoy['actual'].astype('float')
+    gdp_yoy = gdp_yoy.dropna(subset=['Actual/YoY'])
+    gdp_yoy['Date'].reset_index()     
 
     gdp_qoq = cals.loc[cals['event'].str.contains('GDP Growth Rate QoQ', regex=False)]
-    gdp_qoq['Date'] = pd.to_datetime(gdp_qoq.index)
+    gdp_qoq['Date'] = pd.to_datetime(gdp_qoq.date).dt.date
     gdp_qoq['Actual/QoQ'] = gdp_qoq['actual'].astype('float')
+    gdp_qoq = gdp_qoq.dropna(subset=['Actual/QoQ'])
+    gdp_qoq['Date'].reset_index()      
 
     logger2.info(gdp_yoy[:10:2])
     logger2.info(gdp_qoq[:10:2])
@@ -284,7 +289,7 @@ def shanghai_vs_gpd(cals):
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns4, lns4, loc=1)
-    plt.savefig(reports_dir + '/china_0210.png')
+    plt.savefig(reports_dir + '/cn_e0210.png')
 
     return gdp_yoy, gdp_qoq
 
@@ -292,12 +297,14 @@ def shanghai_vs_gpd(cals):
 '''
 **2.2 Shanghai vs Industrial Production(YoY, YTD)
 주가가 GDP 발표나기 1개월이전정도면 확실히 알고 미리 움직이고 있음.
-주가가 미래의 경제를 선반영
+주가가 미래의 경제를 선반영  
 '''
 def shanghai_vs_ip(cals, gdp_yoy, gdp_qoq):
     ip_yoy = cals.loc[cals['event'].str.contains('Industrial Production YoY', regex=False)]
-    ip_yoy['Date'] = pd.to_datetime(ip_yoy.index)
+    ip_yoy['Date'] = pd.to_datetime(ip_yoy.date).dt.date
     ip_yoy['Actual/YoY'] = ip_yoy['actual'].astype('float')
+    ip_yoy = ip_yoy.dropna(subset=['Actual/YoY'])
+    ip_yoy['Date'].reset_index()      
     logger2.info(ip_yoy[:10:2])
 
     # Graph: Shanghai vs Industrial Production
@@ -314,7 +321,7 @@ def shanghai_vs_ip(cals, gdp_yoy, gdp_qoq):
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0220.png')
+    plt.savefig(reports_dir + '/cn_e0220.png')
 
 
 '''
@@ -323,8 +330,10 @@ def shanghai_vs_ip(cals, gdp_yoy, gdp_qoq):
 def shanghai_vs_house(cals):
     # House Prices (YoY)
     house = cals.loc[cals['event'].str.contains('House Price Index YoY', regex=False)]
-    house['Date'] = pd.to_datetime(house.index)
+    house['Date'] = pd.to_datetime(house.date).dt.date
     house['Actual/YTD'] = house['actual'].astype('float')
+    house = house.dropna(subset=['Actual/YTD'])
+    house['Date'].reset_index()     
     logger2.info(house[:10:2])
 
     # Graph: Shanghai vs House Prices (YoY)
@@ -340,7 +349,7 @@ def shanghai_vs_house(cals):
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0230.png')
+    plt.savefig(reports_dir + '/cn_e0230.png')
 
 
 '''
@@ -350,16 +359,22 @@ def shanghai_vs_house(cals):
 def shanghai_vs_eximport(cals):
     # Export
     china_epi = cals.loc[cals['event'].str.contains('Exports YoY',regex=False)]
-    china_epi['Date'] = pd.to_datetime(china_epi.index)
+    china_epi['Date'] = pd.to_datetime(china_epi.date).dt.date
     china_epi['Actual/YoY'] = china_epi['actual'].astype('float')
+    china_epi = china_epi.dropna(subset=['Actual/YoY'])
+    china_epi['Date'].reset_index()     
     # Import
     china_ipi = cals.loc[cals['event'].str.contains('Imports YoY',regex=False)]
-    china_ipi['Date'] = pd.to_datetime(china_ipi.index)
+    china_ipi['Date'] = pd.to_datetime(china_ipi.date).dt.date
     china_ipi['Actual/YoY'] = china_ipi['actual'].astype('float')
+    china_ipi = china_ipi.dropna(subset=['Actual/YoY'])
+    china_ipi['Date'].reset_index()     
     # Trade Balance
     china_tb = cals.loc[cals['event'].str.contains('Balance of Trade',regex=False)]
-    china_tb['Date'] = pd.to_datetime(china_tb.index)
-    china_tb['Actual/Bil/YoY'] = china_tb['actual'].astype('float')
+    china_tb['Date'] = pd.to_datetime(china_tb.date).dt.date
+    china_tb['Actual/YoY'] = china_tb['actual'].astype('float')
+    china_tb = china_tb.dropna(subset=['Actual/YoY'])
+    china_tb['Date'].reset_index()     
     logger2.info(china_tb[china_tb['actual'] < 20])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -367,7 +382,7 @@ def shanghai_vs_eximport(cals):
                     linestyle='--')
     lns2 = ax1.plot(china_ipi['Date'], (china_ipi['Actual/YoY']), color='orange', label='Imports', linewidth=1, \
                     linestyle='--')
-    lns3 = ax1.plot(china_tb['Date'], (china_tb['Actual/Bil/YoY']), color='maroon', label='Trade Balance', linewidth=1, \
+    lns3 = ax1.plot(china_tb['Date'], (china_tb['Actual/YoY']), color='maroon', label='Trade Balance', linewidth=1, \
                     linestyle='--', marker='x', markersize=4)
     ax2 = ax1.twinx()
     lns4 = ax2.plot(shanghai_shares.index, shanghai_shares['Close'], color='green', label='Shanghai', linewidth=1)
@@ -378,16 +393,19 @@ def shanghai_vs_eximport(cals):
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns4, lns4, loc=1)
-    plt.savefig(reports_dir + '/china_0310.png')
+    plt.savefig(reports_dir + '/cn_e0310.png')
 
 '''
 3.2 Shanghai vs Dollar Reserve
 '''
 def shanghai_vs_dollar(cals):
     fx_res = cals.loc[cals['event'].str.contains('Foreign Exchange Reserves',regex=False)]
-    fx_res['Date'] = pd.to_datetime(fx_res.index)
+    fx_res['Date'] = pd.to_datetime(fx_res.date).dt.date
     fx_res['Actual(Bil)'] = fx_res['actual'].astype('float')
     fx_res['Change(Bil)'] = fx_res['Actual(Bil)'] - fx_res['Actual(Bil)'].shift(1)
+    fx_res = fx_res.dropna(subset=['Actual(Bil)'])
+    fx_res = fx_res.dropna(subset=['Change(Bil)'])    
+    fx_res['Date'].reset_index()    
     logger2.info(fx_res[-5:])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -400,7 +418,7 @@ def shanghai_vs_dollar(cals):
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0320.png')
+    plt.savefig(reports_dir + '/cn_e0320.png')
 
 
 '''
@@ -411,17 +429,23 @@ def shanghai_vs_dollar(cals):
 def shanghai_vs_cpi_ppi(cals):
     # PPI: The Producer Price Index (PPI)
     ppi_yoy = cals.loc[cals['event'].str.contains('PPI YoY', regex=False)]
-    ppi_yoy['Date'] = pd.to_datetime(ppi_yoy.index)
+    ppi_yoy['Date'] = pd.to_datetime(ppi_yoy.date).dt.date
     ppi_yoy['Actual'] = ppi_yoy['actual'].astype('float')
+    ppi_yoy = ppi_yoy.dropna(subset=['Actual'])
+    ppi_yoy['Date'].reset_index()     
     logger2.info(ppi_yoy[:5])
 
     # The Consumer Price Index (CPI) 
     cpi_yoy = cals.loc[cals['event'].str.contains('Inflation Rate YoY', regex=False)]
     cpi_mom = cals.loc[cals['event'].str.contains('Inflation Rate MoM', regex=False)]
-    cpi_yoy['Date'] = pd.to_datetime(cpi_yoy.index)
-    cpi_mom['Date'] = pd.to_datetime(cpi_mom.index)
+    cpi_yoy['Date'] = pd.to_datetime(cpi_yoy.date).dt.date
+    cpi_mom['Date'] = pd.to_datetime(cpi_mom.date).dt.date
     cpi_yoy['Actual/YoY'] = cpi_yoy['actual'].astype('float')
     cpi_mom['Actual/MoM'] = cpi_mom['actual'].astype('float')
+    cpi_yoy = cpi_yoy.dropna(subset=['Actual/YoY'])
+    cpi_yoy['Date'].reset_index()
+    cpi_mom = cpi_mom.dropna(subset=['Actual/MoM'])
+    cpi_mom['Date'].reset_index()         
     logger2.info(cpi_yoy[:5])
     logger2.info(cpi_mom[:5])
 
@@ -441,7 +465,7 @@ def shanghai_vs_cpi_ppi(cals):
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns4, lns4, loc=1)
-    plt.savefig(reports_dir + '/china_0410.png')
+    plt.savefig(reports_dir + '/cn_e0410.png')
 
 
 '''
@@ -458,26 +482,34 @@ def pmi(cals):
 
     # Manufacturing PMI
     pmi_manuf = cals.loc[cals['event'].str.contains('NBS Manufacturing PMI', regex=False)]
-    pmi_manuf['Date'] = pd.to_datetime(pmi_manuf.index)
+    pmi_manuf['Date'] = pd.to_datetime(pmi_manuf.date).dt.date
     pmi_manuf['Actual'] = pmi_manuf['actual'].astype('float')
+    pmi_manuf = pmi_manuf.dropna(subset=['Actual'])
+    pmi_manuf['Date'].reset_index()     
     logger2.info(pmi_manuf[:5])
 
     # Non-Manufacturing PMI
     pmi_non_manuf = cals.loc[cals['event'].str.contains('NBS Non Manufacturing PMI', regex=False)]
-    pmi_non_manuf['Date'] = pd.to_datetime(pmi_non_manuf.index)
+    pmi_non_manuf['Date'] = pd.to_datetime(pmi_non_manuf.date).dt.date
     pmi_non_manuf['Actual'] = pmi_non_manuf['actual'].astype('float')
+    pmi_non_manuf = pmi_non_manuf.dropna(subset=['Actual'])
+    pmi_non_manuf['Date'].reset_index()       
     logger2.info(pmi_non_manuf[:5])
 
     # Caixin Manufacturing PMI
     pmi_manuf_caixin = cals.loc[cals['event'].str.contains('Caixin Manufacturing PMI', regex=False)]
-    pmi_manuf_caixin['Date'] = pd.to_datetime(pmi_manuf_caixin.index)
+    pmi_manuf_caixin['Date'] = pd.to_datetime(pmi_manuf_caixin.date).dt.date
     pmi_manuf_caixin['Actual'] = pmi_manuf_caixin['actual'].astype('float')
+    pmi_manuf_caixin = pmi_manuf_caixin.dropna(subset=['Actual'])
+    pmi_manuf_caixin['Date'].reset_index()         
     logger2.info(pmi_manuf_caixin[:5])
 
     # Caixin Services PMI
     pmi_service_caixin = cals.loc[cals['event'].str.contains('Caixin Services PMI', regex=False)]
-    pmi_service_caixin['Date'] = pd.to_datetime(pmi_service_caixin.index, dayfirst=True)
+    pmi_service_caixin['Date'] = pd.to_datetime(pmi_service_caixin.date).dt.date
     pmi_service_caixin['Actual'] = pmi_service_caixin['actual'].astype('float')
+    pmi_service_caixin = pmi_service_caixin.dropna(subset=['Actual'])
+    pmi_service_caixin['Date'].reset_index()      
     logger2.info(pmi_service_caixin[-5:])
 
 
@@ -502,7 +534,7 @@ def pmi(cals):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=1)
-    plt.savefig(reports_dir + '/china_0510.png')
+    plt.savefig(reports_dir + '/cn_e0510.png')
 
 
 '''
@@ -511,14 +543,18 @@ def pmi(cals):
 def indu_profit(cals):
     # Chinese Industrial profit  (YoY) 
     indu_profit_yoy = cals.loc[cals['event'].str.contains('Industrial Profits YoY', regex=False)]
-    indu_profit_yoy['Date'] = pd.to_datetime(indu_profit_yoy.index)
+    indu_profit_yoy['Date'] = pd.to_datetime(indu_profit_yoy.date).dt.date
     indu_profit_yoy['Actual'] = indu_profit_yoy['actual'].astype('float')
+    indu_profit_yoy = indu_profit_yoy.dropna(subset=['Actual'])
+    indu_profit_yoy['Date'].reset_index()     
     logger2.info(indu_profit_yoy[:5])
 
     # Chinese Industrial profit YTD
     indu_profit_ytd = cals.loc[cals['event'].str.contains('Industrial Profits (YTD) YoY', regex=False)]
-    indu_profit_ytd['Date'] = pd.to_datetime(indu_profit_ytd.index)
+    indu_profit_ytd['Date'] = pd.to_datetime(indu_profit_ytd.date).dt.date
     indu_profit_ytd['Actual'] = indu_profit_ytd['actual'].astype('float')
+    indu_profit_ytd = indu_profit_ytd.dropna(subset=['Actual'])
+    indu_profit_ytd['Date'].reset_index()       
     logger2.info(indu_profit_ytd[:5])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -535,21 +571,23 @@ def indu_profit(cals):
     ax1.grid()
     ax1.legend(lns1, lnses, loc=3)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0520.png')
+    plt.savefig(reports_dir + '/cn_e0520.png')
 
 
 '''
 5.3 Foreign direct investment
 '''
 def foreign_invest(cals):
-    # FDI (Foreign direct investment)
-    FDI = cals.loc[cals['event'].str.contains('FDI (YTD) YoY', regex=False)]
-    FDI['Date'] = pd.to_datetime(FDI.index)
-    FDI['Actual'] = FDI['actual'].astype('float')
-    logger2.info(FDI[:5])
+    # fdi (Foreign direct investment)
+    fdi = cals.loc[cals['event'].str.contains('FDI (YTD) YoY', regex=False)]
+    fdi['Date'] = pd.to_datetime(fdi.date).dt.date
+    fdi['Actual'] = fdi['actual'].astype('float')
+    fdi = fdi.dropna(subset=['Actual'])
+    fdi['Date'].reset_index()     
+    logger2.info(fdi[:5])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
-    lns1 = ax1.plot(FDI['Date'], (FDI['Actual']), color='maroon', label='FDI (Foreign direct investment)', linewidth=2, \
+    lns1 = ax1.plot(fdi['Date'], (fdi['Actual']), color='maroon', label='FDI (Foreign direct investment)', linewidth=2, \
                     linestyle='-', marker='x', markersize=4)
     ax2 = ax1.twinx()
     lns6 = ax2.plot(shanghai_shares.index, shanghai_shares['Close'], color='green', label='Shanghai', linewidth=1)
@@ -559,7 +597,7 @@ def foreign_invest(cals):
     lnses = [l.get_label() for l in lns]
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
-    plt.savefig(reports_dir + '/china_0530.png')
+    plt.savefig(reports_dir + '/cn_e0530.png')
 
 
 '''
@@ -568,8 +606,10 @@ def foreign_invest(cals):
 def fixed_asset_invest(cals):
     # Fixed Asset Investment (YoY) 
     fai = cals.loc[cals['event'].str.contains('Fixed Asset Investment (YTD) YoY', regex=False)]
-    fai['Date'] = pd.to_datetime(fai.index)
+    fai['Date'] = pd.to_datetime(fai.date).dt.date
     fai['Actual'] = fai['actual'].astype('float')
+    fai = fai.dropna(subset=['Actual'])
+    fai['Date'].reset_index()     
     logger2.info(fai[:5])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -584,7 +624,7 @@ def fixed_asset_invest(cals):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/china_0540.png')
+    plt.savefig(reports_dir + '/cn_e0540.png')
 
 
 

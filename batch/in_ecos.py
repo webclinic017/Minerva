@@ -72,7 +72,7 @@ def eco_calendars(from_date, to_date):
         plt.ylabel('actual')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/india_0000.png')
+    plt.savefig(reports_dir + '/in_e0000.png')
 
     return cals
 
@@ -102,7 +102,7 @@ def bse_vs_inr(from_date, to_date):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/india_0110.png')
+    plt.savefig(reports_dir + '/in_e0110.png')
 
     # BSE(Bombay Stock Exchange) + NSE(National Stock Exchange)
     india_shares = fred.get_series(series_id='SPASTT01INM661N', observation_start=from_date_MT)
@@ -120,7 +120,7 @@ def bse_vs_inr(from_date, to_date):
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/india_0111.png')
+    plt.savefig(reports_dir + '/in_e0111.png')
 
     return india_shares, rupees
 
@@ -143,7 +143,7 @@ def shares_vs_loan(cals):
     ax1.grid()
     ax1.legend(lns1, lns1, loc=2)
     ax2.legend(lns2, lns2, loc=1)
-    plt.savefig(reports_dir + '/india_0120.png')
+    plt.savefig(reports_dir + '/in_e0120.png')
 
 
 
@@ -169,7 +169,7 @@ def shares_vs_Uncertainty():
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/india_0210.png')
+    plt.savefig(reports_dir + '/in_e0210.png')
 
 
 '''
@@ -193,7 +193,7 @@ def shares_vs_gov_debt():
     ax1.grid()
     ax1.legend(lns, lnses, loc=3)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/india_0220.png')
+    plt.savefig(reports_dir + '/in_e0220.png')
     # 20221102 History
     # 2023-01-01    83.837
     # 2024-01-01    84.051

@@ -1045,7 +1045,7 @@ def gaSellHoldBuy_strategy(ticker):
         print(f"Solution {sol_idx:3d} - Total Reward: {total_reward:10.2f} - Profit: {info['current_profit']:10.3f}")
 
         if sol_idx == (SOLUTIONS-1):
-            print("".center(60, "*"))
+            print(f"".center(60, "*"))
             
         # Return the solution reward
         return total_reward
@@ -1090,8 +1090,11 @@ def gaSellHoldBuy_strategy(ticker):
 
     # Show details of the best solution.
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
-    print(f"Fitness value of the best solution = {solution_fitness}")
-    print(f"Index of the best solution : {solution_idx}")
+
+    logger2.info(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
+    logger2.info(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
+    logger2.info(f"Fitness value of the best solution = {solution_fitness}")
+    logger2.info(f"Index of the best solution : {solution_idx}")
 
     # Create a test environmant
     env = SellHoldBuyEnv(observation_size=OBS_SIZE, features=test[['close_percentage','volatility']].values, closes=test['close'].values)
@@ -1114,10 +1117,9 @@ def gaSellHoldBuy_strategy(ticker):
         total_reward += reward
 
     # Show the final result
-    print(' RESULT '.center(60, '*'))
-    print(f"* Profit/Loss: {info['current_profit']:6.3f}")
-    print(f"* Wins: {info['wins']} - Losses: {info['losses']}")
-    print(f"* Win Rate: {100 * (info['wins']/(info['wins'] + info['losses'])):6.2f}%")
+    logger2.info(f"* Profit/Loss: {info['current_profit']:6.3f}")
+    logger2.info(f"* Wins: {info['wins']} - Losses: {info['losses']}")
+    logger2.info(f"* Win Rate: {100 * (info['wins']/(info['wins'] + info['losses'])):6.2f}%")
 
 
 
@@ -1127,8 +1129,10 @@ Main Fuction
 '''
 
 if __name__ == "__main__":
+    '''
+    1. Stock
+    '''
 
-    # 1. Stocks
     timing_strategy(gtta.keys(), 20, 200) # 200일 이평 vs 20일 이평
     timing_strategy(gtta.keys(), 1, 200) # 200일 이평 vs 어제 종가
     max_dd_strategy(WATCH_TICKERS) # max draw down strategy : 바닥에서 분할 매수구간 찾기
@@ -1155,9 +1159,10 @@ if __name__ == "__main__":
     set_cot_file()
     for ticker in COT_TICKERS:
         cot_report_bat(ticker)
-
-    # for symbol in COT_SYMBOLS:  # financialmodeling.com 에서 해당 API 에 대한 비용을 요구하고 있음.
-    #     cot_report_on(symbol)   # 유로화후 적용 예정
+'''
+    for symbol in COT_SYMBOLS:  # financialmodeling.com 에서 해당 API 에 대한 비용을 요구하고 있음.
+        cot_report_on(symbol)   # 유로화후 적용 예정
+'''
         
     for ticker in WATCH_TICKERS:
         control_chart_strategy(ticker)

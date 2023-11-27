@@ -87,7 +87,7 @@ def eco_calendars(from_date, to_date):
         plt.ylabel('actual')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/japan_0000.png')
+    plt.savefig(reports_dir + '/jp_e0000.png')
 
     return cals
 
@@ -106,18 +106,3 @@ Main Fuction
 
 if __name__ == "__main__":
     cals = eco_calendars(from_date, to_date_2)  # calendars
-    # shanghai_shares, szse_shares = shanghai_szse_vs_yuan(from_date_MT, to_date)
-    # shanghai_vs_loan(cals)
-    # shanghai_vs_m2(cals)
-    # house_loan(cals)
-    # yuan_exchange_rate(from_date_MT)
-    # gdp_yoy, gdp_qoq = shanghai_vs_gpd(cals)
-    # shanghai_vs_ip(cals, gdp_yoy, gdp_qoq)
-    # shanghai_vs_house(cals)
-    # shanghai_vs_eximport(cals)
-    # shanghai_vs_dollar(cals)
-    # shanghai_vs_cpi_ppi(cals)   
-    # pmi(cals)
-    # indu_profit(cals)
-    # foreign_invest(cals)
-    # fixed_asset_invest(cals)

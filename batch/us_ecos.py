@@ -148,7 +148,7 @@ def eco_calendars(from_date, to_date):
         plt.ylabel('actual')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/usa_e0000.png')
+    plt.savefig(reports_dir + '/us_e0000.png')
 
     return cals
 
@@ -205,7 +205,7 @@ def realGDP_projection():
     plt.plot(real_gdp_central_low, label='real_gdp_central_low', linewidth=1, color='olive')
     plt.plot(real_gdp_low, label='real_gdp_low', linewidth=1, color='green')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e0100.png')
+    plt.savefig(reports_dir + '/us_e0100.png')
 
 
 # 실업률 추이와 전망
@@ -239,7 +239,7 @@ def unemployment_projection():
     plt.plot(Unemployment_Rate_central_low, label='Unemployment_Rate_central_low', linewidth=1, color='olive')
     plt.plot(Unemployment_Rate_low, label='Unemployment_Rate_low', linewidth=1, color='green')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e0200.png')
+    plt.savefig(reports_dir + '/us_e0200.png')
 
 
 # PCE 와 Core PCE 추이와 전망
@@ -316,7 +316,7 @@ def pce_projection():
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/usa_e0300.png')
+    plt.savefig(reports_dir + '/us_e0300.png')
 
 
 # Effective Federal Funds Rate 추이와 전망 by 삼프로 KB 연구원...
@@ -351,7 +351,7 @@ def effective_rate():
     plt.plot(Federal_Rate_central_low, label='Federal_Rate_central_low', linewidth=1, color='olive')
     plt.plot(Federal_Rate_low, label='Federal_Rate_low', linewidth=1, color='green')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e0400.png')
+    plt.savefig(reports_dir + '/us_e0400.png')
 
 
 '''
@@ -393,7 +393,7 @@ def component_series():
     # plt.plot(Interest_Rate_Spread, label='Intrestt Rate Spread')
     plt.plot(Share_Prices, label='Share Prices')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e0500.png')
+    plt.savefig(reports_dir + '/us_e0500.png')
 
 
 '''
@@ -445,7 +445,7 @@ def nonfarm_payroll():
     plt.plot(df['Pct_change'])
     plt.legend()
     plt.grid()
-    plt.savefig(reports_dir + '/usa_e0600.png')
+    plt.savefig(reports_dir + '/us_e0600.png')
 
 
 '''
@@ -490,7 +490,7 @@ def hires_vs_jobopen():
     plt.fill_between(df.index, y1=df['Hires'], y2=df['Job_Openings'], color='gray', label='Hires-Job_Openings')
     plt.yscale('log')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e0700.png')
+    plt.savefig(reports_dir + '/us_e0700.png')
 
 
 '''
@@ -520,7 +520,7 @@ def sp500_profits_realgdp():
     ax1.grid()
     ax1.legend(lns, lnses, loc=6)
     ax2.legend(lns1, lns1, loc=4)
-    plt.savefig(reports_dir + '/usa_e0800.png')
+    plt.savefig(reports_dir + '/us_e0800.png')
 
 '''
 2.5 Velocity of M2 Money Stock vs Real M2 Money Stock (M2속도 vs M2총량)
@@ -546,7 +546,7 @@ def m2v_vs_m2s():
     ax1.grid()
     ax1.legend(lns, lnses, loc=6)
     ax2.legend(lns1, lns1, loc=4)
-    plt.savefig(reports_dir + '/usa_e0900.png')
+    plt.savefig(reports_dir + '/us_e0900.png')
 
 
 '''
@@ -569,7 +569,7 @@ def unemploy_ahead_retail():
     plt.plot(normalize(Retail_Ratio), label='Retail_Sales_Ratio')  # *2 = Scale Rate 
     plt.plot(normalize(Unemployment_Rate), label='Unemployment_Rate')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e1000.png')
+    plt.savefig(reports_dir + '/us_e1000.png')
 
 
 '''
@@ -618,7 +618,7 @@ def expect_vs_10yminus5y():
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/usa_e1100.png')
+    plt.savefig(reports_dir + '/us_e1100.png')
 
 
 '''
@@ -649,7 +649,7 @@ def smoothed_recession_prob():
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)# Covid-19 Crisis
     plt.plot(smooth_recession, label='Recession Probabilities')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e1200.png')
+    plt.savefig(reports_dir + '/us_e1200.png')
 
 '''
 4.2 Real-time Sahm Rule Recession Indicator
@@ -674,7 +674,7 @@ def sahm_recession():
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)# Covid-19 Crisis
     plt.plot(sahm_recession, label='Recession Indicator')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e1210.png')
+    plt.savefig(reports_dir + '/us_e1210.png')
 
 '''
 4.3 ICE BofA US High Yield Index Option-Adjusted Spread
@@ -712,7 +712,7 @@ def high_yield_spread(CONF_INTVL):
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/usa_e1300.png')
+    plt.savefig(reports_dir + '/us_e1300.png')
 
 
 '''
@@ -736,7 +736,7 @@ def y10minusy2():
     plt.plot(bond_10y2y, label='Resession Indicator after 1~2year: 10y - 2y', linewidth=1)
     plt.plot(normalize(sp500), label='S&P 500', color='royalblue')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e1400.png')
+    plt.savefig(reports_dir + '/us_e1400.png')
 
 
 '''
@@ -764,7 +764,7 @@ def y10minusm3():
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)# Covid-19 Crisis
     plt.plot(bond_us_10y3m, label='[US] Resession Indicator after 1~2year: 10y - 3m', linewidth=1, color='royalblue')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e1500.png')
+    plt.savefig(reports_dir + '/us_e1500.png')
 
 
 '''
@@ -791,7 +791,7 @@ def total_assets_and_rp():
     plt.plot(normalize(rp.dropna()), label='Overnight Reverse Repurchase Agreements')
     plt.plot(normalize(sp500), label='S&P 500', linewidth=1, color='royalblue')
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e1600.png')
+    plt.savefig(reports_dir + '/us_e1600.png')
 
 
 '''
@@ -815,7 +815,7 @@ def y10_crak_line():
     plt.axvspan(datetime(2020,3,3), datetime(2020,3,30), facecolor='gray', edgecolor='gray', alpha=0.3)# Covid-19 Crisis
     plt.plot(bond_10y, label='Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity', linewidth=1)
     plt.legend()
-    plt.savefig(reports_dir + '/usa_e1700.png')
+    plt.savefig(reports_dir + '/us_e1700.png')
 
 
 '''
@@ -848,7 +848,7 @@ def rp_total():
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/usa_e1800.png')
+    plt.savefig(reports_dir + '/us_e1800.png')
 
 
 '''
@@ -874,7 +874,7 @@ def total_bank_reserves():
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns6, lns6, loc=1)
-    plt.savefig(reports_dir + '/usa_e1900.png')
+    plt.savefig(reports_dir + '/us_e1900.png')
 
 '''
 4.10 Consumer Loans + Commercial & Industrial Loans, All Commercial Banks
@@ -903,7 +903,7 @@ def loans():
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns6, lns6, loc=1)
-    plt.savefig(reports_dir + '/usa_e2000.png')
+    plt.savefig(reports_dir + '/us_e2000.png')
 
 '''
 4.11 언제 지원금이 다 소진되는가 ? feat. Savings.
@@ -950,7 +950,7 @@ def when_is_the_day():
     ax1.grid()
     ax1.legend(lns, lnses, loc=2)
     ax2.legend(lns6, lns6, loc=4)
-    plt.savefig(reports_dir + '/usa_e2100.png')
+    plt.savefig(reports_dir + '/us_e2100.png')
 
 
 

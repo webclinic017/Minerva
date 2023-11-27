@@ -87,7 +87,7 @@ def eco_calendars(from_date, to_date):
         plt.ylabel('actual')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/germany_0000.png')
+    plt.savefig(reports_dir + '/de_e0000.png')
 
     return cals
 
@@ -114,7 +114,7 @@ def y10minusm3():
     plt.plot(bond_10y3m, label='[EURO] Resession Indicator after 1~2year: 10y - 3m', linewidth=1, color='maroon')
     plt.plot(bond_us_10y3m, label='[USA] Resession Indicator after 1~2year: 10y - 3m', linewidth=1, color='royalblue')
     plt.legend()
-    plt.savefig(reports_dir + '/germany_0400.png')
+    plt.savefig(reports_dir + '/de_e0400.png')
 
 
 

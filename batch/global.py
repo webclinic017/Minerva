@@ -64,7 +64,7 @@ def cli():
     plt.plot(CLI_Euro, label='CLI_Euro')
     plt.grid()
     plt.legend()
-    plt.savefig(reports_dir + '/global_0100.png')
+    plt.savefig(reports_dir + '/global_e0100.png')
 
 
 '''
@@ -115,7 +115,7 @@ def m1():
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/global_0200.png')
+    plt.savefig(reports_dir + '/global_e0200.png')
 
 
 '''
@@ -145,7 +145,7 @@ def cpi():
     plt.plot(cpi_korea, label='CPI for South Korea')
     plt.plot(cpi_china, label='CPI for China')
     plt.legend()
-    plt.savefig(reports_dir + '/global_0300.png')
+    plt.savefig(reports_dir + '/global_e0300.png')
 
 
 '''
