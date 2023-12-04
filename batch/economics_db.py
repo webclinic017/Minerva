@@ -210,7 +210,7 @@ def get_indicators(country, url, table_name):
 def make_calendars(from_date, to_date):
     table_name = 'Calendars'
     cals = pd.DataFrame()
-    for i in range(50):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
+    for i in range(30):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
         buf = get_calendar(from_date=from_date, to_date=to_date)
         for i in range(len(nations)):
             buf2 = buf[buf['country'] == nations[i]]
