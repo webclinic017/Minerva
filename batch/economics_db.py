@@ -80,18 +80,19 @@ def create_Markets(conn):
         cur = conn.cursor()
         cur.execute('CREATE TABLE if not exists Markets (\
         Country TEXT NOT NULL,\
-        Security TEXT NOT NULL,\
-        Date TEXT NOT NULL,\
-        Symbol TEXT,\
-        Last_value NUMERIC, \
+        Market TEXT NOT NULL,\
+        Symbol TEXT NOT NULL,\
+        Last_value NUMERIC NOT NULL, \
         Momentum NUMERIC, \
         Trend NUMERIC, \
         Oscillator NUMERIC, \
-        Day NUMERIC, \
-        Week NUMERIC, \
-        Month NUMERIC, \
-        Year NUMERIC, \
-        PRIMARY KEY (Country, Security, date))')
+        RSI NUMERIC, \
+        DOD NUMERIC, \
+        WOW NUMERIC, \
+        MOM NUMERIC, \
+        YOY NUMERIC, \
+        Date TEXT,\
+        PRIMARY KEY (Country, Market, Symbol, Last_value))')
     return conn
 
 # MacroVar.com 에서 추출한 Macroeconomic Indicators
@@ -123,45 +124,74 @@ def read_table(table_name):
         # logger2.info(buf)
         return buf
     except Exception as e:
-        print('Exception: {}'.format(e))
+        logger.error('Exception: {}'.format(e))
 
 # 테이블 데이터 insert
 def write_table(table_name, data):
-    try:
-        df = read_table(table_name)
-        merged_df = pd.concat([data, df])
-        if table_name == 'Calendars':
-            result_df = merged_df.drop_duplicates(subset=['date', 'country', 'event'])
-        elif table_name == 'Indicators':
-            # 중복된 행을 찾습니다.
-            duplicates = merged_df.duplicated()
-            # 중복된 행을 제거합니다.
-            result_df = merged_df[~duplicates]
-        else:
-            print('Exception: Table Name Not found.')
-        count = result_df.to_sql(table_name, con=engine, if_exists='replace', chunksize=1000, index=False)
-        logger2.info(f'{table_name} insert Count: ' + str({count}))
-    except Exception as e:
-        print(e)
 
-# macro economics indication 페이지 읽어오기 
+    count = 0
+    if table_name == 'Calendars':
+        data = data.reset_index(drop=False)
+        data.dropna(subset=['date', 'country', 'event'], inplace=True) # ??? 추가 확인 필요     
+    elif table_name == 'Markets':
+        data.dropna(subset=['Country', 'Market', 'Symbol', 'Last_value'], inplace=True) 
+    elif table_name == 'Indicators':
+        data.dropna(subset=['Country', 'Indicator', 'Date'], inplace=True)
+    else:
+        logger.error('Exception: Table Name Not found.')
+
+    for i, d in enumerate(range(len(data))):
+        buf = data.iloc[i:i+1:]
+        try:
+            _cnt = buf.to_sql(table_name, con=engine, if_exists='append', chunksize=1000, index=False)
+            count += _cnt
+        except:
+            continue
+    logger2.info(f'{table_name} insert Count: ' + str({count}))
+
+
+
+# macrovar.com 에서 markets 표 읽어오기
+def get_markets(country, url, table_name):
+    page = requests.get(url, allow_redirects=True)
+    soup = bs(page.text, "html.parser")
+    table = soup.find_all(class_="container--tabs mb-2")
+
+    # 1. Markets
+    markets = pd.read_html(str(table))[0]
+
+    buf = pd.DataFrame()
+    buf['Country'] = [country] * len(markets)
+    buf['Market'] = markets.Market
+    buf['Symbol'] = markets.Symbol
+    buf['Last_value'] = markets.Last
+    buf['Momentum'] = markets.Mom
+    buf['Trend'] = markets.Trend
+    buf['Oscillator'] = markets.Exh
+    buf['RSI'] = markets.RSI
+    buf['DOD'] = markets['1D%']
+    buf['WOW'] = markets['1W%']    
+    buf['MOM'] = markets['1M%']
+    buf['YOY'] = markets['1Y%']    
+    buf['Date'] = pd.to_datetime(to_date2).date()
+
+    return buf
+
+# macrovar.com 에서 indicator 표 읽어오기
 def get_indicators(country, url, table_name):
     page = requests.get(url, allow_redirects=True)
     soup = bs(page.text, "html.parser")
     table = soup.find_all(class_="container--tabs mb-2")
 
-    # 1. Financial Markets ??? 엡데이트 오류있음.
-    markets = pd.read_html(str(table))[0]
-
-    # 2. Macroeconomic Indicators
+    # Macroeconomic Indicators
     indicators = pd.read_html(str(table))[1]
     indicators['Country'] = [country] *  len(indicators)
     indicators['Date'] = pd.to_datetime(indicators['Update']).dt.date
 
     buf = pd.DataFrame()
-    buf['Country'] = [country] *  len(indicators)
+    buf['Country'] = indicators.Country
     buf['Indicator'] = indicators.Indicator
-    buf['Date'] = pd.to_datetime(indicators.Update).dt.date
+    buf['Date'] = indicators.Date
     buf['Symbol'] = indicators.Symbol
     buf['Actual'] = indicators.Actual
     buf['Previous'] = indicators.Previous
@@ -173,7 +203,6 @@ def get_indicators(country, url, table_name):
 
     return buf
 
-    
 
 
 '''
@@ -182,7 +211,7 @@ def get_indicators(country, url, table_name):
 def make_calendars(from_date, to_date):
     table_name = 'Calendars'
     cals = pd.DataFrame()
-    for i in range(1):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
+    for i in range(30):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
         buf = get_calendar(from_date=from_date, to_date=to_date)
         for i in range(len(nations)):
             buf2 = buf[buf['country'] == nations[i]]
@@ -190,19 +219,25 @@ def make_calendars(from_date, to_date):
         to_date = pd.to_datetime(from_date)
         from_date = (to_date - term_days).date()
         to_date = to_date.date()
-    cals = cals.reset_index()
-    logger2.info('##### 최근 1주일동안의 cals ####')
+    logger2.info(f'##### 최근 1주일동안의 Calendars 표 ####')
     logger2.info(cals)
     
     write_table(table_name, cals)
-    # read_table(table_name)
 
 
 '''
-2. Markets 테이블 <== 현재는 사이트의 정보 업데이트가 미흡하여 미활용, 주기적으로 확인필요 (유사 사이트: macromicro.com)
+2. Markets 테이블 데이터 구성
 '''
-def make_markets():
-    pass
+def make_markets(**kwargs):
+    table_name = 'Markets'
+    df = pd.DataFrame()
+    for key, value in kwargs.items():
+        buf = get_markets(key, value, table_name)
+        logger2.info(f'##### {buf.Country[0]} Markets 표 ####')
+        logger2.info(buf)        
+        df = pd.concat([df, buf])
+
+    write_table(table_name, df)
 
 '''
 3. Indicators 테이블 데이터 구성
@@ -212,12 +247,11 @@ def make_indicators(**kwargs):
     df = pd.DataFrame()
     for key, value in kwargs.items():
         buf = get_indicators(key, value, table_name)
-        print(buf)
+        logger2.info(f'##### {buf.Country[0]} Indicators 표 ####')
+        logger2.info(buf)          
         df = pd.concat([df, buf])
 
     write_table(table_name, df)
-
-
 
 
 '''
@@ -226,14 +260,14 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    # # 테이블 생성 (최초 생성시)
-    # create_Calendars(conn)
-    # create_Markets(conn)
-    # create_Indicators(conn)
+    # 테이블 생성 (최초 생성시)
+    create_Calendars(conn)
+    create_Markets(conn)
+    create_Indicators(conn)
 
-    make_calendars(from_date, to_date)
-    # make_markets()
-    make_indicators(**urls)
+    # make_calendars(from_date, to_date)
+    # make_markets(**urls)
+    # make_indicators(**urls)
 
 
 
