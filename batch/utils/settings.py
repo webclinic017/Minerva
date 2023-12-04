@@ -512,7 +512,6 @@ def get_calendar(from_date, to_date=to_date2):
     try:
         response = requests.get(url).json()
         calendar = pd.DataFrame(response)
-        calendar = calendar.set_index('date')        
     except Exception as e:
         logger.error(response)
         print("################# financilamodeling.com api error: "+ e)    
