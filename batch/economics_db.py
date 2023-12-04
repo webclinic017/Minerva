@@ -42,7 +42,7 @@ urls = {
 }
 # 검색기간 설정
 _to_date = pd.to_datetime(to_date, format="%d/%m/%Y")
-term_days = relativedelta(weeks=12)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적!
+term_days = relativedelta(weeks=1)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적! 평소에는 1주기간 데이터만으로도 가능
 from_date = (_to_date - term_days).date()
 to_date = _to_date.date()
 
@@ -131,7 +131,7 @@ def write_table(table_name, data):
 
     count = 0
     if table_name == 'Calendars':
-        data.dropna(subset=['date', 'country', 'event'], inplace=True) # ??? 추가 확인 필요     
+        data.dropna(subset=['date', 'country', 'event'], inplace=True)     
     elif table_name == 'Markets':
         data.dropna(subset=['Country', 'Market', 'Symbol', 'Last_value'], inplace=True) 
     elif table_name == 'Indicators':
@@ -210,7 +210,7 @@ def get_indicators(country, url, table_name):
 def make_calendars(from_date, to_date):
     table_name = 'Calendars'
     cals = pd.DataFrame()
-    for i in range(30):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
+    for i in range(1):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
         buf = get_calendar(from_date=from_date, to_date=to_date)
         for i in range(len(nations)):
             buf2 = buf[buf['country'] == nations[i]]
@@ -265,8 +265,8 @@ if __name__ == "__main__":
     # create_Indicators(conn)
 
     make_calendars(from_date, to_date)
-    # make_markets(**urls)
-    # make_indicators(**urls)
+    make_markets(**urls)
+    make_indicators(**urls)
 
 
 
