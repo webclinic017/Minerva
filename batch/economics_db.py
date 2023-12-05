@@ -128,8 +128,9 @@ def read_table(table_name):
 
 # 테이블 데이터 insert
 def write_table(table_name, data):
+    insert_count = 0
+    delete_count = 0
 
-    count = 0
     if table_name == 'Calendars':
         data.dropna(subset=['date', 'country', 'event'], inplace=True)     
     elif table_name == 'Markets':
@@ -139,15 +140,35 @@ def write_table(table_name, data):
     else:
         logger.error('Exception: Table Name Not found.')
 
-    for i, d in enumerate(range(len(data))):
-        buf = data.iloc[i:i+1:]
-        try:
-            _cnt = buf.to_sql(table_name, con=engine, if_exists='append', chunksize=1000, index=False)
-            count += _cnt
-        except:
-            continue
-    logger2.info(f'{table_name} insert Count: ' + str({count}))
+    data = data.reset_index(drop=True) 
 
+    # print(data[70:120])
+    with conn:
+        cur=conn.cursor()
+        for i, row in data.iterrows():
+
+            buf = data.iloc[i:i+1, :]
+            if table_name == 'Calendars':
+                _key = f"date = '{buf['date'][i]}' and country = '{buf['country'][i]}' and event = '{buf['event'][i]}'"     
+            elif table_name == 'Markets':
+                _key = f"Country = '{buf['Country'][i]}' and Symbol = '{buf['Symbol'][i]}' and Last_value = '{buf['Last_value'][i]}'"
+            elif table_name == 'Indicators':
+                _key = f"Country = '{buf['Country'][i]}' and Indicator = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
+            else:
+                logger.error('Exception: Table Name Not found 2.')            
+
+            # print(f'delete from {table_name} where {_key}')  # DEBUG
+            cur.execute(f'delete from {table_name} where {_key}')
+            cur.execute('commit')
+            delete_count += 1
+
+            # print('insert...', buf)     # DEBUG
+            _cnt = buf.to_sql(table_name, con=engine, if_exists='append', chunksize=1000, index=False)
+
+            insert_count += _cnt
+
+    logger2.info(f'{table_name} insert Count: ' + str({insert_count}))
+    logger2.info(f'{table_name} delete Count: ' + str({delete_count}))
 
 
 # macrovar.com 에서 markets 표 읽어오기
@@ -218,9 +239,11 @@ def make_calendars(from_date, to_date):
         to_date = pd.to_datetime(from_date)
         from_date = (to_date - term_days).date()
         to_date = to_date.date()
+
     logger2.info(f'##### 최근 1주일동안의 Calendars 표 ####')
     logger2.info(cals)
-    
+
+    cals = cals.reset_index(drop=True)    
     write_table(table_name, cals)
 
 
@@ -236,6 +259,7 @@ def make_markets(**kwargs):
         logger2.info(buf)        
         df = pd.concat([df, buf])
 
+    df = df.reset_index(drop=True)     
     write_table(table_name, df)
 
 '''
@@ -250,6 +274,7 @@ def make_indicators(**kwargs):
         logger2.info(buf)          
         df = pd.concat([df, buf])
 
+    df = df.reset_index(drop=True)
     write_table(table_name, df)
 
 
