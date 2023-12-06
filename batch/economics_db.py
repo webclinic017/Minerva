@@ -279,6 +279,51 @@ def make_indicators(**kwargs):
 
 
 '''
+999. 주기적 insert/delete 작업으로 키값 저장위치가 분산되어 그래프화시 노이즈 발생하여 이를 제거하기 위하여 재구성함.
+- cron 작업 첫번째로 순서 변경
+'''
+def reorg_tables(conn):
+
+    cur = conn.cursor()
+
+    # 테이블 목록 조회
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cur.fetchall()
+    for table in tables:
+        print(table[0])
+
+    cur.execute('DROP TABLE Markets_backup;')
+    cur.execute('CREATE TABLE Markets_backup AS SELECT * FROM Markets;')
+    cur.execute('DROP TABLE Markets;')
+    cur.execute('CREATE TABLE Markets AS SELECT * FROM Markets_backup;')
+    cur.execute('SELECT count(*) FROM Markets;')
+    result = cur.fetchone()      
+    logger2.info(f'Markets Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
+    conn.commit()
+
+    cur.execute('DROP TABLE Indicators_backup;')
+    cur.execute('CREATE TABLE Indicators_backup AS SELECT * FROM Indicators;')
+    cur.execute('DROP TABLE Indicators;')
+    cur.execute('CREATE TABLE Indicators AS SELECT * FROM Indicators_backup;')
+    cur.execute('SELECT count(*) FROM Indicators;')
+    result = cur.fetchone()      
+    logger2.info(f'Indicators Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
+    conn.commit()
+
+
+    cur.execute('DROP TABLE Calendars_backup;')
+    cur.execute('CREATE TABLE Calendars_backup AS SELECT * FROM Calendars;')
+    cur.execute('DROP TABLE Calendars;')
+    cur.execute('CREATE TABLE Calendars AS SELECT * FROM Calendars_backup;')
+    cur.execute('SELECT count(*) FROM Calendars;')
+    result = cur.fetchone()      
+    logger2.info(f'Calendars Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
+    conn.commit()
+
+    return conn
+
+
+'''
 Main Fuction
 '''
 
@@ -292,6 +337,13 @@ if __name__ == "__main__":
     make_calendars(from_date, to_date)
     make_markets(**urls)
     make_indicators(**urls)
+
+
+    # 테이블 저장공간 키구성순을 위한 재구성작업
+    reorg_tables(conn)
+
+
+
 
 
 
