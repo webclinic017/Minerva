@@ -241,7 +241,7 @@ def make_calendars(from_date, to_date):
         to_date = to_date.date()
 
     logger2.info(f'##### 최근 1주일동안의 Calendars 표 ####')
-    logger2.info(str(cals))
+    logger2.info(cals)
 
     cals = cals.reset_index(drop=True)    
     write_table(table_name, cals)
@@ -256,7 +256,7 @@ def make_markets(**kwargs):
     for key, value in kwargs.items():
         buf = get_markets(key, value, table_name)
         logger2.info(f'##### {buf.Country[0]} Markets 표 ####')
-        logger2.info(str(buf))        
+        logger2.info(buf)        
         df = pd.concat([df, buf])
 
     df = df.reset_index(drop=True)     
@@ -271,7 +271,7 @@ def make_indicators(**kwargs):
     for key, value in kwargs.items():
         buf = get_indicators(key, value, table_name)
         logger2.info(f'##### {buf.Country[0]} Indicators 표 ####')
-        logger2.info(str(buf))          
+        logger2.info(buf)          
         df = pd.concat([df, buf])
 
     df = df.reset_index(drop=True)
