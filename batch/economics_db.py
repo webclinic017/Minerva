@@ -341,18 +341,21 @@ Main Fuction
 
 if __name__ == "__main__":
 
+    pd.set_option('display.max_columns', None)  # 모든 열 표시
+    pd.set_option('display.width', None)         # 열 너비 제한 없음
+
     # 테이블 생성 (최초 생성시)
     # create_Calendars(conn)
     # create_Markets(conn)
     # create_Indicators(conn)
 
-    make_calendars(from_date, to_date)
+    # make_calendars(from_date, to_date)
     make_markets(**urls)
-    make_indicators(**urls)
+    # make_indicators(**urls)
 
 
     # 테이블 저장공간 키구성순을 위한 재구성작업
-    reorg_tables(conn)
+    # reorg_tables(conn)
 
 
 
