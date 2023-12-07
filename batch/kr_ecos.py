@@ -275,7 +275,7 @@ def kospi200_vs_currency(from_date, to_date):
     df_m3_month = df.loc[df['ITEM_CODE1'] == 'X000000']
 
     logger2.info('한국은행 m2'.center(60, '*'))
-    logger2.info(df_m2_month[-3:][['TIME','DATA_VALUE']])
+    logger2.info(df_m2_month[-5:][['TIME','DATA_VALUE']])
 
     # Graph
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
@@ -343,11 +343,11 @@ def loan(from_date, to_date):
 
     logger2.info('가계대출'.center(60, '*'))
     logger2.info('은행 가계 가계대출 중 주담대, 주담대 제외'.center(60, '*'))
-    logger2.info(df_1[:5])
-    logger2.info(df_2[:5])
+    logger2.info(df_1[-5:])
+    logger2.info(df_2[-5:])
     logger2.info('비은행 가계 가계대출 중 주담대, 주담대 제외'.center(60, '*'))
-    logger2.info(df_3[:5])
-    logger2.info(df_4[:5])    
+    logger2.info(df_3[-5:])
+    logger2.info(df_4[-5:])    
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
     # 서브플롯 설정
@@ -518,7 +518,7 @@ def unemployment():
     df_2.set_index('TIME')
 
     logger2.info('실업급여수급실적'.center(60, '*'))
-    logger2.info(df_1[-3:])
+    logger2.info(df_1[:3])
 
     plt.figure(figsize=(18,6))
     plt.title(f"Unemployement", fontdict={'fontsize':20, 'color':'g'})
@@ -624,7 +624,7 @@ def kospi200_vs_export_import_balance(cals):
     kor_tb['Actual/Bil/YoY'] = kor_tb['actual']
 
     logger2.info('환율/통관수출입/외환'.center(60, '*'))
-    logger2.info(kor_tb['Actual/Bil/YoY'][:5])
+    logger2.info(kor_tb[:5])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200 vs Export/Import/Balance", fontdict={'fontsize':20, 'color':'g'})
@@ -656,7 +656,7 @@ def kospi200_vs_dollar_current():
     cur_account['Actual(Bil)'] = cur_account['actual']
 
     logger2.info('Dollar Reserve, Current Account'.center(60, '*'))
-    logger2.info(fx_res[-5:])
+    logger2.info(fx_res[:5])
     logger2.info(cur_account[cur_account['Actual(Bil)'] < 0])
 
     plt.figure(figsize=(18,6))

@@ -17,6 +17,7 @@ from sqlalchemy import create_engine
 from sqlite3 import Error
 from dateutil.relativedelta import relativedelta
 from tabulate import tabulate
+from scipy.stats import norm
 
 utils_dir = os.getcwd() + '/batch/Utils'
 reports_dir = os.getcwd() + '/batch/reports'
@@ -125,6 +126,12 @@ CONF_INTVL = 2 # Warning: 정규분포 이상치값을 엄격하게 적용하는
 global CONST_CORR
 CONST_CORR = 0.85
 
+global SIGMA_75, SIGMA_85
+SIGMA_75 = norm.ppf(0.75)  # 75%에 해당하는 Z-score
+SIGMA_85 = norm.ppf(0.85)  # 85%에 해당하는 Z-score
+
+
+ASSETS = ['stock', 'bond', 'commodity', 'cash']
 
 
 Major_ETFs = [
@@ -547,3 +554,84 @@ def get_oct_by_symbol(symbols:list):  # period: 1min, 5min, 15min, 30min, 1hour,
                                             'changeInNetPosition', 'marketSentiment', 'reversalTrend', 'name', 'exchange'])
         except Exception as e:
             print('Exception: {}'.format(e))
+
+'''
+국가별 경제전망을 지표화한 함수
+- +1 과 -1 사이에서의 값 반환 
+'''
+# - 0.6744시그마 ~ 1.0364시그마 사이에서 탄력적으로 운용하기 위함. 
+#   . 75% 분포를 갖는 시그마: 0.6744897501960817
+#   . 85% 분포를 갖는 시그마: 1.0364333894937898
+# - BULL 장에서는 대역폭을 2시그마(+- 42.5%)로 넓혀서 매도/매수선을 확대하고,
+# - BEAR 장에서는 대역폭을 1.5시그마(+- 35%)로 좁혀서 매도/매수선을 긴축적으로 운영하고자 함.
+def get_trend(ticker):
+    country = 0 # defualt: STAY
+    market = 0  # defualt: STAY
+    country_weight = 0.667 # 가중치
+    market_weight = 0.333 # 가중치
+
+    _gdp = f"SELECT * FROM Calendars WHERE event like 'GDP Growth Rate%' AND country = '{country_sign}' \
+            ORDER BY date DESC LIMIT 1"
+    _cpi = f"SELECT * FROM Calendars WHERE event like '%cpi%' AND country = '{country_sign}' \
+            AND estimate is NOT NULL ORDER BY date DESC LIMIT 1"
+    _m2 = f"SELECT * FROM Indicators WHERE Indicator like '%M2%' AND Country = '{country_sign}'\
+            ORDER BY date DESC LIMIT 1"
+    
+    def read_cals():
+            try:
+                gdp = pd.read_sql_query(_gdp, conn)
+                display(gdp)
+                if gdp['actual'][0] > gdp['estimate'][0]:
+                    _multi_1 = 1.5
+                elif gdp['actual'][0] == gdp['estimate'][0]:
+                    _multi_1 = 1
+                else:
+                    _multi_1 = 0.5
+                _multi_2 = gdp['change'][0]
+                _multi_gpd = (_multi_1 + _multi_2)
+                print(_multi_gpd)
+                
+                cpi = pd.read_sql_query(_cpi, conn)
+                display(cpi)
+                if cpi['actual'][0] > cpi['estimate'][0]:
+                    _multi_3 = 1.5
+                elif cpi['actual'][0] == cpi['estimate'][0]:
+                    _multi_3 = 1
+                else:
+                    _multi_3 = 0.5
+                _multi_4 = cpi['change'][0]
+                _multi_cpi = (_multi_3 + _multi_4)
+                print(_multi_cpi)   
+                
+                _multi_cont_tot = _multi_gpd - _multi_cpi
+                if _multi_cont_tot > 1.2:
+                    country = 'BULL'
+                elif _multi_cont_tot < 0.8:
+                    country = 'BEAR'
+                else:
+                    country = 'STAY'
+                print(country, _multi_cont_tot)
+            except Exception as e:
+                print('Exception: {}'.format(e))
+
+    trend = read_cals(ticker)
+
+
+
+
+
+    if country == 'BULL':
+        value_1 = 1
+    elif country == 'BEAR':
+        value_1 = -1
+    else:
+        value_1 = 0
+    
+    if market == 'BULL':
+        value_2 = 1
+    elif market == 'BEAR':
+        value_2 = -1
+    else:
+        value_2 = 0 
+        
+    return country_weight*value_1 + market_weight*value_2

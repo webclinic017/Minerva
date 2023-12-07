@@ -16,9 +16,13 @@ History
 import sys, os
 utils_dir = os.getcwd() + '/batch/utils'
 sys.path.append(utils_dir)
+from settings import *
+
+# logging
+logger.warning(sys.argv[0])
+logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # local import
-from settings import *
 from naverApi import *
 from pytrends.request import TrendReq
 import plotly.express as px
@@ -26,9 +30,7 @@ import json
 import requests
 from bs4 import BeautifulSoup as bs
 
-# logging
-logger.warning(sys.argv[0])
-logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
+
 
 
 ###################################################################################################

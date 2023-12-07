@@ -929,12 +929,9 @@ def when_is_the_day():
         if personal_saving[x] <= crack:
             _extra_saving -= (crack - personal_saving[x])
             logger2.info('평균저축금액 이하만큼 월 차감액:  ' + str(i) + '개월   ' + str(round(_extra_saving,0)) + ' Billion dollars 남아있음.')
-            if _extra_saving  < 0:
-                logger2.info('#######################################')
-                logger2.info('초과 저축액 다 소진하는 개월수:  ' + str(i))
-
-    # logger2.info('평균저축금액 이하만큼 월 차감액:  ' + str(i) + '개월차   ' + str(round(_extra_saving,0)) + 'Billion dollars 남아있음.')
-    # logger2.info('초과 저축액 다 소진하는 개월수:  \n' + str(i))        
+    
+    logger2.info('#######################################')
+    logger2.info('남은 예상개월수: ' + str(round(_extra_saving / personal_saving[-1])))     
 
     # Graph
     fig, ax1 = plt.subplots(figsize=(19,5))

@@ -32,6 +32,7 @@ from sklearn.model_selection import train_test_split
 from gym import spaces
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
+from math import sqrt, exp
 
 # logging
 logger.warning(sys.argv[0])
@@ -55,6 +56,97 @@ def find_5days_ago():
 
 _day5_ago = find_5days_ago()
 day5_ago = _day5_ago.date().strftime('%Y-%m-%d')
+
+
+'''
+01. Simulate Multi-Asset Baskets With Correlated Price Paths
+- https://medium.com/codex/simulate-multi-asset-baskets-with-correlated-price-paths-using-python-472cbec4e379
+'''
+def multiAsset_basket():
+    sp500 = fred.get_series('SP500', observation_start=from_date_MT)    
+    nasdaq_comp = fred.get_series('NASDAQCOM', observation_start=from_date_MT)
+    oil_wti = fred.get_series('DCOILWTICO', observation_start=from_date_MT)
+    bond_10y = fred.get_series('DGS10', observation_start=from_date_MT)
+    dollar_idx = fred.get_series('DTWEXBGS', observation_start=from_date_MT)
+
+    sp500_norm = (sp500-sp500.min()) / (sp500.max()-sp500.min())
+    nasdaq_comp_norm = (nasdaq_comp-nasdaq_comp.min()) / (nasdaq_comp.max()-nasdaq_comp.min())
+    oil_wti_norm = (oil_wti-oil_wti.min()) / (oil_wti.max()-oil_wti.min())
+    bond_10y_norm = (bond_10y-bond_10y.min()) / (bond_10y.max()-bond_10y.min())
+    dollar_idx_norm = (dollar_idx-dollar_idx.min()) / (dollar_idx.max()-dollar_idx.min())
+
+    # Manually input number of stocks
+    NUMBER_OF_ASSETS = 5
+    ASSET_TICKERS = ["sp500", "Nasdaq", "Oil", "Bond_10y", "Dollar"]
+    Vol_sp500 = sp500_norm.std()
+    Vol_Nasdaq = nasdaq_comp_norm.std()
+    Vol_oil = oil_wti_norm.std()
+    Vol_bond_10y = bond_10y_norm.std()
+    Vol_dollar = dollar_idx_norm.std()
+
+    VOLATILITY_ARRAY =[Vol_sp500, Vol_Nasdaq, Vol_oil, Vol_bond_10y, Vol_dollar]
+    temp = pd.DataFrame()
+    temp= pd.concat([temp, sp500, nasdaq_comp, oil_wti, bond_10y, dollar_idx], axis=1)
+    temp.columns = ['sp500_norm', 'nasdaq_comp_norm', 'oil_wti_norm', 'bond_10y_norm', 'dollar_idx_norm']
+    temp.fillna(method='ffill', inplace=True)
+    COEF_MATRIX = temp.corr()
+
+    # Perform Cholesky decomposition on coefficient matrix
+    R = np.linalg.cholesky(COEF_MATRIX)
+    # Compute transpose conjugate (only for validation)
+    RT = R.T.conj()
+    # Reconstruct coefficient matrix from factorization (only for validation)
+    logger2.info("Multi-Asset Baskets With Correlated Price".center(60, '*'))
+    logger2.info(": \n" + str(COEF_MATRIX))
+    logger2.info(": \n" + str(np.dot(R, RT)))
+
+    T = 250                                   # Number of simulated days
+    asset_price_array = np.full((NUMBER_OF_ASSETS,T), 100.0) # Stock price, first value is simulation input 
+    volatility_array = VOLATILITY_ARRAY       # Volatility (annual, 0.01=1%)
+    r = 0.001                                 # Risk-free rate (annual, 0.01=1%)
+    dt = 1.0 / T
+
+    # Plot simulated price paths
+    retry_cnt = 5
+    fig = plt.figure(figsize=(16,4*retry_cnt))
+
+    for i in range(retry_cnt):
+
+        for t in range(1, T):
+            # Generate array of random standard normal draws
+            random_array = np.random.standard_normal(NUMBER_OF_ASSETS)
+            # Multiply R (from factorization) with random_array to obtain correlated epsilons
+            epsilon_array = np.inner(random_array,R)
+            # Sample price path per stock
+            for n in range(NUMBER_OF_ASSETS):
+                dt = 1 / T 
+                S = asset_price_array[n,t-1]
+                v = volatility_array[n]
+                epsilon = epsilon_array[n]
+                # Generate new stock price
+                if n == 0:
+                    asset_price_array[n,t] = S * exp((r - 0.5 * v**2) * dt + v * sqrt(dt) * epsilon)
+                else:
+                    asset_price_array[n,t] = temp.iloc[t,n]+100*1
+                asset_price_array[n,t] = S * exp((r - 0.5 * v**2) * dt + v * sqrt(dt) * epsilon)
+
+        ax = fig.add_subplot(retry_cnt, 1,  i+1)
+        array_day_plot = [t for t in range(T)]
+        for n in range(NUMBER_OF_ASSETS):
+            ax.plot(array_day_plot, asset_price_array[n],\
+                                label = '{}'.format(ASSET_TICKERS[n]))
+
+        plt.grid()
+        plt.xlabel('Day')
+        plt.ylabel('Asset price')
+        plt.legend(loc='best')
+
+    plt.tight_layout()
+    plt.savefig(reports_dir + '/us_m0001.png')
+
+
+
+
 
 
 
@@ -656,7 +748,7 @@ def control_chart_strategy(ticker):
 '''
 def vb_genericAlgo_strategy(ticker):
     # Constants
-    SOLUTIONS = 20
+    POPULATIONS = 20
     GENERATIONS = 50
     CASH = 10_000
 
@@ -725,7 +817,7 @@ def vb_genericAlgo_strategy(ticker):
             ga_instance = pygad.GA(num_generations=GENERATIONS,
                                 num_parents_mating=5,
                                 fitness_func=fitness_func,
-                                sol_per_pop=SOLUTIONS,
+                                sol_per_pop=POPULATIONS,
                                 num_genes=3,
                                 gene_space=[{'low': 0, 'high':1}, {'low': 0, 'high':1}, {'low': 0, 'high':1}],
                                 parent_selection_type="sss",
@@ -773,7 +865,7 @@ def vb_genericAlgo_strategy(ticker):
 def vb_genericAlgo_strategy2(ticker):
     # Constants
     CASH = 10_000
-    SOLUTIONS = 30
+    POPULATIONS = 30
     GENERATIONS = 50
 
     # Configuration
@@ -869,7 +961,7 @@ def vb_genericAlgo_strategy2(ticker):
             ga_instance = pygad.GA(num_generations=GENERATIONS,
                                 num_parents_mating=5,
                                 fitness_func=fitness_func,
-                                sol_per_pop=SOLUTIONS,
+                                sol_per_pop=POPULATIONS,
                                 num_genes=4,
                                 gene_space=[
                                     {'low': 1, 'high': 200, 'step': 1},
@@ -925,6 +1017,7 @@ def vb_genericAlgo_strategy2(ticker):
 '''
 1.10 Generic Algorithm SellHoldBuy Strategy
 - we will employ a genetic algorithm to update the network’s weights and biases.
+- https://medium.com/@diegodegese/accelerating-model-training-and-improving-stock-market-predictions-with-genetic-algorithms-and-541b04be685b
 '''
 def gaSellHoldBuy_strategy(ticker):
     # Operations
@@ -934,7 +1027,7 @@ def gaSellHoldBuy_strategy(ticker):
     # Constants
     OBS_SIZE = 32
     FEATURES = 2
-    SOLUTIONS = 20
+    POPULATIONS = 20
     GENERATIONS = 50
 
     global model, observation_space_size, env
@@ -1044,7 +1137,7 @@ def gaSellHoldBuy_strategy(ticker):
         # Print the reward and profit
         print(f"Solution {sol_idx:3d} - Total Reward: {total_reward:10.2f} - Profit: {info['current_profit']:10.3f}")
 
-        if sol_idx == (SOLUTIONS-1):
+        if sol_idx == (POPULATIONS-1):
             print(f"".center(60, "*"))
             
         # Return the solution reward
@@ -1073,7 +1166,7 @@ def gaSellHoldBuy_strategy(ticker):
     model.summary()
 
     # Create Genetic Algorithm
-    keras_ga = pygad.kerasga.KerasGA(model=model, num_solutions=SOLUTIONS)
+    keras_ga = pygad.kerasga.KerasGA(model=model, num_solutions=POPULATIONS)
 
     ga_instance = pygad.GA(num_generations=GENERATIONS,
                         num_parents_mating=5,
@@ -1122,6 +1215,61 @@ def gaSellHoldBuy_strategy(ticker):
     logger2.info(f"* Win Rate: {100 * (info['wins']/(info['wins'] + info['losses'])):6.2f}%")
 
 
+'''
+1.11 Generic Algorithm & MACD Indicator Strategy
+- https://medium.datadriveninvestor.com/my-approach-to-use-the-macd-indicator-in-the-market-part-2-3958aff26d0a
+'''
+def GaMacd_strategy():
+    # Constants
+    DEBUG = 0
+    CASH = 10_000
+    POPULATIONS = 30
+    GENERATIONS = 50
+    FILE_TRAIN = '../data/spy.train.csv.gz'
+    FILE_TEST = '../data/spy.test.csv.gz'
+    TREND_LEN = 7
+    MIN_TRADES_PER_DAY = 1
+    MAX_TRADES_PER_DAY = 10
+
+    # Configuration
+    np.set_printoptions(suppress=True)
+    pd.options.mode.chained_assignment = None
+
+    # Loading data, and split in train and test datasets
+    def get_data():
+        train = pd.read_csv(FILE_TRAIN, compression='gzip')
+        train['date'] = pd.to_datetime(train['date'])
+        train.ta.ppo(close=train['close'], append=True)
+        train = train.dropna().reset_index(drop=True)
+
+        test = pd.read_csv(FILE_TEST, compression='gzip')
+        test['date'] = pd.to_datetime(test['date'])
+        test.ta.ppo(close=test['close'], append=True)
+        test = test.dropna().reset_index(drop=True)
+
+        train = train[train['date'] > (test['date'].max() - pd.Timedelta(365 * 10, 'D'))]
+
+        return train, test
+
+    # Define fitness function to be used by the PyGAD instance
+    def fitness_func(self, solution, sol_idx):
+        # Get Reward from train data
+        reward, wins, losses, pnl = get_result(train, train_dates,
+                                    solution[           :TREND_LEN*1],
+                                    solution[TREND_LEN*1:TREND_LEN*2],
+                                    solution[TREND_LEN*2:TREND_LEN*3],
+                                    solution[TREND_LEN*3:TREND_LEN*4])
+        if DEBUG:
+            print(f'\n{reward:10.2f}, {pnl:10.2f}, {wins:6.0f}, {losses:6.0f}, {solution[TREND_LEN*1:TREND_LEN*2]}, {solution[TREND_LEN*3:TREND_LEN*4]}', end='')
+
+        # Return the solution reward
+        return reward
+    
+
+
+
+
+
 
 
 '''
@@ -1129,10 +1277,16 @@ Main Fuction
 '''
 
 if __name__ == "__main__":
+
+    '''
+    0. 공통
+    '''
+    multiAsset_basket()
+
+
     '''
     1. Stock
     '''
-
     timing_strategy(gtta.keys(), 20, 200) # 200일 이평 vs 20일 이평
     timing_strategy(gtta.keys(), 1, 200) # 200일 이평 vs 어제 종가
     max_dd_strategy(WATCH_TICKERS) # max draw down strategy : 바닥에서 분할 매수구간 찾기
@@ -1159,17 +1313,17 @@ if __name__ == "__main__":
     set_cot_file()
     for ticker in COT_TICKERS:
         cot_report_bat(ticker)
-'''
-    for symbol in COT_SYMBOLS:  # financialmodeling.com 에서 해당 API 에 대한 비용을 요구하고 있음.
-        cot_report_on(symbol)   # 유로화후 적용 예정
-'''
-        
+
     for ticker in WATCH_TICKERS:
         control_chart_strategy(ticker)
         
     for ticker in WATCH_TICKERS:
         gaSellHoldBuy_strategy(ticker)
-
+        
+'''
+    for symbol in COT_SYMBOLS:  # financialmodeling.com 에서 해당 API 에 대한 비용을 요구하고 있음.
+        cot_report_on(symbol)   # 유로화후 적용 예정
+'''
 
     # 2. Bonds
     # get_yields()
