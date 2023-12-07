@@ -346,9 +346,9 @@ if __name__ == "__main__":
     # create_Markets(conn)
     # create_Indicators(conn)
 
-    # make_calendars(from_date, to_date)
-    # make_markets(**urls)
-    # make_indicators(**urls)
+    make_calendars(from_date, to_date)
+    make_markets(**urls)
+    make_indicators(**urls)
 
 
     # 테이블 저장공간 키구성순을 위한 재구성작업
