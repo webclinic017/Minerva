@@ -1,5 +1,7 @@
-!/bin/bash
+#!/bin/bash
+env >> /home/jarvis/logs/cronError.log 2>&1
 source ~/anaconda3/bin/activate minerenv #correct
+env >> /home/jarvis/logs/cronError.log 2>&1
 cd /home/jarvis/codes/Minerva/ #correct
 cp ./database/Economics.db ./database/Economics.db.backup
 python ./batch/economics_db.py >> /home/jarvis/logs/cronError.log 2>&1

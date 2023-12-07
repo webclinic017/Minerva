@@ -292,7 +292,11 @@ def reorg_tables(conn):
     for table in tables:
         print(table[0])
 
-    cur.execute('DROP TABLE Markets_backup;')
+    try:
+        cur.execute('DROP TABLE Markets_backup;')
+    except Exception as e:
+        logger.error('Exception: {}'.format(e))
+        pass
     cur.execute('CREATE TABLE Markets_backup AS SELECT * FROM Markets;')
     cur.execute('DROP TABLE Markets;')
     cur.execute('CREATE TABLE Markets AS SELECT * FROM Markets_backup;')
@@ -301,7 +305,12 @@ def reorg_tables(conn):
     logger2.info(f'Markets Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
     conn.commit()
 
-    cur.execute('DROP TABLE Indicators_backup;')
+    
+    try:
+        cur.execute('DROP TABLE Indicators_backup;')
+    except Exception as e:
+        logger.error('Exception: {}'.format(e))
+        pass
     cur.execute('CREATE TABLE Indicators_backup AS SELECT * FROM Indicators;')
     cur.execute('DROP TABLE Indicators;')
     cur.execute('CREATE TABLE Indicators AS SELECT * FROM Indicators_backup;')
@@ -310,8 +319,11 @@ def reorg_tables(conn):
     logger2.info(f'Indicators Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
     conn.commit()
 
-
-    cur.execute('DROP TABLE Calendars_backup;')
+    try:
+        cur.execute('DROP TABLE Calendars_backup;')
+    except Exception as e:
+        logger.error('Exception: {}'.format(e))
+        pass
     cur.execute('CREATE TABLE Calendars_backup AS SELECT * FROM Calendars;')
     cur.execute('DROP TABLE Calendars;')
     cur.execute('CREATE TABLE Calendars AS SELECT * FROM Calendars_backup;')
@@ -334,9 +346,9 @@ if __name__ == "__main__":
     # create_Markets(conn)
     # create_Indicators(conn)
 
-    make_calendars(from_date, to_date)
-    make_markets(**urls)
-    make_indicators(**urls)
+    # make_calendars(from_date, to_date)
+    # make_markets(**urls)
+    # make_indicators(**urls)
 
 
     # 테이블 저장공간 키구성순을 위한 재구성작업
