@@ -100,6 +100,32 @@ str_indicators = '(\
     ZS5Y INTEGER,\
     PRIMARY KEY (Country, Indicator, Date))'
 
+str_stock_indices = '(\
+    symbol TEXT NOT NULL,\
+    name TEXT NOT NULL,\
+    price NUMERIC,\
+    changesPercentage NUMERIC,\
+    change NUMERIC,\
+    Previous NUMERIC,\
+    dayLow NUMERIC,\
+    dayHigh NUMERIC,\
+    yearHigh NUMERIC,\
+    yearLow NUMERIC,\
+    marketCap NUMERIC,\
+    priceAvg50 NUMERIC,\
+    priceAvg200 NUMERIC,\
+    exchange TEXT,\
+    volume INTEGER,\
+    avgVolume INTEGER,\
+    open NUMERIC,\
+    previousClose NUMERIC,\
+    eps  NUMERIC,\
+    pe   NUMERIC,\
+    earningsAnnouncement    NUMERIC,\
+    sharesOutstanding   NUMERIC,\
+    timestamp INTEGER NOT NULL,\
+    PRIMARY KEY (symbol, name, timestamp))'
+
 
 
 # financemodeling.com 추출한 경제 캘린더 <=== 검증완료: 수기 작성과 어플리케이션 작성 모두 멀티 Primary key 구성 가능
@@ -124,6 +150,14 @@ def create_Indicators(conn, str_indicators):
 
     return conn
 
+# financialmodelingprep.com 에서 추출한 Stock Market Indices
+def create_Stock_Indices(conn, str_indicators):
+    with conn:
+        cur = conn.cursor()
+        cur.execute(f'CREATE TABLE if not exists Stock_Indices {str_stock_indices}')
+
+    return conn    
+
 # 테이블 데이터 read
 def read_table(table_name):
     M_table = table_name
@@ -146,6 +180,8 @@ def write_table(table_name, data):
         data.dropna(subset=['Country', 'Market', 'Symbol', 'Last_value'], inplace=True) 
     elif table_name == 'Indicators':
         data.dropna(subset=['Country', 'Indicator', 'Date'], inplace=True)
+    elif table_name == 'Stock_Indices':
+        data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)    
     else:
         logger.error('Exception: Table Name Not found.')
 
@@ -163,6 +199,8 @@ def write_table(table_name, data):
                 _key = f"Country = '{buf['Country'][i]}' and Symbol = '{buf['Symbol'][i]}' and Last_value = '{buf['Last_value'][i]}'"
             elif table_name == 'Indicators':
                 _key = f"Country = '{buf['Country'][i]}' and Indicator = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
+            elif table_name == 'Stock_Indices':
+                _key = f"symbol = '{buf['symbol'][i]}' and name = '{buf['name'][i]}' and timestamp = '{buf['timestamp'][i]}'"
             else:
                 logger.error('Exception: Table Name Not found 2.')            
 
@@ -176,8 +214,9 @@ def write_table(table_name, data):
 
             insert_count += _cnt
 
-    logger2.info(f'{table_name} insert Count: ' + str({insert_count}))
     logger2.info(f'{table_name} delete Count: ' + str({delete_count}))
+    logger2.info(f'{table_name} insert Count: ' + str({insert_count}))
+
 
 
 # macrovar.com 에서 markets 표 읽어오기
@@ -286,6 +325,15 @@ def make_indicators(**kwargs):
     df = df.reset_index(drop=True)
     write_table(table_name, df)
 
+'''
+4. Global Stock Market Indices 테이블 데이터 구성
+'''
+def make_stock_indices(**kwargs):
+    table_name = 'Stock_Indices'
+    df = get_stock_indices()
+    df = df.reset_index(drop=True)
+    write_table(table_name, df)
+
 
 '''
 999. 주기적 insert/delete 작업으로 키값 저장위치가 분산되어 그래프화시 노이즈 발생하여 이를 제거하기 위하여 재구성함.
@@ -302,7 +350,7 @@ def reorg_tables(conn):
         print(table[0])
 
 
-    # Markets 테이블 재구성
+    # 1. Markets 테이블 재구성
     try:
         cur.execute('DROP TABLE Markets_backup;')
     except Exception as e:
@@ -319,7 +367,7 @@ def reorg_tables(conn):
     logger2.info(f'Markets Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
     conn.commit()
 
-    # Indicators 테이블 재구성    
+    # 2. Indicators 테이블 재구성    
     try:
         cur.execute('DROP TABLE Indicators_backup;')
     except Exception as e:
@@ -336,7 +384,7 @@ def reorg_tables(conn):
     logger2.info(f'Indicators Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
     conn.commit()
 
-    # Calendars 테이블 재구성
+    # 3. Calendars 테이블 재구성
     try:
         cur.execute('DROP TABLE Calendars_backup;')
     except Exception as e:
@@ -353,6 +401,23 @@ def reorg_tables(conn):
     logger2.info(f'Calendars Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
     conn.commit()
 
+    # 4. Stock_Indices 테이블 재구성
+    try:
+        cur.execute('DROP TABLE Stock_Indices_backup;')
+    except Exception as e:
+        logger.error('Exception: {}'.format(e))
+        pass
+    cur.execute(f'CREATE TABLE Stock_Indices_backup {str_stock_indices};')
+    cur.execute('INSERT INTO Stock_Indices_backup SELECT * FROM Stock_Indices;')    
+    cur.execute('DROP TABLE Stock_Indices;')
+
+    cur.execute(f'CREATE TABLE Stock_Indices {str_stock_indices};')
+    cur.execute(f'INSERT INTO Stock_Indices SELECT * FROM Stock_Indices_backup;')    
+    cur.execute('SELECT count(*) FROM Stock_Indices;')
+    result = cur.fetchone()      
+    logger2.info(f'Stock_Indices Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
+    conn.commit()    
+
     return conn
 
 
@@ -366,10 +431,13 @@ if __name__ == "__main__":
     # create_Calendars(conn, str_calendars)
     # create_Markets(conn, str_markets)
     # create_Indicators(conn, str_indicators)
+    # create_Stock_Indices(conn, str_stock_indices)
 
+    # 테이블내 데이터 만들어 넣기
     make_calendars(from_date, to_date)
     make_markets(**urls)
     make_indicators(**urls)
+    make_stock_indices()
 
 
     # 테이블 저장공간 키구성순을 위한 재구성작업

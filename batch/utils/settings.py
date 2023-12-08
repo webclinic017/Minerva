@@ -517,6 +517,7 @@ def get_daily_hist(ticker, from_date, to_date=to_date2):
     
     return symbol, df
 
+
 def get_calendar(from_date, to_date=to_date2):
     url = (f'https://financialmodelingprep.com/api/v3/economic_calendar?from={from_date}&to={to_date}&apikey={fmp_key}')
     try:
@@ -557,6 +558,24 @@ def get_oct_by_symbol(symbols:list):  # period: 1min, 5min, 15min, 30min, 1hour,
                                             'changeInNetPosition', 'marketSentiment', 'reversalTrend', 'name', 'exchange'])
         except Exception as e:
             print('Exception: {}'.format(e))
+        
+    return df
+
+# financial modeling 에서  Global Stock Market Indices 데이터 가져오기
+def get_stock_indices():
+    url = f'https://financialmodelingprep.com/api/v3/quotes/index?apikey={fmp_key}' 
+    try:       
+        df = requests.get(url).json()
+        df = pd.DataFrame(df, columns=['symbol', 'name', 'price', 'changesPercentage', 'change', 'dayLow',\
+                                        'dayHigh', 'yearHigh', 'yearLow', 'marketCap','priceAvg50',\
+                                        'priceAvg200', 'exchange', 'volume', 'avgVolume', 'open', 'previousClose',\
+                                        'eps', 'pe', 'earningsAnnouncement', 'sharesOutstanding', 'timestamp'])
+    except Exception as e:
+        print('Exception: {}'.format(e))    
+
+    return df
+
+
 
 '''
 국가별 경제전망을 지표화한 함수
