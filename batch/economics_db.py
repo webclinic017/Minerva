@@ -56,62 +56,71 @@ database = database_dir+'/'+'Economics.db'
 conn, engine = create_connection(database)
 
 
+# 테이블 정의
+str_calendars = '(\
+        date	TEXT NOT NULL,\
+        country	TEXT NOT NULL,\
+        event	TEXT NOT NULL,\
+        currency	TEXT,\
+        previous	NUMERIC,\
+        estimate	NUMERIC,\
+        actual	NUMERIC,\
+        change	NUMERIC,\
+        impact	TEXT,\
+        changePercentage	NUMERIC,\
+        PRIMARY KEY(date,country,event))'
+
+str_markets = '(\
+    Country TEXT NOT NULL,\
+    Market TEXT NOT NULL,\
+    Symbol TEXT NOT NULL,\
+    Last_value NUMERIC NOT NULL, \
+    Momentum NUMERIC, \
+    Trend NUMERIC, \
+    Oscillator NUMERIC, \
+    RSI NUMERIC, \
+    DOD NUMERIC, \
+    WOW NUMERIC, \
+    MOM NUMERIC, \
+    YOY NUMERIC, \
+    Date TEXT,\
+    PRIMARY KEY (Country, Market, Symbol, Last_value))'
+
+str_indicators = '(\
+    Country TEXT NOT NULL,\
+    Indicator TEXT NOT NULL,\
+    Date TEXT NOT NULL,\
+    Symbol TEXT,\
+    Actual NUMERIC,\
+    Previous NUMERIC,\
+    MOM NUMERIC,\
+    YOY NUMERIC,\
+    Trend TEXT,\
+    Slope TEXT,\
+    ZS5Y INTEGER,\
+    PRIMARY KEY (Country, Indicator, Date))'
+
+
+
 # financemodeling.com 추출한 경제 캘린더 <=== 검증완료: 수기 작성과 어플리케이션 작성 모두 멀티 Primary key 구성 가능
-def create_Calendars(conn):
+def create_Calendars(conn, str_calendar):
     with conn:
         cur = conn.cursor()
-        cur.execute('CREATE TABLE if not exists Calendars (\
-                date	TEXT NOT NULL,\
-                country	TEXT NOT NULL,\
-                event	TEXT NOT NULL,\
-                currency	TEXT,\
-                previous	NUMERIC,\
-                estimate	NUMERIC,\
-                actual	NUMERIC,\
-                change	NUMERIC,\
-                impact	TEXT,\
-                changePercentage	NUMERIC,\
-                PRIMARY KEY(date,country,event))')
+        cur.execute(f'CREATE TABLE if not exists Calendars {str_calendars}')
     return conn
 
 # MacroVar.com 에서 추출한 Financial Markets <== 현재는 사이트의 정보 업데이트가 미흡하여 미활용, 주기적으로 확인필요
-def create_Markets(conn):
+def create_Markets(conn, str_markets):
     with conn:
         cur = conn.cursor()
-        cur.execute('CREATE TABLE if not exists Markets (\
-        Country TEXT NOT NULL,\
-        Market TEXT NOT NULL,\
-        Symbol TEXT NOT NULL,\
-        Last_value NUMERIC NOT NULL, \
-        Momentum NUMERIC, \
-        Trend NUMERIC, \
-        Oscillator NUMERIC, \
-        RSI NUMERIC, \
-        DOD NUMERIC, \
-        WOW NUMERIC, \
-        MOM NUMERIC, \
-        YOY NUMERIC, \
-        Date TEXT,\
-        PRIMARY KEY (Country, Market, Symbol, Last_value))')
+        cur.execute(f'CREATE TABLE if not exists Markets {str_markets}')
     return conn
 
 # MacroVar.com 에서 추출한 Macroeconomic Indicators
-def create_Indicators(conn):
+def create_Indicators(conn, str_indicators):
     with conn:
         cur = conn.cursor()
-        cur.execute('CREATE TABLE if not exists Indicators (\
-        Country TEXT NOT NULL,\
-        Indicator TEXT NOT NULL,\
-        Date TEXT NOT NULL,\
-        Symbol TEXT,\
-        Actual NUMERIC,\
-        Previous NUMERIC,\
-        MOM NUMERIC,\
-        YOY NUMERIC,\
-        Trend TEXT,\
-        Slope TEXT,\
-        ZS5Y INTEGER,\
-        PRIMARY KEY (Country, Indicator, Date))')
+        cur.execute(f'CREATE TABLE if not exists Indicators {str_indicators}')
 
     return conn
 
@@ -292,41 +301,53 @@ def reorg_tables(conn):
     for table in tables:
         print(table[0])
 
+
+    # Markets 테이블 재구성
     try:
         cur.execute('DROP TABLE Markets_backup;')
     except Exception as e:
         logger.error('Exception: {}'.format(e))
         pass
-    cur.execute('CREATE TABLE Markets_backup AS SELECT * FROM Markets;')
+    cur.execute(f'CREATE TABLE Markets_backup {str_markets};')
+    cur.execute('INSERT INTO Markets_backup SELECT * FROM Markets;')    
     cur.execute('DROP TABLE Markets;')
-    cur.execute('CREATE TABLE Markets AS SELECT * FROM Markets_backup;')
+
+    cur.execute(f'CREATE TABLE Markets {str_markets};')
+    cur.execute(f'INSERT INTO Markets SELECT * FROM Markets_backup;')    
     cur.execute('SELECT count(*) FROM Markets;')
     result = cur.fetchone()      
     logger2.info(f'Markets Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
     conn.commit()
 
-    
+    # Indicators 테이블 재구성    
     try:
         cur.execute('DROP TABLE Indicators_backup;')
     except Exception as e:
         logger.error('Exception: {}'.format(e))
         pass
-    cur.execute('CREATE TABLE Indicators_backup AS SELECT * FROM Indicators;')
+    cur.execute(f'CREATE TABLE Indicators_backup {str_indicators};')
+    cur.execute('INSERT INTO Indicators_backup SELECT * FROM Indicators;')    
     cur.execute('DROP TABLE Indicators;')
-    cur.execute('CREATE TABLE Indicators AS SELECT * FROM Indicators_backup;')
+
+    cur.execute(f'CREATE TABLE Indicators {str_indicators};')
+    cur.execute(f'INSERT INTO Indicators SELECT * FROM Indicators_backup;')    
     cur.execute('SELECT count(*) FROM Indicators;')
     result = cur.fetchone()      
     logger2.info(f'Indicators Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
     conn.commit()
 
+    # Calendars 테이블 재구성
     try:
         cur.execute('DROP TABLE Calendars_backup;')
     except Exception as e:
         logger.error('Exception: {}'.format(e))
         pass
-    cur.execute('CREATE TABLE Calendars_backup AS SELECT * FROM Calendars;')
+    cur.execute(f'CREATE TABLE Calendars_backup {str_calendars};')
+    cur.execute('INSERT INTO Calendars_backup SELECT * FROM Calendars;')    
     cur.execute('DROP TABLE Calendars;')
-    cur.execute('CREATE TABLE Calendars AS SELECT * FROM Calendars_backup;')
+
+    cur.execute(f'CREATE TABLE Calendars {str_calendars};')
+    cur.execute(f'INSERT INTO Calendars SELECT * FROM Calendars_backup;')    
     cur.execute('SELECT count(*) FROM Calendars;')
     result = cur.fetchone()      
     logger2.info(f'Calendars Reorg Count: ' + str(result[0]))    # result에는 (행의 수,) 형태의 튜플이 들어 있습니다.
@@ -342,9 +363,9 @@ Main Fuction
 if __name__ == "__main__":
 
     # 테이블 생성 (최초 생성시)
-    # create_Calendars(conn)
-    # create_Markets(conn)
-    # create_Indicators(conn)
+    # create_Calendars(conn, str_calendars)
+    # create_Markets(conn, str_markets)
+    # create_Indicators(conn, str_indicators)
 
     make_calendars(from_date, to_date)
     make_markets(**urls)
