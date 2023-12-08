@@ -36,6 +36,8 @@ sys.path.append(batch_dir)
 '''
 import logging, logging.config, logging.handlers
 
+pd.set_option('display.max_columns', None)  # 모든 열 표시
+pd.set_option('display.width', None)        # 열 너비 제한 없음
 
 # 로그파일 텍스트의 길이 조정
 class MaxLengthFilter(logging.Filter):
@@ -47,6 +49,7 @@ class MaxLengthFilter(logging.Filter):
         return True
 ## Loads The Config File
 logging.config.fileConfig(batch_dir+'/logging.conf', disable_existing_loggers=False)
+
 
 # 최대 길이 필터 설정 (예: 50자)
 max_length = 3000
