@@ -357,7 +357,7 @@ def reorg_tables(conn):
         logger.error('Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Markets_backup {str_markets};')
-    cur.execute('INSERT INTO Markets_backup SELECT * FROM Markets;')    
+    cur.execute('INSERT INTO Markets_backup SELECT * FROM Markets ORDER BY Date;')    
     cur.execute('DROP TABLE Markets;')
 
     cur.execute(f'CREATE TABLE Markets {str_markets};')
@@ -374,7 +374,7 @@ def reorg_tables(conn):
         logger.error('Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Indicators_backup {str_indicators};')
-    cur.execute('INSERT INTO Indicators_backup SELECT * FROM Indicators;')    
+    cur.execute('INSERT INTO Indicators_backup SELECT * FROM Indicators ORDER BY Country, Indicator, Date;')    
     cur.execute('DROP TABLE Indicators;')
 
     cur.execute(f'CREATE TABLE Indicators {str_indicators};')
@@ -391,7 +391,7 @@ def reorg_tables(conn):
         logger.error('Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Calendars_backup {str_calendars};')
-    cur.execute('INSERT INTO Calendars_backup SELECT * FROM Calendars;')    
+    cur.execute('INSERT INTO Calendars_backup SELECT * FROM Calendars ORDER BY date,country,event;')    
     cur.execute('DROP TABLE Calendars;')
 
     cur.execute(f'CREATE TABLE Calendars {str_calendars};')
@@ -408,7 +408,7 @@ def reorg_tables(conn):
         logger.error('Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Stock_Indices_backup {str_stock_indices};')
-    cur.execute('INSERT INTO Stock_Indices_backup SELECT * FROM Stock_Indices;')    
+    cur.execute('INSERT INTO Stock_Indices_backup SELECT * FROM Stock_Indices ORDER BY symbol, name, timestamp;')    
     cur.execute('DROP TABLE Stock_Indices;')
 
     cur.execute(f'CREATE TABLE Stock_Indices {str_stock_indices};')
