@@ -391,7 +391,7 @@ def reorg_tables(conn):
         logger.error('Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Calendars_backup {str_calendars};')
-    cur.execute('INSERT INTO Calendars_backup SELECT * FROM Calendars ORDER BY country, event, date;')    
+    cur.execute('INSERT INTO Calendars_backup SELECT * FROM Calendars ORDER BY country, date;')    
     cur.execute('DROP TABLE Calendars;')
 
     cur.execute(f'CREATE TABLE Calendars {str_calendars};')
