@@ -428,20 +428,20 @@ Main Fuction
 if __name__ == "__main__":
 
     # # 테이블 생성 (최초 생성시)
-    # # create_Calendars(conn, str_calendars)
-    # # create_Markets(conn, str_markets)
-    # # create_Indicators(conn, str_indicators)
-    create_Stock_Indices(conn, str_stock_indices)
+    # create_Calendars(conn, str_calendars)
+    # create_Markets(conn, str_markets)
+    # create_Indicators(conn, str_indicators)
+    # create_Stock_Indices(conn, str_stock_indices)
 
-    # # 테이블내 데이터 만들어 넣기
-    # make_calendars(from_date, to_date)
-    # make_markets(**urls)
-    # make_indicators(**urls)
-    # make_stock_indices()
+    # 테이블내 데이터 만들어 넣기
+    make_calendars(from_date, to_date)
+    make_markets(**urls)
+    make_indicators(**urls)
+    make_stock_indices()
 
 
-    # # 테이블 저장공간 키구성순을 위한 재구성작업
-    # reorg_tables(conn)
+    # 테이블 저장공간 키구성순을 위한 재구성작업
+    reorg_tables(conn)
 
 
 
