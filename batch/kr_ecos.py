@@ -49,7 +49,7 @@ def eco_calendars(from_date, to_date):
     try:
         cals = pd.read_sql_query(M_query, conn)
         logger2.info('Calendar 경제지표'.center(60, '*'))
-        logger2.info(cals[:30])
+        logger2.info(cals[-30:])
     except Exception as e:
         logger.error('Exception: {}'.format(e))
 
@@ -390,7 +390,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     gdp_qoq['Actual/QoQ'] = gdp_qoq['Actual']
 
     logger2.info('GDP (Gross domestic product)'.center(60, '*'))
-    logger2.info(gdp_yoy[:4])    
+    logger2.info(gdp_yoy[-4:])    
 
     # Industrial Production
     ip = cals.loc[cals['event'].str.contains('Industrial Production')]
@@ -404,7 +404,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     ip_qoq['Actual/MoM'] = ip_qoq['Actual']
 
     logger2.info('Industrial Production (YoY)'.center(60, '*'))
-    logger2.info(ip_yoy[:4])
+    logger2.info(ip_yoy[-4:])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200(YoY) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'g'})
@@ -442,8 +442,8 @@ def kospi200_mom_vs_gdp_ip(cals, kr_total_shares):
     ip_yoy['Actual/YoY'] = ip_yoy['actual']
     ip_qoq['Actual/MoM'] = ip_qoq['actual']
 
-    logger2.info('GDP (Gross domestic product)'.center(60, '*'))
-    logger2.info(gdp_yoy[:4])
+    # logger2.info('GDP (Gross domestic product)'.center(60, '*'))
+    # logger2.info(gdp_yoy[-4:])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200(MoM) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'royalblue'})
@@ -518,7 +518,7 @@ def unemployment():
     df_2.set_index('TIME')
 
     logger2.info('실업급여수급실적'.center(60, '*'))
-    logger2.info(df_1[:3])
+    logger2.info(df_1[-3:])
 
     plt.figure(figsize=(18,6))
     plt.title(f"Unemployement", fontdict={'fontsize':20, 'color':'g'})
@@ -624,7 +624,7 @@ def kospi200_vs_export_import_balance(cals):
     kor_tb['Actual/Bil/YoY'] = kor_tb['actual']
 
     logger2.info('환율/통관수출입/외환'.center(60, '*'))
-    logger2.info(kor_tb[:5])
+    logger2.info(kor_tb[-5:])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200 vs Export/Import/Balance", fontdict={'fontsize':20, 'color':'g'})
@@ -655,8 +655,9 @@ def kospi200_vs_dollar_current():
     cur_account['Date'] = pd.to_datetime(cur_account['date']).dt.date
     cur_account['Actual(Bil)'] = cur_account['actual']
 
-    logger2.info('Dollar Reserve, Current Account'.center(60, '*'))
-    logger2.info(fx_res[:5])
+    logger2.info('Korea Dollar Reserve'.center(60, '*'))
+    logger2.info(fx_res[-5:])
+    logger2.info('Korea Current Account'.center(60, '*'))
     logger2.info(cur_account[cur_account['Actual(Bil)'] < 0])
 
     plt.figure(figsize=(18,6))

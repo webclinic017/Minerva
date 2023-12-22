@@ -55,7 +55,8 @@ def eco_calendars(from_date, to_date):
 
     try:
         cals = pd.read_sql_query(M_query, conn)
-        logger2.info(cals[:30])
+        logger2.info('=== China Calendars ===')
+        logger2.info(cals[-30:])
     except Exception as e:
         print('Exception: {}'.format(e))
 
@@ -135,7 +136,7 @@ def shanghai_vs_loan(cals):
     buf = buf.dropna(subset=['Actual'])
     buf['Date'].reset_index()
     logger2.info(f"Shanghai vs PBoC Loan Prime Rate".center(60, '*'))
-    logger2.info(buf[:5])
+    logger2.info(buf[-5:])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(buf['Date'], buf['Actual'], label='PBoC Loan Prime Rate', linewidth=2,\
@@ -159,7 +160,8 @@ def shanghai_vs_m2(cals):
     buf['Actual'] = buf['actual'].astype('float')
     buf = buf.dropna(subset=['Actual'])
     buf['Date'].reset_index()    
-    logger2.info(buf[:10:2])
+    logger2.info('=== China M2 ===')
+    logger2.info(buf[-10::2])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(buf['Date'], buf['Actual'], label='M2(YoY)', linewidth=2,\
@@ -183,8 +185,9 @@ def house_loan(cals):
     new_loans['Date'] = pd.to_datetime(new_loans.date).dt.date
     new_loans['Actual'] = new_loans['actual'].astype('float')
     new_loans = new_loans.dropna(subset=['Actual'])
-    new_loans['Date'].reset_index()      
-    logger2.info(new_loans[:10:2])
+    new_loans['Date'].reset_index()
+    logger2.info('=== China New Loan ===')
+    logger2.info(new_loans[-10::2])
 
     # Outstanding Loan Growth (미결제대출 증가율)
     loan_growth = cals.loc[cals['event'].str.contains('Outstanding Loan Growth YoY')]
@@ -192,7 +195,8 @@ def house_loan(cals):
     loan_growth['Actual'] = loan_growth['actual'].astype('float')
     loan_growth = loan_growth.dropna(subset=['Actual'])
     loan_growth['Date'].reset_index()   
-    logger2.info(loan_growth[:10:2])
+    logger2.info('=== China Outstanding Loan Growth: 미결제 대출 증가율 ===')
+    logger2.info(loan_growth[-10::2])
 
 
     # Graph: New Loans vs Outstanding Loan Growth (미결제대출 증가율)
@@ -268,8 +272,10 @@ def shanghai_vs_gpd(cals):
     gdp_qoq = gdp_qoq.dropna(subset=['Actual/QoQ'])
     gdp_qoq['Date'].reset_index()      
 
-    logger2.info(gdp_yoy[:10:2])
-    logger2.info(gdp_qoq[:10:2])
+    logger2.info('=== China GDP YoY ===')
+    logger2.info(gdp_yoy[-10::2])
+    logger2.info('=== China GDP QoQ ===')
+    logger2.info(gdp_qoq[-10::2])
 
     # Graph: Shanghai vs GDP (Gross domestic product)
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -304,8 +310,9 @@ def shanghai_vs_ip(cals, gdp_yoy, gdp_qoq):
     ip_yoy['Date'] = pd.to_datetime(ip_yoy.date).dt.date
     ip_yoy['Actual/YoY'] = ip_yoy['actual'].astype('float')
     ip_yoy = ip_yoy.dropna(subset=['Actual/YoY'])
-    ip_yoy['Date'].reset_index()      
-    logger2.info(ip_yoy[:10:2])
+    ip_yoy['Date'].reset_index()
+    logger2.info('=== China Industrial Production YoY @@@@===')
+    logger2.info(ip_yoy[-10::2])
 
     # Graph: Shanghai vs Industrial Production
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -333,8 +340,9 @@ def shanghai_vs_house(cals):
     house['Date'] = pd.to_datetime(house.date).dt.date
     house['Actual/YTD'] = house['actual'].astype('float')
     house = house.dropna(subset=['Actual/YTD'])
-    house['Date'].reset_index()     
-    logger2.info(house[:10:2])
+    house['Date'].reset_index()
+    logger2.info('=== China House Prices YoY ===')
+    logger2.info(house[-10::2])
 
     # Graph: Shanghai vs House Prices (YoY)
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -375,6 +383,7 @@ def shanghai_vs_eximport(cals):
     china_tb['Actual/YoY'] = china_tb['actual'].astype('float')
     china_tb = china_tb.dropna(subset=['Actual/YoY'])
     china_tb['Date'].reset_index()     
+    logger2.info('=== China Trade Balance ===')
     logger2.info(china_tb[china_tb['actual'] < 20])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -405,7 +414,8 @@ def shanghai_vs_dollar(cals):
     fx_res['Change(Bil)'] = fx_res['Actual(Bil)'] - fx_res['Actual(Bil)'].shift(1)
     fx_res = fx_res.dropna(subset=['Actual(Bil)'])
     fx_res = fx_res.dropna(subset=['Change(Bil)'])    
-    fx_res['Date'].reset_index()    
+    fx_res['Date'].reset_index()
+    logger2.info('=== China Dollar Reserve ===')
     logger2.info(fx_res[-5:])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
@@ -432,8 +442,9 @@ def shanghai_vs_cpi_ppi(cals):
     ppi_yoy['Date'] = pd.to_datetime(ppi_yoy.date).dt.date
     ppi_yoy['Actual'] = ppi_yoy['actual'].astype('float')
     ppi_yoy = ppi_yoy.dropna(subset=['Actual'])
-    ppi_yoy['Date'].reset_index()     
-    logger2.info(ppi_yoy[:5])
+    ppi_yoy['Date'].reset_index()
+    logger2.info('=== China PPI YoY ===')
+    logger2.info(ppi_yoy[-5:])
 
     # The Consumer Price Index (CPI) 
     cpi_yoy = cals.loc[cals['event'].str.contains('Inflation Rate YoY', regex=False)]
@@ -445,9 +456,11 @@ def shanghai_vs_cpi_ppi(cals):
     cpi_yoy = cpi_yoy.dropna(subset=['Actual/YoY'])
     cpi_yoy['Date'].reset_index()
     cpi_mom = cpi_mom.dropna(subset=['Actual/MoM'])
-    cpi_mom['Date'].reset_index()         
-    logger2.info(cpi_yoy[:5])
-    logger2.info(cpi_mom[:5])
+    cpi_mom['Date'].reset_index()
+    logger2.info('=== China CPI YoY ===')
+    logger2.info(cpi_yoy[-5:])
+    logger2.info('=== China CPI MoM ===')
+    logger2.info(cpi_mom[-5:])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(cpi_yoy['Date'], cpi_yoy['Actual/YoY'], color='blue', label='CPI (YoY)', linewidth=1, \
@@ -485,31 +498,35 @@ def pmi(cals):
     pmi_manuf['Date'] = pd.to_datetime(pmi_manuf.date).dt.date
     pmi_manuf['Actual'] = pmi_manuf['actual'].astype('float')
     pmi_manuf = pmi_manuf.dropna(subset=['Actual'])
-    pmi_manuf['Date'].reset_index()     
-    logger2.info(pmi_manuf[:5])
+    pmi_manuf['Date'].reset_index()
+    logger2.info('=== China Manufacturing PMI ===')
+    logger2.info(pmi_manuf[-5:])
 
     # Non-Manufacturing PMI
     pmi_non_manuf = cals.loc[cals['event'].str.contains('NBS Non Manufacturing PMI', regex=False)]
     pmi_non_manuf['Date'] = pd.to_datetime(pmi_non_manuf.date).dt.date
     pmi_non_manuf['Actual'] = pmi_non_manuf['actual'].astype('float')
     pmi_non_manuf = pmi_non_manuf.dropna(subset=['Actual'])
-    pmi_non_manuf['Date'].reset_index()       
-    logger2.info(pmi_non_manuf[:5])
+    pmi_non_manuf['Date'].reset_index()
+    logger2.info('=== China Non-Manufacturing PMI ===')  
+    logger2.info(pmi_non_manuf[-5:])
 
     # Caixin Manufacturing PMI
     pmi_manuf_caixin = cals.loc[cals['event'].str.contains('Caixin Manufacturing PMI', regex=False)]
     pmi_manuf_caixin['Date'] = pd.to_datetime(pmi_manuf_caixin.date).dt.date
     pmi_manuf_caixin['Actual'] = pmi_manuf_caixin['actual'].astype('float')
     pmi_manuf_caixin = pmi_manuf_caixin.dropna(subset=['Actual'])
-    pmi_manuf_caixin['Date'].reset_index()         
-    logger2.info(pmi_manuf_caixin[:5])
+    pmi_manuf_caixin['Date'].reset_index()
+    logger2.info('=== China Caixin Manfacturing PMI ===')
+    logger2.info(pmi_manuf_caixin[-5:])
 
     # Caixin Services PMI
     pmi_service_caixin = cals.loc[cals['event'].str.contains('Caixin Services PMI', regex=False)]
     pmi_service_caixin['Date'] = pd.to_datetime(pmi_service_caixin.date).dt.date
     pmi_service_caixin['Actual'] = pmi_service_caixin['actual'].astype('float')
     pmi_service_caixin = pmi_service_caixin.dropna(subset=['Actual'])
-    pmi_service_caixin['Date'].reset_index()      
+    pmi_service_caixin['Date'].reset_index()
+    logger2.info('=== China Caixin Service PMI ===')
     logger2.info(pmi_service_caixin[-5:])
 
 
@@ -546,16 +563,18 @@ def indu_profit(cals):
     indu_profit_yoy['Date'] = pd.to_datetime(indu_profit_yoy.date).dt.date
     indu_profit_yoy['Actual'] = indu_profit_yoy['actual'].astype('float')
     indu_profit_yoy = indu_profit_yoy.dropna(subset=['Actual'])
-    indu_profit_yoy['Date'].reset_index()     
-    logger2.info(indu_profit_yoy[:5])
+    indu_profit_yoy['Date'].reset_index()
+    logger2.info('=== China Industrinal Profit YoY ===')
+    logger2.info(indu_profit_yoy[-5:])
 
     # Chinese Industrial profit YTD
     indu_profit_ytd = cals.loc[cals['event'].str.contains('Industrial Profits (YTD) YoY', regex=False)]
     indu_profit_ytd['Date'] = pd.to_datetime(indu_profit_ytd.date).dt.date
     indu_profit_ytd['Actual'] = indu_profit_ytd['actual'].astype('float')
     indu_profit_ytd = indu_profit_ytd.dropna(subset=['Actual'])
-    indu_profit_ytd['Date'].reset_index()       
-    logger2.info(indu_profit_ytd[:5])
+    indu_profit_ytd['Date'].reset_index()
+    logger2.info('=== China Industrial Profit YTD ===')
+    logger2.info(indu_profit_ytd[-5:])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(indu_profit_yoy['Date'], indu_profit_yoy['Actual'], color='maroon', label='Chinese Industrial profit  (YoY)', linewidth=2, \
@@ -583,8 +602,9 @@ def foreign_invest(cals):
     fdi['Date'] = pd.to_datetime(fdi.date).dt.date
     fdi['Actual'] = fdi['actual'].astype('float')
     fdi = fdi.dropna(subset=['Actual'])
-    fdi['Date'].reset_index()     
-    logger2.info(fdi[:5])
+    fdi['Date'].reset_index()
+    logger2.info('=== China FDI(Foreign Direct Investment) ===')
+    logger2.info(fdi[-5:])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(fdi['Date'], (fdi['Actual']), color='maroon', label='FDI (Foreign direct investment)', linewidth=2, \
@@ -609,8 +629,9 @@ def fixed_asset_invest(cals):
     fai['Date'] = pd.to_datetime(fai.date).dt.date
     fai['Actual'] = fai['actual'].astype('float')
     fai = fai.dropna(subset=['Actual'])
-    fai['Date'].reset_index()     
-    logger2.info(fai[:5])
+    fai['Date'].reset_index()
+    logger2.info('=== China Fixed Asset Investment YoY ===')
+    logger2.info(fai[-5:])
 
     fig, ax1 = plt.subplots(figsize=(16,4))
     lns1 = ax1.plot(fai['Date'], fai['Actual'], color='maroon', label='Fixed Asset Investment (YoY) ', linewidth=2, \

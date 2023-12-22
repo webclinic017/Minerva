@@ -232,11 +232,6 @@ def trend_detector_for_series(df, tp_date_from, tp_date_to=to_date2, order=1):
     slope = buf[-2]
     
     return float(slope)
-# def trend_detector_for_series(df, tp, order=1):
-#     data = df.index[tp:]
-#     buf = np.polyfit(range(len(data.index)), data, order)
-#     slope = buf[-2]
-#     return float(slope)
 
  # 이전 2개가 계속 커지고, 이후 2개가 계속 작아지는 구간이 Turning Point 로 찾아내는 기능
 def turning_point(data, col):
@@ -602,7 +597,7 @@ def get_trend(ticker):
     def read_cals():
             try:
                 gdp = pd.read_sql_query(_gdp, conn)
-                display(gdp)
+                print(gdp)
                 if gdp['actual'][0] > gdp['estimate'][0]:
                     _multi_1 = 1.5
                 elif gdp['actual'][0] == gdp['estimate'][0]:
@@ -614,7 +609,7 @@ def get_trend(ticker):
                 print(_multi_gpd)
                 
                 cpi = pd.read_sql_query(_cpi, conn)
-                display(cpi)
+                print(cpi)
                 if cpi['actual'][0] > cpi['estimate'][0]:
                     _multi_3 = 1.5
                 elif cpi['actual'][0] == cpi['estimate'][0]:
@@ -657,3 +652,380 @@ def get_trend(ticker):
         value_2 = 0 
         
     return country_weight*value_1 + market_weight*value_2
+
+
+'''
+pyminerva 로 보낼 녀석들
+'''
+def get_country_growth(conn, country_sign:str, month_term:int=0):
+    '''
+    국가단위의 현재와 미래의 성장율을 도출하는 루틴으로,
+    1. 현재: realGDP실적 성장율(+- 예측치대비)
+      1.1 fmp.calendar.com 에서 추출한 realGDP (= nominalGDP - Inflation) 로 계산한 값
+        - 잠재성장률대비 real GDP YoY, (include KR.Export) = nominal GDP - Inflation
+      1.2 macrovar.com 에서 추출한 realGDP
+
+    2. 미래: (LEI 성장율 예측 (각종 기관들의 값 평균치 활용, IMF, OECD...) + ML perdict) / 2
+      2.1 IMF 전망치: 
+    '''
+    def cals_GDP_rate(): # rate 로 측정되는 값은 'actual' 값을 기준으로 가감을 하고, 
+        
+        if country_sign in ['US', 'JP']:
+            gdp = pd.read_sql_query(f"SELECT * FROM Calendars WHERE event like 'GDP Growth Rate QoQ%'  AND country = '{country_sign}' \
+                ORDER BY date DESC LIMIT 2", conn)
+        else:        
+            gdp = pd.read_sql_query(f"SELECT * FROM Calendars WHERE event like '%GDP Growth Rate YoY%'  AND country = '{country_sign}' \
+                ORDER BY date DESC LIMIT 2", conn)
+        print(gdp)
+        
+        try:
+            if np.isnan(gdp['estimate'][0]) or np.isnan(gdp['actual'][0]):
+                idx = 1
+            else:
+                idx = 0
+        except:
+            result = gdp['actual'][0]
+            return result
+        
+        # 보정 1: 지난 값대비 변화율로 가감점
+        mul_1 = (gdp['change'][idx] / 100)
+        
+        # 보정 2: 예측치 대비 실측치로 가감점
+        mul_2 = (gdp['actual'][idx] - gdp['estimate'][idx]) / 100
+        
+        logger2.debug('mul_1: ' + str(mul_1))
+        logger2.debug('mul_2: ' + str(mul_2))
+        
+        result = gdp['actual'][idx] + mul_1 + mul_2
+        
+        return result
+    
+
+    def cals_inflation(): # inflation mom : price 로 측정되는 값은 'change' 값을 기준으로 가감함.
+        inflation = pd.read_sql_query(f"SELECT * FROM Calendars WHERE event like 'Inflation Rate YoY%' AND country = '{country_sign}' \
+                ORDER BY date DESC LIMIT 2", conn)
+
+        print(inflation)
+
+        try:
+            if np.isnan(inflation['estimate'][0]) or np.isnan(inflation['actual'][0]):
+                idx = 1
+            else:
+                idx = 0
+        except:
+            result = inflation['actual'][0]
+            return result
+        
+        # 보정 1: 지난 월단위값 대비 변화율
+        mul_1 = (inflation['change'][idx] / 100)
+        
+        # 보정 2: 예측치 대비 실측치로 +- 20% 보정
+        mul_2 = (inflation['actual'][idx] - inflation['estimate'][idx]) / 100
+    
+        logger2.debug('mul_1: ' + str(mul_1))
+        logger2.debug('mul_2: ' + str(mul_2))    
+
+        result = inflation['actual'][idx] + mul_1 + mul_2
+        
+        return result
+    
+    
+    def cals_export(): # export yoy  : price 로 측정되는 값은 'change' 값을 기준으로 가감함.
+        if country_sign in ['US']:            
+            export = pd.read_sql_query(f"SELECT * FROM Calendars WHERE country = '{country_sign}' \
+                AND event like 'Export Prices YoY%'  ORDER BY date DESC LIMIT 2", conn)
+        elif country_sign in ['KR', 'JP', 'CN']:    
+            export = pd.read_sql_query(f"SELECT * FROM Calendars WHERE country = '{country_sign}' \
+                AND event like 'Exports YoY%'  ORDER BY date DESC LIMIT 2", conn)              
+        else:
+            export = pd.read_sql_query(f"SELECT * FROM Calendars WHERE country = '{country_sign}' \
+                AND event like '%Exports%'  ORDER BY date DESC LIMIT 2", conn)            
+        print(export)     
+        
+        try:
+            if np.isnan(export['estimate'][0]) or np.isnan(export['actual'][0]):
+                idx = 1
+            else:
+                idx = 0
+                
+            # 보정 1: 지난 월단위값 대비 변화율
+            mul_1 = (export['change'][idx] / 100)
+
+            # 보정 2: 예측치 대비 실측치로 보정
+            mul_2 = (export['actual'][idx] - export['estimate'][idx]) / 100                
+        except:
+            mul_1 = 0
+            mul_2 = 0
+            idx = 0
+            pass
+        
+        logger2.debug('mul_1: ' + str(mul_1))
+        logger2.debug('mul_2: ' + str(mul_2))           
+        
+        result = export['actual'][idx] + mul_1 + mul_2
+        
+        return result
+
+        
+    
+    gdp = cals_GDP_rate()
+    inflation = cals_inflation()
+    export = cals_export()
+    
+    logger2.info('gdp: ' + str(gdp))
+    logger2.info('inflation: ' + str(inflation))
+    logger2.info('export: ' + str(export))    
+    
+    
+    realGDP_rate = gdp - inflation*0.3 
+    if country_sign in ['KR', 'JP', 'CN']: # 수출 주도형 국가: 한국, 일본, 중국
+        result = gdp - inflation*0.3 + export*0.3 # GDP 대비 inflation 비중이 30% 가정, GDP 대비 무역비중이 30% 가정 
+    elif country_sign in ['EU', 'EC']:
+#         logger.warning(f'{country_sign} is not found.'.center('*'), 60)
+        pass
+    else:
+        result = gdp - inflation*0.3 + export*0.03
+
+    return result
+
+
+
+
+def get_market_growth(conn, country_sign:str, market_name:str, month_term:int):
+    
+    '''
+    market: M2(증가량 배수) 와 자산시장별 변화율 비교
+        - 주식, 채권, 원자재, 부동산, 현금
+        - US: S&P500/Nasdaq, 국채3년/10년/30년 수익률, GOLD/OIL, LITZ, DOLLOAR
+        - KR: KOSPI/KOSDAQ, 국채3년/10년/30년 수익률, 금현물, LITZ, WON
+        - JP: NIKKEI, x, GOLD, LITZ, YEN
+        - EU: EUROXXX, BONDS, x, x, x
+        - CN: SHANHAE/SIMCHUN, x, x, x, x
+        - IN: NIFTY, x, x, x, x
+    '''
+    result = None
+
+    def m2_growth():
+        m2 = pd.read_sql_query(f"SELECT * FROM Indicators WHERE Indicator like '%M2%' AND \
+        Country = '{country_sign}' ORDER BY date DESC LIMIT 1", conn)
+        logger2.info('m2:' + str(m2))
+        if m2['Trend'].values[0] == 'UP':
+            if m2['Slope'].values[0] == 'UP':
+                result = (1.2*2 + 1.2*1) / 2
+            else:
+                result = (1.2*2 + (-1.2)*1) / 2 
+        else: # DOWN
+            if m2['Slope'].values[0] == 'UP':
+                result = (-1.2*2 + 1.2*1) / 2
+            else:
+                result = (-1.2*2 + (-1.2)*1) / 2         
+
+        return result
+    
+    m2_growth = m2_growth()
+    logger2.info(f' {country_sign} m2_growth:' + str(m2_growth))   
+
+    #2.2 Assets
+    if country_sign == 'US':
+        if market_name == 'stock':
+            buf = get_stock_indices()            
+            df = (buf[buf['symbol'] == '^SP500TR'])
+            df = df.sort_values(by='timestamp', ascending=False)
+            print(df)            
+            gap = df['priceAvg50'] - df['priceAvg200']
+            if gap.values[0] > 0:
+                idx_growth = 1.2
+            else:
+                idx_growth = -1.2
+            logger2.info('idx_growth:' + str(idx_growth))
+        elif market_name == 'bond':
+            pass
+        elif market_name == 'commidity':
+            pass
+        elif market_name == 'currency':
+            pass
+    elif country_sign == 'KR':
+        if market_name == 'stock':
+            buf = get_stock_indices()            
+            df = (buf[buf['symbol'] == '^KS11'])
+            df = df.sort_values(by='timestamp', ascending=False)
+            print(df)            
+            gap = df['priceAvg50'] - df['priceAvg200']
+            if gap.values[0] > 0:
+                idx_growth = 1.2
+            else:
+                idx_growth = -1.2
+            logger2.info('idx_growth:' + str(idx_growth))
+        elif market_name == 'bond':
+            pass
+        elif market_name == 'commidity':
+            pass
+        elif market_name == 'currency':
+            pass
+    elif country_sign == 'JP':
+        if market_name == 'stock':
+            buf = get_stock_indices()            
+            df = (buf[buf['symbol'] == '^N225'])
+            df = df.sort_values(by='timestamp', ascending=False)
+            print(df)            
+            gap = df['priceAvg50'] - df['priceAvg200']
+            if gap.values[0] > 0:
+                idx_growth = 1.2
+            else:
+                idx_growth = -1.2
+            logger2.info('idx_growth:' + str(idx_growth))
+        elif market_name == 'bond':
+            pass
+        elif market_name == 'commidity':
+            pass
+        elif market_name == 'currency':
+            pass
+    elif country_sign == 'CN':
+        if market_name == 'stock':
+            buf = get_stock_indices()            
+            df = (buf[buf['symbol'] == '000001.SS'])
+            df = df.sort_values(by='timestamp', ascending=False)
+            print(df)            
+            gap = df['priceAvg50'] - df['priceAvg200']
+            if gap.values[0] > 0:
+                idx_growth = 1.2
+            else:
+                idx_growth = -1.2
+            logger2.info('idx_growth:' + str(idx_growth))
+        elif market_name == 'bond':
+            pass
+        elif market_name == 'commidity':
+            pass
+        elif market_name == 'currency':
+            pass   
+    elif country_sign == 'DE':
+        if market_name == 'stock':
+            buf = get_stock_indices()            
+            df = (buf[buf['symbol'] == '^GDAXI'])
+            df = df.sort_values(by='timestamp', ascending=False)
+            print(df)            
+            gap = df['priceAvg50'] - df['priceAvg200']
+            if gap.values[0] > 0:
+                idx_growth = 1.2
+            else:
+                idx_growth = -1.2
+            logger2.info('idx_growth:' + str(idx_growth))
+        elif market_name == 'bond':
+            pass
+        elif market_name == 'commidity':
+            pass
+        elif market_name == 'currency':
+            pass                 
+    else:
+        print('Country sign is not found.')
+
+    result = (m2_growth + idx_growth) / 2
+    logger2.info(f'{country_sign} market growth:' + str(result))
+
+    return result
+
+
+def get_busi_growth(conn, ticker:str, month_term:int):
+    '''
+        business: 각 섹터별 ETF
+        - 특별히 업종을 주도하는 섹터만 집중 투자하는 경우만 활용
+        - US: spy/qqq, shy/tlt/tmf, gld/bci, o/vnq, dollar
+        - kr: kodex200/tiger200it, kodex국고채3년/kosef국고채10년/kbstar kis국고채30년enhanced, 금현물, 맥쿼리인프라, 원
+        - jp: 노무라닛케이225etf, yen
+        - eu:
+        - cn:  
+        month_term: 0, 3, 12, 36 개월후 예측치 산정
+    '''
+    return 1
+
+
+def get_country_growth_pjt_byIMF(conn, country_sign2:str, month_term:int=0):
+    
+    def add_month(to_date2:str, term_month:int):
+        target_date = pd.to_datetime(to_date2)
+        term_month = relativedelta(weeks=term_month*4)
+        target_date2 = (target_date + term_month).date()
+        return target_date2
+    
+    target_year = add_month(to_date, month_term).year
+    print(target_year)
+    lei_gdp_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'NGDP_RPCH'", conn)
+    lei_inflation_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'PCPIPCH'", conn)
+    lei_export_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'TXG_RPCH'", conn)
+    logger2.info(f' {country_sign2} lei_gdp_rate:' + str(lei_gdp_rate))
+    logger2.info(f' {country_sign2} lei_inflation_rate:' + str(lei_inflation_rate))
+    logger2.info(f' {country_sign2} lei_export_rate:' + str(lei_export_rate))
+    print(lei_export_rate)
+    gdp = lei_gdp_rate[str(target_year)]
+    inflation = lei_inflation_rate[str(target_year)]
+    export = lei_export_rate[str(target_year)]
+    print(target_year)
+    print('gdp: ', gdp)
+    print('inflation: ', inflation)
+    print('export: ', export)    
+    
+    realGDP_rate = float(gdp) - float(inflation) * 0.3  # 한국에서 GDP 대비 소비비중????
+    if country_sign2 in ['KOR', 'JPN', 'CHN']: # 수출 주도형 국가: 한국, 일본, 중국
+        result = realGDP_rate + float(export) * 0.3 # GDP 대비 무역비중이 30% 가정 
+    elif country_sign2 in ['USA']:
+        result = realGDP_rate + float(export) * 0.05 # GDP 대비 무역비중이 0% 가정 
+    else:
+        result = realGDP_rate + export * 0.2 # 미국 빼고, 수출형 국가 빼고 그 나머지들.
+        
+    print(result)
+
+
+# OECD LEI 현재월값은 향후 6개월후 경제지표(반기단위 발표) 를 매월 수정본을 내고 있음. 수정한 월 + 6개월 전망으로 가정함.
+# 중기 전망으로는 사용할수 없음
+def get_country_growth_pjt_byOECD(conn, country_sign2:str, month_term:int=0):
+    
+    if month_term > 6:
+        print('month term 기간 최대 6개월까지 측정 가능 !!!')
+        return
+    
+    def add_month(to_date2:str, term_month:int):
+        target_date = pd.to_datetime(to_date2)
+        term_month = relativedelta(weeks=term_month*4)
+        target_date2 = (target_date + term_month).date()
+        return target_date2    
+    target_date = add_month(to_date, month_term)
+
+    lei = pd.read_sql_query(f"SELECT * FROM OECD WHERE LOCATION = '{country_sign2}' AND INDICATOR = 'CLI'", conn)
+    
+    result = sum((lei[-3:].Value/100)) / 3
+    strength = lei.iloc[-1].Value - lei.iloc[-3].Value
+    angle = strength / 2
+    
+    print(strength)
+    print(angle)
+
+    if (lei.iloc[-1].Value > lei.iloc[-2].Value) and (lei.iloc[-2].Value > lei.iloc[-3].Value):
+        slope = 'UP'
+    else:
+        slope = 'DOWN'
+                                                     
+    return result, slope
+
+
+def get_trend(conn, country:str, market:str, business:str, month_term:int):
+    if month_term == 0:
+        c_growth = get_country_growth(conn, country, month_term)
+        m_growth = get_market_growth(conn, country, market, month_term)
+        b_growth = get_busi_growth(conn, business, month_term)
+    elif month_term <= 6:  # IMF 와 OECD 평균 전망치 적용
+        c_growth = 0
+        m_growth = 0
+        b_growth = 0
+        pass
+
+    else : # IMF 전망치만 적용
+        country_sign2 = 'USA'
+        imf_growth = get_country_growth_pjt_byIMF(conn, country_sign2, month_term)
+        oecd_growth = get_country_growth_pjt_byOECD(conn, country_sign2, month_term)
+        print(imf_growth)
+        print(oecd_growth)
+        c_growth = (imf_growth + oecd_growth) / 2
+
+    print(c_growth, m_growth, b_growth)
+    
+    return (c_growth + m_growth*0.3 + b_growth*0.3*0.5)

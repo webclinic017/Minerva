@@ -181,7 +181,9 @@ def write_table(table_name, data):
     elif table_name == 'Indicators':
         data.dropna(subset=['Country', 'Indicator', 'Date'], inplace=True)
     elif table_name == 'Stock_Indices':
-        data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)    
+        data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)
+    elif table_name == 'IMF':
+        data.dropna(subset=['Date', 'WEO Country Code', 'ISO'], inplace=True)         
     else:
         logger.error('Exception: Table Name Not found.')
 
@@ -201,8 +203,11 @@ def write_table(table_name, data):
                 _key = f"Country = '{buf['Country'][i]}' and Indicator = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
             elif table_name == 'Stock_Indices':
                 _key = f"symbol = '{buf['symbol'][i]}' and name = '{buf['name'][i]}' and timestamp = '{buf['timestamp'][i]}'"
+            elif table_name == 'IMF':
+                _key = f"Date = '{buf['Date'][i]}' and 'WEO Country Code' = '{buf['WEO Country Code'][i]}' and ISO = '{buf['ISO'][i]}'"                
             else:
                 logger.error('Exception: Table Name Not found 2.')            
+
 
             # print(f'delete from {table_name} where {_key}')  # DEBUG
             cur.execute(f'delete from {table_name} where {_key}')
@@ -217,6 +222,15 @@ def write_table(table_name, data):
     logger2.info(f'{table_name} delete Count: ' + str({delete_count}))
     logger2.info(f'{table_name} insert Count: ' + str({insert_count}))
 
+
+# 덤프 테이블 데이터 replace
+def write_dump_table(table_name, data):
+    insert_count = 0
+
+    _cnt = data.to_sql(table_name, con=engine, if_exists='replace', chunksize=1000, index=False, method='multi')
+    
+    insert_count += _cnt
+    logger2.info(f'Dump {table_name} replace Count: ' + str({insert_count}))
 
 
 # macrovar.com 에서 markets 표 읽어오기
@@ -325,6 +339,7 @@ def make_indicators(**kwargs):
     df = df.reset_index(drop=True)
     write_table(table_name, df)
 
+
 '''
 4. Global Stock Market Indices 테이블 데이터 구성
 '''
@@ -333,6 +348,30 @@ def make_stock_indices(**kwargs):
     df = get_stock_indices()
     df = df.reset_index(drop=True)
     write_table(table_name, df)
+
+
+'''
+5. IMF Data 구성
+- IMF 메일 오면 사이트 들어가서 아래 디렉토리로 다운로드 받고, 마지막줄 지우고 파일명 IMF.csv 로 만들고 작업들어가게 만듬
+'''
+def make_imf():
+    table_name = 'IMF'
+    df = pd.read_csv('./batch/reports/data/IMF.csv')
+    df = df.reset_index(drop=True)
+    write_dump_table(table_name, df)
+
+
+'''
+6. OECD Data 구성
+- OECD 사이트 들어가서 아래 디렉토리로 다운로드 받고, OECD.csv 로 만들고 작업들어가게 만듬
+'''
+def make_oecd():
+    table_name = 'OECD'
+    df = pd.read_csv('./batch/reports/data/OECD.csv')
+    df = df.reset_index(drop=True)
+    write_dump_table(table_name, df)
+
+
 
 
 '''
@@ -434,10 +473,12 @@ if __name__ == "__main__":
     # create_Stock_Indices(conn, str_stock_indices)
 
     # 테이블내 데이터 만들어 넣기
-    make_calendars(from_date, to_date)
-    make_markets(**urls)
-    make_indicators(**urls)
-    make_stock_indices()
+    # make_calendars(from_date, to_date)
+    # make_markets(**urls)
+    # make_indicators(**urls)
+    # make_stock_indices()
+    make_imf()
+    make_oecd()
 
 
     # 테이블 저장공간 키구성순을 위한 재구성작업

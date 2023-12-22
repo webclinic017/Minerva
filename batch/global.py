@@ -43,7 +43,7 @@ def cli():
     CLI_Usa = fred.get_series(series_id='USALOLITONOSTSAM', observation_start=from_date_MT)
     CLI_Korea = fred.get_series(series_id='KORLOLITONOSTSAM', observation_start=from_date_MT)
     CLI_China = fred.get_series(series_id='CHNLOLITONOSTSAM', observation_start=from_date_MT)
-    CLI_Euro = fred.get_series(series_id='EA19LOLITONOSTSAM', observation_start=from_date_MT)
+    CLI_Germany = fred.get_series(series_id='DEULOLITOTRSTSAM', observation_start=from_date_MT)
 
     logger2.info('##### Leading indicators: CLI (Composite leading indicator) #####')
     logger2.info('CLI_OECD_Total: \n' + str(CLI_OECD_Total[-3:]))
@@ -51,7 +51,7 @@ def cli():
     logger2.info('CLI_Usa: \n' + str(CLI_Usa[-3:]))
     logger2.info('CLI_Korea: \n' + str(CLI_Korea[-3:]))
     logger2.info('CLI_China: \n' + str(CLI_China[-3:]))
-    logger2.info('CLI_Euro: \n' + str(CLI_Euro[-3:]))  
+    logger2.info('CLI_Germany: \n' + str(CLI_Germany[-3:]))  
 
     plt.figure(figsize=(15,6))
     plt.title(f"Leading indicators: CLI (Composite leading indicator)", fontdict={'fontsize':20, 'color':'g'})
@@ -61,7 +61,7 @@ def cli():
     plt.plot(CLI_Usa, label='CLI_Usa')
     plt.plot(CLI_Korea, label='CLI_Korea')
     plt.plot(CLI_China, label='CLI_China')
-    plt.plot(CLI_Euro, label='CLI_Euro')
+    plt.plot(CLI_Germany, label='CLI_Germany')
     plt.grid()
     plt.legend()
     plt.savefig(reports_dir + '/global_e0100.png')

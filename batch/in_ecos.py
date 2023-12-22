@@ -54,7 +54,8 @@ def eco_calendars(from_date, to_date):
 
     try:
         cals = pd.read_sql_query(M_query, conn)
-        logger2.info(cals[:30])
+        logger2.info('=== Calendars ===')
+        logger2.info(cals[-30:])
     except Exception as e:
         print('Exception: {}'.format(e))
 
@@ -131,6 +132,7 @@ def bse_vs_inr(from_date, to_date):
 def shares_vs_loan(cals):
     # Bank Loan Growth
     buf = cals.loc[cals['event'].str.contains('Bank Loan Growth')]
+    logger2.info('=== India Loan ===')
     logger2.info(buf[-7::2])
 
     # Graph
@@ -154,6 +156,7 @@ def shares_vs_loan(cals):
 def shares_vs_Uncertainty():
     # Economic Policy Uncertainty Index 가 100이상이면 위험으로 간주, 투자 축소
     uncertainty = fred.get_series(series_id='INDEPUINDXM', observation_start=from_date_MT)
+    logger2.info('=== India Uncertainty ===')
     logger2.info(uncertainty[-5:])
     # BSE(Bombay Stock Exchange) + NSE(National Stock Exchange)
     # india_shares = fred.get_series(series_id='SPASTT01INM661N', observation_start=from_date_MT)
@@ -178,6 +181,7 @@ def shares_vs_Uncertainty():
 def shares_vs_gov_debt():
     # General government gross debt
     gov_debt = fred.get_series(series_id='GGGDTPINA188N', observation_start=from_date_MT)
+    logger2.info('=== India Government Debt ===')
     logger2.info(gov_debt[-5:])
     # BSE(Bombay Stock Exchange) + NSE(National Stock Exchange)
     india_shares = fred.get_series(series_id='SPASTT01INM661N', observation_start=from_date_MT)

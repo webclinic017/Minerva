@@ -70,7 +70,7 @@ def eco_calendars(from_date, to_date):
 
     try:
         cals = pd.read_sql_query(M_query, conn)
-        logger2.info(cals[:30])
+        logger2.info(cals[-30:])
     except Exception as e:
         print('Exception: {}'.format(e))
 
