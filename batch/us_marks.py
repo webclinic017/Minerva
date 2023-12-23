@@ -98,7 +98,7 @@ def multiAsset_basket():
     # Reconstruct coefficient matrix from factorization (only for validation)
     logger2.info("Multi-Asset Baskets With Correlated Price".center(60, '*'))
     logger2.info(": \n" + str(COEF_MATRIX))
-    logger2.info(": \n" + str(np.dot(R, RT)))
+    # logger2.info(": \n" + str(np.dot(R, RT)))
 
     T = 250                                   # Number of simulated days
     asset_price_array = np.full((NUMBER_OF_ASSETS,T), 100.0) # Stock price, first value is simulation input 
@@ -288,7 +288,7 @@ def show_vb_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} for timeframe {timeframe} '.center(60, '*'))
+    logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} - {timeframe} Timeframe '.center(60, '*'))
     logger2.info(f'* Profit/Loss: {profit:.2f}')
     logger2.info(f"* Wins: {wins} - Losses: {losses}")
     try:
@@ -341,7 +341,7 @@ def show_reversal_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    logger2.info(f'********** Reversal Strategy: Result of {ticker} for timeframe {timeframe} '.center(60, '*'))
+    logger2.info(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
     logger2.info(f'* Profit/Loss: {profit:.2f}')
     logger2.info(f"* Wins: {wins} - Losses: {losses}")
     try:
@@ -431,7 +431,7 @@ def trend_following_strategy(ticker:str):
                             sl_price = sl_price_tmp
 
             if timeframe == '1day':
-                if operation_last != operation_last_old:
+                if (operation_last != operation_last_old) and (date >= pd.Timestamp('2023-01-01')):
                     logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
                 operation_last_old = operation_last
             
@@ -442,7 +442,7 @@ def trend_following_strategy(ticker:str):
             shares = 0
             open_price = 0
 
-        logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} for {timeframe}'.center(76, '*'))
+        logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} - {timeframe} Timeframe '.center(76, '*'))
         logger2.info(f"Cash after Trade: {round(cash, 2):8}")
         logger2.info('  ')
 
@@ -809,8 +809,6 @@ def vb_genericAlgo_strategy(ticker):
         train, test = get_data(timeframe)
         # Process timeframe
         logger2.info("".center(60, "*"))
-        logger2.info(f' PROCESSING TIMEFRAME {timeframe} '.center(60, '*'))
-        logger2.info("".center(60, "*"))
 
         with tqdm(total=GENERATIONS) as pbar:
             # Create Genetic Algorithm
@@ -833,7 +831,7 @@ def vb_genericAlgo_strategy(ticker):
         # Show details of the best solution.
         solution, solution_fitness, _ = ga_instance.best_solution()
 
-        logger2.info(f' {ticker} Best Solution Parameters for timeframe {timeframe}'.center(60, '*'))
+        logger2.info(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
         logger2.info(f"Min Volatility   : {solution[0]:6.4f}")
         logger2.info(f"Max Perc to Buy  : {solution[1]:6.4f}")
         logger2.info(f"Min Perc to Sell : {solution[2]:6.4f}")
@@ -952,8 +950,6 @@ def vb_genericAlgo_strategy2(ticker):
 
         # Process data
         logger2.info("".center(60, "*"))
-        logger2.info(f' PROCESSING DATA '.center(60, '*'))
-        logger2.info("".center(60, "*"))
 
         with tqdm(total=GENERATIONS) as pbar:
 
@@ -982,8 +978,8 @@ def vb_genericAlgo_strategy2(ticker):
 
         # Show details of the best solution.
         solution, solution_fitness, _ = ga_instance.best_solution()
-
-        logger2.info(f' {ticker} Best Solution Parameters for timeframe {timeframe}'.center(60, '*'))
+        logger2.info(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
+        logger2.info('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
         logger2.info(f'Buy Length    : {solution[0]:.0f}')
         logger2.info(f'Buy Std       : {solution[1]:.2f}')
         logger2.info(f'Sell Length   : {solution[2]:.0f}')
@@ -1134,11 +1130,10 @@ def gaSellHoldBuy_strategy(ticker):
             observation, reward, done, info = env.step(action)
             total_reward += reward
         
-        # Print the reward and profit
-        print(f"Solution {sol_idx:3d} - Total Reward: {total_reward:10.2f} - Profit: {info['current_profit']:10.3f}")
-
-        if sol_idx == (POPULATIONS-1):
-            print(f"".center(60, "*"))
+        # Print the reward and profit: @@@
+        # print(f"Solution {sol_idx:3d} - Total Reward: {total_reward:10.2f} - Profit: {info['current_profit']:10.3f}")
+        # if sol_idx == (POPULATIONS-1):
+        #     print(f"".center(60, "*"))
             
         # Return the solution reward
         return total_reward
@@ -1260,7 +1255,7 @@ def GaMacd_strategy():
                                     solution[TREND_LEN*2:TREND_LEN*3],
                                     solution[TREND_LEN*3:TREND_LEN*4])
         if DEBUG:
-            print(f'\n{reward:10.2f}, {pnl:10.2f}, {wins:6.0f}, {losses:6.0f}, {solution[TREND_LEN*1:TREND_LEN*2]}, {solution[TREND_LEN*3:TREND_LEN*4]}', end='')
+            logger.debug(f'\n{reward:10.2f}, {pnl:10.2f}, {wins:6.0f}, {losses:6.0f}, {solution[TREND_LEN*1:TREND_LEN*2]}, {solution[TREND_LEN*3:TREND_LEN*4]}', end='')
 
         # Return the solution reward
         return reward
@@ -1322,7 +1317,7 @@ if __name__ == "__main__":
         
 '''
     for symbol in COT_SYMBOLS:  # financialmodeling.com 에서 해당 API 에 대한 비용을 요구하고 있음.
-        cot_report_on(symbol)   # 유로화후 적용 예정
+        cot_report_on(symbol)   # 유로화후 적용 예정 --> 유료화 적용완료 20231210??? 
 '''
 
     # 2. Bonds
