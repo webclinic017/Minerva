@@ -190,6 +190,9 @@ def create_connection(db_file):
 
     return conn, engine
 
+# 날짜 및 시간 문자열을 날짜로 변환하는 함수
+def parse_date(date_str):
+    return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").date()
 
 def include(filename):
     if os.path.exists(filename): 
@@ -570,6 +573,118 @@ def get_stock_indices():
 
     return df
 
+# financial modeling 에서 각 상품별 선물 베팅 데이터 COT(Commitment of Traders)를 기간설정으로 가져오기, 최근 날짜건으로만. 
+def get_cot_analysis_by_dates():
+    url = f'https://financialmodelingprep.com/api/v4/commitment_of_traders_report_analysis?from={from_date_ST2}&to={to_date2}&apikey={fmp_key}' 
+    try:       
+        df = requests.get(url).json()
+        df = pd.DataFrame(df, columns=['symbol', 'date', 'sector', 'currentLongMarketSituation', 'currentShortMarketSituation',\
+                                        'marketSituation', 'previousLongMarketSituation', 'previousShortMarketSituation',\
+                                        'previousMarketSituation', 'netPostion', 'previousNetPosition', 'changeInNetPosition',\
+                                        'marketSentiment', 'reversalTrend', 'name', 'exchange'])
+    except Exception as e:
+        print('Exception: {}'.format(e))    
+
+    return df
+
+# financial modeling 에서 각 상품별 선물 베팅  COT(Commitment of Traders) 보고서를 기간설정으로 가져오기, 최근 날짜건으로만. 
+def get_cot_report_by_dates():
+    url = f'https://financialmodelingprep.com/api/v4/commitment_of_traders_report?from={from_date_ST2}&to={to_date2}&apikey={fmp_key}' 
+    try:       
+        df = requests.get(url).json()
+        df = pd.DataFrame(df, columns=['symbol', 'date', 'short_name', 'sector', 'market_and_exchange_names',\
+                                       'as_of_date_in_form_yymmdd', 'cftc_contract_market_code', 'cftc_market_code',\
+                                       'cftc_region_code', 'cftc_commodity_code', 'open_interest_all', 'noncomm_positions_long_all',\
+                                       'noncomm_positions_short_all', 'noncomm_postions_spread_all', 'comm_positions_long_all',\
+                                       'comm_positions_short_all', 'tot_rept_positions_long_all', 'tot_rept_positions_short_all',\
+                                       'nonrept_positions_long_all', 'nonrept_positions_short_all', 'open_interest_old',\
+                                       'noncomm_positions_long_old', 'noncomm_positions_short_old', 'noncomm_positions_spread_old',\
+                                       'comm_positions_long_old', 'comm_positions_short_old', 'tot_rept_positions_long_old',\
+                                       'tot_rept_positions_short_old', 'nonrept_positions_long_old', 'nonrept_positions_short_old',\
+                                       'open_interest_other', 'noncomm_positions_long_other', 'noncomm_positions_short_other',\
+                                       'noncomm_positions_spread_other', 'comm_positions_long_other', 'comm_positions_short_other',\
+                                       'tot_rept_positions_long_other', 'tot_rept_positions_short_other', 'nonrept_positions_long_other',\
+                                       'nonrept_positions_short_other', 'change_in_open_interest_all', 'change_in_noncomm_long_all',\
+                                       'change_in_noncomm_short_all', 'change_in_noncomm_spead_all', 'change_in_comm_long_all',\
+                                       'change_in_comm_short_all', 'change_in_tot_rept_long_all', 'change_in_tot_rept_short_all',\
+                                       'change_in_nonrept_long_all', 'change_in_nonrept_short_all', 'pct_of_open_interest_all',\
+                                       'pct_of_oi_noncomm_long_all', 'pct_of_oi_noncomm_short_all', 'pct_of_oi_noncomm_spread_all',\
+                                       'pct_of_oi_comm_long_all', 'pct_of_oi_comm_short_all', 'pct_of_oi_tot_rept_long_all',\
+                                       'pct_of_oi_tot_rept_short_all', 'pct_of_oi_nonrept_long_all', 'pct_of_oi_nonrept_short_all',\
+                                       'pct_of_open_interest_ol', 'pct_of_oi_noncomm_long_ol', 'pct_of_oi_noncomm_short_ol',\
+                                       'pct_of_oi_noncomm_spread_ol', 'pct_of_oi_comm_long_ol', 'pct_of_oi_comm_short_ol', 'pct_of_oi_tot_rept_long_ol',\
+                                       'pct_of_oi_tot_rept_short_ol', 'pct_of_oi_nonrept_long_ol', 'pct_of_oi_nonrept_short_ol', 'pct_of_open_interest_other',\
+                                       'pct_of_oi_noncomm_long_other', 'pct_of_oi_noncomm_short_other', 'pct_of_oi_noncomm_spread_other',\
+                                       'pct_of_oi_comm_long_other', 'pct_of_oi_comm_short_other', 'pct_of_oi_tot_rept_long_other',\
+                                       'pct_of_oi_tot_rept_short_other', 'pct_of_oi_nonrept_long_other', 'pct_of_oi_nonrept_short_other',\
+                                       'traders_tot_all', 'traders_noncomm_long_all', 'traders_noncomm_short_all', 'traders_noncomm_spread_all',\
+                                       'traders_comm_long_all', 'traders_comm_short_all', 'traders_tot_rept_long_all', 'traders_tot_rept_short_all',\
+                                       'traders_tot_ol', 'traders_noncomm_long_ol', 'traders_noncomm_short_ol', 'traders_noncomm_spead_ol',\
+                                       'traders_comm_long_ol', 'traders_comm_short_ol', 'traders_tot_rept_long_ol', 'traders_tot_rept_short_ol',\
+                                       'traders_tot_other', 'traders_noncomm_long_other', 'traders_noncomm_short_other', 'traders_noncomm_spread_other',\
+                                       'traders_comm_long_other', 'traders_comm_short_other', 'traders_tot_rept_long_other', 'traders_tot_rept_short_other',\
+                                       'conc_gross_le_4_tdr_long_all', 'conc_gross_le_4_tdr_short_all', 'conc_gross_le_8_tdr_long_all',\
+                                       'conc_gross_le_8_tdr_short_all', 'conc_net_le_4_tdr_long_all', 'conc_net_le_4_tdr_short_all',\
+                                       'conc_net_le_8_tdr_long_all', 'conc_net_le_8_tdr_short_all', 'conc_gross_le_4_tdr_long_ol', 'conc_gross_le_4_tdr_short_ol',\
+                                       'conc_gross_le_8_tdr_long_ol', 'conc_gross_le_8_tdr_short_ol', 'conc_net_le_4_tdr_long_ol',\
+                                       'conc_net_le_4_tdr_short_ol', 'conc_net_le_8_tdr_long_ol', 'conc_net_le_8_tdr_short_ol',\
+                                       'conc_gross_le_4_tdr_long_other', 'conc_gross_le_4_tdr_short_other', 'conc_gross_le_8_tdr_long_other',\
+                                       'conc_gross_le_8_tdr_short_other', 'conc_net_le_4_tdr_long_other', 'conc_net_le_4_tdr_short_other',\
+                                       'conc_net_le_8_tdr_long_other', 'conc_net_le_8_tdr_short_other', 'contract_units'])
+    except Exception as e:
+        print('Exception: {}'.format(e))    
+
+    return df
+
+
+# financial modeling 에서 각 상품별 선물 베팅  COT(Commitment of Traders) 보고서를 기간설정으로 가져오기, 최근 날짜건으로만. 
+def get_cot_report_by_symbol(symbol):
+    url = f'https://financialmodelingprep.com/api/v4/commitment_of_traders_report/{symbol}?apikey={fmp_key}' 
+    try:       
+        df = requests.get(url).json()
+        df = pd.DataFrame(df, columns=['symbol', 'date', 'short_name', 'sector', 'market_and_exchange_names',\
+                                       'as_of_date_in_form_yymmdd', 'cftc_contract_market_code', 'cftc_market_code',\
+                                       'cftc_region_code', 'cftc_commodity_code', 'open_interest_all', 'noncomm_positions_long_all',\
+                                       'noncomm_positions_short_all', 'noncomm_postions_spread_all', 'comm_positions_long_all',\
+                                       'comm_positions_short_all', 'tot_rept_positions_long_all', 'tot_rept_positions_short_all',\
+                                       'nonrept_positions_long_all', 'nonrept_positions_short_all', 'open_interest_old',\
+                                       'noncomm_positions_long_old', 'noncomm_positions_short_old', 'noncomm_positions_spread_old',\
+                                       'comm_positions_long_old', 'comm_positions_short_old', 'tot_rept_positions_long_old',\
+                                       'tot_rept_positions_short_old', 'nonrept_positions_long_old', 'nonrept_positions_short_old',\
+                                       'open_interest_other', 'noncomm_positions_long_other', 'noncomm_positions_short_other',\
+                                       'noncomm_positions_spread_other', 'comm_positions_long_other', 'comm_positions_short_other',\
+                                       'tot_rept_positions_long_other', 'tot_rept_positions_short_other', 'nonrept_positions_long_other',\
+                                       'nonrept_positions_short_other', 'change_in_open_interest_all', 'change_in_noncomm_long_all',\
+                                       'change_in_noncomm_short_all', 'change_in_noncomm_spead_all', 'change_in_comm_long_all',\
+                                       'change_in_comm_short_all', 'change_in_tot_rept_long_all', 'change_in_tot_rept_short_all',\
+                                       'change_in_nonrept_long_all', 'change_in_nonrept_short_all', 'pct_of_open_interest_all',\
+                                       'pct_of_oi_noncomm_long_all', 'pct_of_oi_noncomm_short_all', 'pct_of_oi_noncomm_spread_all',\
+                                       'pct_of_oi_comm_long_all', 'pct_of_oi_comm_short_all', 'pct_of_oi_tot_rept_long_all',\
+                                       'pct_of_oi_tot_rept_short_all', 'pct_of_oi_nonrept_long_all', 'pct_of_oi_nonrept_short_all',\
+                                       'pct_of_open_interest_ol', 'pct_of_oi_noncomm_long_ol', 'pct_of_oi_noncomm_short_ol',\
+                                       'pct_of_oi_noncomm_spread_ol', 'pct_of_oi_comm_long_ol', 'pct_of_oi_comm_short_ol', 'pct_of_oi_tot_rept_long_ol',\
+                                       'pct_of_oi_tot_rept_short_ol', 'pct_of_oi_nonrept_long_ol', 'pct_of_oi_nonrept_short_ol', 'pct_of_open_interest_other',\
+                                       'pct_of_oi_noncomm_long_other', 'pct_of_oi_noncomm_short_other', 'pct_of_oi_noncomm_spread_other',\
+                                       'pct_of_oi_comm_long_other', 'pct_of_oi_comm_short_other', 'pct_of_oi_tot_rept_long_other',\
+                                       'pct_of_oi_tot_rept_short_other', 'pct_of_oi_nonrept_long_other', 'pct_of_oi_nonrept_short_other',\
+                                       'traders_tot_all', 'traders_noncomm_long_all', 'traders_noncomm_short_all', 'traders_noncomm_spread_all',\
+                                       'traders_comm_long_all', 'traders_comm_short_all', 'traders_tot_rept_long_all', 'traders_tot_rept_short_all',\
+                                       'traders_tot_ol', 'traders_noncomm_long_ol', 'traders_noncomm_short_ol', 'traders_noncomm_spead_ol',\
+                                       'traders_comm_long_ol', 'traders_comm_short_ol', 'traders_tot_rept_long_ol', 'traders_tot_rept_short_ol',\
+                                       'traders_tot_other', 'traders_noncomm_long_other', 'traders_noncomm_short_other', 'traders_noncomm_spread_other',\
+                                       'traders_comm_long_other', 'traders_comm_short_other', 'traders_tot_rept_long_other', 'traders_tot_rept_short_other',\
+                                       'conc_gross_le_4_tdr_long_all', 'conc_gross_le_4_tdr_short_all', 'conc_gross_le_8_tdr_long_all',\
+                                       'conc_gross_le_8_tdr_short_all', 'conc_net_le_4_tdr_long_all', 'conc_net_le_4_tdr_short_all',\
+                                       'conc_net_le_8_tdr_long_all', 'conc_net_le_8_tdr_short_all', 'conc_gross_le_4_tdr_long_ol', 'conc_gross_le_4_tdr_short_ol',\
+                                       'conc_gross_le_8_tdr_long_ol', 'conc_gross_le_8_tdr_short_ol', 'conc_net_le_4_tdr_long_ol',\
+                                       'conc_net_le_4_tdr_short_ol', 'conc_net_le_8_tdr_long_ol', 'conc_net_le_8_tdr_short_ol',\
+                                       'conc_gross_le_4_tdr_long_other', 'conc_gross_le_4_tdr_short_other', 'conc_gross_le_8_tdr_long_other',\
+                                       'conc_gross_le_8_tdr_short_other', 'conc_net_le_4_tdr_long_other', 'conc_net_le_4_tdr_short_other',\
+                                       'conc_net_le_8_tdr_long_other', 'conc_net_le_8_tdr_short_other', 'contract_units'])
+    except Exception as e:
+        print('Exception: {}'.format(e))    
+
+    return df
 
 
 '''

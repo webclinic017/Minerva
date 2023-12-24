@@ -43,6 +43,7 @@ gtta = {'VNQ':20, 'GLD':10, 'DBC':10, 'IEF':5, 'LQD':5, 'BNDX':5, 'TLT':5, \
 
 MY_TICKERS = ['SPY', 'QQQ'] # only stocks
 WATCH_TICKERS = ['SPY', 'QQQ'] # 관심종목들
+# Commitment of Traders (COT) report 참조
 COT_TICKERS = ['SPY', 'QQQ', 'UUP', 'FXY', 'TLT', 'VIXY', 'BCI']
 COT_SYMBOLS = ['ES', 'NQ', 'VI', 'DX', 'BA', 'J6', 'ZB', 'ZN', 'SQ', 'CL', 'NG', 'GC', ]
 # S&P 500 E-Mini (ES), Nasdaq 100 E-Mini (NQ), S&P 500 VIX (VI), US Dollar Index (DX), Bitcoin Micro (BA), Japanese Yen (J6), 
@@ -448,161 +449,11 @@ def trend_following_strategy(ticker:str):
 
 
 
-'''
-1.6 The Commitment of Traders (COT) Report
-https://wire.insiderfinance.io/download-sentiment-data-for-financial-trading-with-python-b07a35752b57
-1) Insight into Market Sentiment
-2) Early Warning Signals
-3) Confirmation of Technical Analysis
-4) Risk Management
-5) Long-Term Investment Insights
-6) Data-Driven Trading
-'''
 
-def get_dataframe(url):
-    hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
-    df = pd.read_csv(url, compression='zip', storage_options=hdr, low_memory=False)
-    df = df[['Market_and_Exchange_Names',
-         'Report_Date_as_YYYY-MM-DD',
-         'Pct_of_OI_Dealer_Long_All',
-         'Pct_of_OI_Dealer_Short_All',
-         'Pct_of_OI_Lev_Money_Long_All',
-         'Pct_of_OI_Lev_Money_Short_All']]
-    df['Report_Date_as_YYYY-MM-DD'] = pd.to_datetime(df['Report_Date_as_YYYY-MM-DD'])
-
-    return df
-
-def set_cot_file():
-    BUNDLE_URL = 'https://www.cftc.gov/files/dea/history/fin_fut_txt_2006_2016.zip'
-    YEAR_URL = 'https://www.cftc.gov/files/dea/history/fut_fin_txt_{}.zip'
-
-    df = get_dataframe(BUNDLE_URL) # 다 만들어진 파일을 가져오는 함수
-    df = df[df['Report_Date_as_YYYY-MM-DD'] < '2016-01-01'] # 2016년것은 년도별 zip 파일에서 가져오니까. 그 전 것만 가져오도록 함.
-    to_year = int((to_date2)[:4])+1  # 24년도 파일명에 23년 데이타가 들어가는군.
-    for year in range(2016, to_year):
-        tmp_df = get_dataframe(YEAR_URL.format(year)) # 다 만들어진 파일을 가져오는 함수
-        df = pd.concat([df, tmp_df])
-    df = df.sort_values(['Market_and_Exchange_Names','Report_Date_as_YYYY-MM-DD']).reset_index(drop=True)
-    df = df.drop_duplicates()
-    df.to_csv(data_dir + f'/market_sentiment_data.csv', index=False)
-
-def get_cot_data(senti_file, SYMBOLS_SD_TO_MERGE, SYMBOL_SD, ticker_file, ticker):
-        # Read Sentiment Data
-        df_sd = pd.read_csv(senti_file)
-        # Merge Symbols If Exists A Symbol With Different Names
-        if SYMBOLS_SD_TO_MERGE is not None or len(SYMBOLS_SD_TO_MERGE) > 0:
-            for symbol_to_merge in SYMBOLS_SD_TO_MERGE:
-                df_sd['Market_and_Exchange_Names'] = df_sd['Market_and_Exchange_Names'].str.replace(symbol_to_merge, SYMBOL_SD)
-        # Sort By Report Date
-        df_sd = df_sd.sort_values('Report_Date_as_YYYY-MM-DD')
-        # Filter Required Symbol
-        df_sd = df_sd[df_sd['Market_and_Exchange_Names'] == SYMBOL_SD]
-        df_sd['Report_Date_as_YYYY-MM-DD'] = pd.to_datetime(df_sd['Report_Date_as_YYYY-MM-DD'])
-        # Remove Unneeded Columns And Rename The Rest
-        df_sd = df_sd.rename(columns={'Report_Date_as_YYYY-MM-DD':'report_date'})
-        df_sd = df_sd.drop('Market_and_Exchange_Names', axis=1)
-
-        # # Read / Get & Save Market Data
-        # if not os.path.exists(ticker_file):
-        #     ticker = yf.Ticker(ticker)
-        #     df = ticker.history(
-        #         interval='1d',
-        #         start=min(df_sd['report_date']),
-        #         end=max(df_sd['report_date']))
-        #     df = df.reset_index()
-        #     df['Date'] = df['Date'].dt.date
-        #     df = df[['Date','Close']]
-        #     df.columns = ['date', 'close']
-        #     if len(df) > 0: df.to_csv(ticker_file, index=False)
-        # else:
-        #     df = pd.read_csv(ticker_file)
-        
-        # 어제 만들어진 ticker file 은 오늘 다시 업데이트 되지 않을텐데... 이상함...
-        # Read / Get & Save Market Data
-        ticker = yf.Ticker(ticker)
-        df = ticker.history(
-            interval='1d',
-            start=min(df_sd['report_date']),
-            end=max(df_sd['report_date']))
-        df = df.reset_index()
-        df['Date'] = df['Date'].dt.date
-        df = df[['Date','Close']]
-        df.columns = ['date', 'close']
-        if len(df) > 0: df.to_csv(ticker_file, index=False)
-        df = pd.read_csv(ticker_file)
-
-        df['date'] = pd.to_datetime(df['date'])
-        # Merge Market Sentiment Data And Market Data
-        tolerance = pd.Timedelta('7 day')
-        df = pd.merge_asof(left=df_sd,right=df,left_on='report_date',right_on='date',direction='backward',tolerance=tolerance)
-        # Clean Data And Rename Columns
-        df = df.dropna()
-        df.columns = ['report_date', 'dealer_long', 'dealer_short', 'lev_money_long', 'lev_money_short', 'quote_date', 'close']
-
-        return df
-
-def get_cot_result(df, field, bb_length, min_bandwidth, max_buy_pct, min_sell_pct, CASH):
-    # Generate a copy to avoid changing the original data
-    df = df.copy().reset_index(drop=True)
-    # Calculate Bollinger Bands With The Specified Field
-    df.ta.bbands(close=df[field], length=bb_length, append=True)
-    df['high_limit'] = df[f'BBU_{bb_length}_2.0'] + (df[f'BBU_{bb_length}_2.0'] - df[f'BBL_{bb_length}_2.0']) / 2
-    df['low_limit'] = df[f'BBL_{bb_length}_2.0'] - (df[f'BBU_{bb_length}_2.0'] - df[f'BBL_{bb_length}_2.0']) / 2
-    df['close_percentage'] = np.clip((df[field] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
-    df['bandwidth'] = np.clip(df[f'BBB_{bb_length}_2.0'] / 100, 0, 1)
-    df = df.dropna()
-    # Buy Signal
-    df['signal'] = np.where((df['bandwidth'] > min_bandwidth) & (df['close_percentage'] < max_buy_pct), 1, 0)
-    # Sell Signal
-    df['signal'] = np.where((df['close_percentage'] > min_sell_pct), -1, df['signal'])
-    # Remove all rows without operations, rows with the same consecutive operation, first row selling, and last row buying
-    result = df[df['signal'] != 0]
-    result = result[result['signal'] != result['signal'].shift()]
-    if (len(result) > 0) and (result.iat[0, -1] == -1): result = result.iloc[1:]
-    if (len(result) > 0) and (result.iat[-1, -1] == 1): result = result.iloc[:-1]
-    # Calculate the reward / operation
-    result['total_reward'] = np.where(result['signal'] == -1, (result['close'] - result['close'].shift()) * (CASH // result['close'].shift()), 0)
-    # Generate the result
-    total_reward = result['total_reward'].sum()
-    wins = len(result[result['total_reward'] > 0])
-    losses = len(result[result['total_reward'] < 0])
-
-    return total_reward, wins, losses
-
-
-def cot_report_bat(ticker):
-    # Configuration
-    np.set_printoptions(suppress=True)
-    pd.options.mode.chained_assignment = None
-    # Constants
-    SYMBOL_SD = 'E-MINI S&P 500 - CHICAGO MERCANTILE EXCHANGE'
-    SYMBOLS_SD_TO_MERGE = ['E-MINI S&P 500 STOCK INDEX - CHICAGO MERCANTILE EXCHANGE']
-    senti_file = data_dir + f'/market_sentiment_data.csv'
-    ticker_file = data_dir + f'/{ticker}.csv'
-    CASH = 10_000
-    BB_LENGTH = 20
-    MIN_BANDWIDTH = 0
-    MAX_BUY_PCT = 0.25
-    MIN_SELL_PCT = 0.75
-
-    # Get Required Data
-    df = get_cot_data(senti_file, SYMBOLS_SD_TO_MERGE, SYMBOL_SD, ticker_file, ticker)
-    # Get Result Based Calculating the BB on Each Field to Check Which is the Most Accurate
-    for field in ['dealer_long', 'dealer_short', 'lev_money_long', 'lev_money_short']:
-        total_reward, wins, losses = get_cot_result(df, field, BB_LENGTH, MIN_BANDWIDTH, MAX_BUY_PCT, MIN_SELL_PCT, CASH)
-        logger2.info(f' Result of {ticker} for (Field: {field}) '.center(60, '*'))
-        logger2.info(f"* Profit / Loss           : {total_reward:.2f}")
-        logger2.info(f"* Wins / Losses           : {wins} / {losses}")
-        logger2.info(f"* Win Rate (BB length=20) : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
-        
-
-# def cot_report_on(symbols):
-#     # get_oct_by_symbol(COT_SYMBOLS)
-#     continue
 
 
 '''
-1.7 ControlChartStrategy
+1.6 ControlChartStrategy
 https://wire.insiderfinance.io/trading-the-stock-market-in-an-unconventional-way-using-control-charts-f6e9aca3d8a0
 these seven rules proposed by Mark Allen Durivage
 Rule 1 — One Point Beyond the 3σ Control Limit
@@ -744,7 +595,7 @@ def control_chart_strategy(ticker):
     show_result(df, 'rule6')
 
 '''
-1.8 Volatility & Bollinger Band with Generic Algorithm Strategy
+1.7 Volatility & Bollinger Band with Generic Algorithm Strategy
 '''
 def vb_genericAlgo_strategy(ticker):
     # Constants
@@ -857,7 +708,7 @@ def vb_genericAlgo_strategy(ticker):
 
 
 '''
-1.9 Volatility & Bollinger Band with Generic Algorithm Strategy 2
+1.8 Volatility & Bollinger Band with Generic Algorithm Strategy 2
 - 기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용
 '''
 def vb_genericAlgo_strategy2(ticker):
@@ -1011,7 +862,7 @@ def vb_genericAlgo_strategy2(ticker):
 
 
 '''
-1.10 Generic Algorithm SellHoldBuy Strategy
+1.9 Generic Algorithm SellHoldBuy Strategy
 - we will employ a genetic algorithm to update the network’s weights and biases.
 - https://medium.com/@diegodegese/accelerating-model-training-and-improving-stock-market-predictions-with-genetic-algorithms-and-541b04be685b
 '''
@@ -1211,7 +1062,7 @@ def gaSellHoldBuy_strategy(ticker):
 
 
 '''
-1.11 Generic Algorithm & MACD Indicator Strategy
+1.10 Generic Algorithm & MACD Indicator Strategy
 - https://medium.datadriveninvestor.com/my-approach-to-use-the-macd-indicator-in-the-market-part-2-3958aff26d0a
 '''
 def GaMacd_strategy():
@@ -1304,10 +1155,6 @@ if __name__ == "__main__":
 
     for ticker in WATCH_TICKERS:     
         trend_following_strategy(ticker)  # 단기 매매 아님. 중장기 매매 기법, 1day 데이터만으로 실행
-
-    set_cot_file()
-    for ticker in COT_TICKERS:
-        cot_report_bat(ticker)
 
     for ticker in WATCH_TICKERS:
         control_chart_strategy(ticker)
