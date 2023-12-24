@@ -15,5 +15,6 @@ python ./batch/cn_ecos.py
 python ./batch/de_ecos.py
 python ./batch/us_ecos.py
 python ./batch/us_marks.py
+python ./batch/global_derivatives.py
 
 conda deactivate

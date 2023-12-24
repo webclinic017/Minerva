@@ -221,7 +221,7 @@ class OTCBBstg():
                 end=max(df_sd['date']))
             
             if len(df) <= 0:
-                print(f'ticker not found: {ticker}')
+                logger2.info(f'ticker not found: {ticker}')
                 return None
             
             df = df.reset_index()
@@ -315,21 +315,21 @@ if __name__ == "__main__":
     1. COT 분석과 리포트: Commitment of Traders (COT) 주간단위 Report
     '''
 
-    # COT_analyse()
+    COT_analyse()
     COT_report()
 
     '''
     2. COT BB Strategy 분석
     '''
 
-    # oct_bb = OTCBBstg()
+    oct_bb = OTCBBstg()
 
-    # for cot in COT_SYMBOLS:
-    #     symbol = cot['symbol']
-    #     ticker = cot['ticker']
-    #     name = cot['name']
-    #     oct_bb.set_cot_file(symbol)
+    for cot in COT_SYMBOLS:
+        symbol = cot['symbol']
+        ticker = cot['ticker']
+        name = cot['name']
+        oct_bb.set_cot_file(symbol)
 
-    #     logger2.info(f''.center(60, ' '))        
-    #     logger2.info(f' {name} '.center(60, '#'))
-    #     oct_bb.cot_bb_stg_report(symbol, ticker)
+        logger2.info(f''.center(60, ' '))        
+        logger2.info(f' {name} '.center(60, '#'))
+        oct_bb.cot_bb_stg_report(symbol, ticker)
