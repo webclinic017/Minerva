@@ -33,37 +33,48 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from math import sqrt, exp
 
+from yahoo_fin import stock_info as si
+from dateutil import parser
+from yahoo_fin import options
+import yfinance as yf
+
 # logging
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 
+Symbols = ['^SPX', '^NDX']
 
 # Commitment of Traders (COT) report 참조
 # symbol: 파생상품의 종류
 # ticker: 현물시장에서 상품종류
 COT_SYMBOLS = [
-                {'symbol':'ZN', 'ticker':'IEF', 'name':'10-Year T-Note (ZN)', 'contract_units': 'CONTRACTS OF $100,000 FACE VALUE'},
-               {'symbol':'ZB', 'ticker':'TLT', 'name':'30-Year T-Bond (ZB)', 'contract_units': 'CONTRACTS OF $100,000 FACE VALUE'},
-               {'symbol':'YM', 'ticker':'DIA', 'name':'Dow Industry 30 E-Mini (YM)', 'contract_units': '$5 X DJIA INDEX'},
-               {'symbol':'VI', 'ticker':'VIXY', 'name':'S&P 500 VIX (VI)', 'contract_units': '$5 X S&P 500 INDEX'},
-               {'symbol':'S6', 'ticker':'FXF', 'name':'Swiss Franc (S6)', 'contract_units': 'CONTRACTS OF 125,000 SWISS FRANCS'},
-               {'symbol':'RB', 'ticker':'UGA', 'name':'Gasoline RBOB (RB)', 'contract_units': 'CONTRACTS OF 42,000 U.S. GALLONS'},
-               {'symbol':'QR', 'ticker':'IWM', 'name':'Russell 2000 E-Mini (QR)', 'contract_units': 'RUSSEL 2000 INDEX X $50'},
                {'symbol':'NQ', 'ticker':'QQQ', 'name':'Nasdaq 100 E-Mini', 'contract_units': 'NASDAQ 100 STOCK INDEX x $2'},
-               {'symbol':'NG', 'ticker':'UNG', 'name':'Natural Gas', 'contract_units': ''},
+               {'symbol':'ES', 'ticker':'SPY', 'name':'S&P 500 E-Mini (ES)', 'contract_units': '$50 X S&P 500 INDEX'}, 
+               {'symbol':'YM', 'ticker':'DIA', 'name':'Dow Industry 30 E-Mini (YM)', 'contract_units': '$5 X DJIA INDEX'},
+               {'symbol':'QR', 'ticker':'IWM', 'name':'Russell 2000 E-Mini (QR)', 'contract_units': 'RUSSEL 2000 INDEX X $50'},
+               {'symbol':'EW', 'ticker':'IJH', 'name':'S&P Midcap E-Mini (EW)', 'contract_units': 'S&P 400 INDEX X $100'},
+               {'symbol':'VI', 'ticker':'VIXY', 'name':'S&P 500 VIX (VI)', 'contract_units': '$5 X S&P 500 INDEX'},
+
+               {'symbol':'ZN', 'ticker':'IEF', 'name':'10-Year T-Note (ZN)', 'contract_units': 'CONTRACTS OF $100,000 FACE VALUE'},
+               {'symbol':'ZB', 'ticker':'TLT', 'name':'30-Year T-Bond (ZB)', 'contract_units': 'CONTRACTS OF $100,000 FACE VALUE'},
+
+               {'symbol':'BT', 'ticker':'BITO', 'name':'Bitcoin CME Futures (BT)', 'contract_units': '5 Bitcoins'},  # 현물 etf 없음. 대체사용
+
+               {'symbol':'DX', 'ticker':'UUP', 'name':'US Dollar Index', 'contract_units': 'U.S. DOLLAR INDEX X $1000'}, 
+               {'symbol':'E6', 'ticker':'FXE', 'name':'Euro FX (E6)', 'contract_units': 'CONTRACTS OF 125,000 EUROS'},                
+               {'symbol':'J6', 'ticker':'FXY', 'name':'Japanese Yen (J6)', 'contract_units': 'CONTRACTS OF JPY 12,500,000'},
+               {'symbol':'B6', 'ticker':'FXB', 'name':'British Pound (B6)', 'contract_units': 'CONTRACTS OF GBP 62,500'},                
+               {'symbol':'S6', 'ticker':'FXF', 'name':'Swiss Franc (S6)', 'contract_units': 'CONTRACTS OF 125,000 SWISS FRANCS'},
                {'symbol':'M6', 'ticker':'MXN', 'name':'Mexican Peso (M6)', 'contract_units': 'CONTRACTS OF 500,000 MEXICAN PESOS'},
                {'symbol':'L6', 'ticker':'EWZ', 'name':'Brazilian Real (L6)', 'contract_units': 'CONTRACTS OF BRL 100,000'}, # 화폐 etf 는 없음. 대체사용
-               {'symbol':'J6', 'ticker':'FXY', 'name':'Japanese Yen (J6)', 'contract_units': 'CONTRACTS OF JPY 12,500,000'},
-               {'symbol':'EW', 'ticker':'IJH', 'name':'S&P Midcap E-Mini (EW)', 'contract_units': 'S&P 400 INDEX X $100'},
-               {'symbol':'ES', 'ticker':'SPY', 'name':'S&P 500 E-Mini (ES)', 'contract_units': '$50 X S&P 500 INDEX'}, 
-               {'symbol':'E6', 'ticker':'FXE', 'name':'Euro FX (E6)', 'contract_units': 'CONTRACTS OF 125,000 EUROS'}, 
-               {'symbol':'DX', 'ticker':'UUP', 'name':'US Dollar Index', 'contract_units': 'U.S. DOLLAR INDEX X $1000'}, 
-               {'symbol':'CL', 'ticker':'UCO', 'name':'Crude Oil', 'contract_units': 'CONTRACTS OF 1,000 BARRELS'}, 
-               {'symbol':'BZ', 'ticker':'BNO', 'name':'Crude Oil BRENT (BZ)', 'contract_units': ''},
-               {'symbol':'BT', 'ticker':'BITO', 'name':'Bitcoin CME Futures (BT)', 'contract_units': '5 Bitcoins'},  # 현물 etf 없음. 대체사용
-               {'symbol':'B6', 'ticker':'FXB', 'name':'British Pound (B6)', 'contract_units': 'CONTRACTS OF GBP 62,500'}, 
+
                {'symbol':'GC', 'ticker':'GLD', 'name':'Gold (GC)', 'contract_units': 'CONTRACTS OF 100 TROY OUNCE'},
+               {'symbol':'HG', 'ticker':'CPER', 'name':'High Grade Copper (HG)', 'contract_units': ''},               
+               {'symbol':'CL', 'ticker':'UCO', 'name':'Crude Oil', 'contract_units': 'CONTRACTS OF 1,000 BARRELS'},
+               {'symbol':'BZ', 'ticker':'BNO', 'name':'Crude Oil BRENT (BZ)', 'contract_units': ''},               
+               {'symbol':'RB', 'ticker':'UGA', 'name':'Gasoline RBOB (RB)', 'contract_units': 'CONTRACTS OF 42,000 U.S. GALLONS'},
+               {'symbol':'NG', 'ticker':'UNG', 'name':'Natural Gas', 'contract_units': ''},
                ]
                
 
@@ -111,9 +122,9 @@ def COT_analyse():
         previousNetPosition = result.iloc[0]['previousNetPosition']
 
         if result.iloc[0]['reversalTrend'] == True:
-            reversalTrend = '추세적 반전 가능성 있음'
+            reversalTrend = 'Reversal Trend YES'
         else:
-            reversalTrend = '추세적 반전까지는 아님'
+            reversalTrend = 'Keep Staying'
         plt.subplot(len(events), 1, i + 1)
         plt.title(name+': '+str(previousNetPosition)+ ' -> ' +str(netPostion)+' / '+situation+' / '+sentiment+' / '+reversalTrend)
         plt.plot(result['date'], result['currentLongMarketSituation'], color='royalblue', label='current long')
@@ -122,7 +133,7 @@ def COT_analyse():
         plt.ylabel('percentage')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/global_d0100.png')
+    plt.savefig(reports_dir + '/global_d0110.png')
 
 
 def COT_report():
@@ -177,7 +188,7 @@ def COT_report():
         plt.ylabel('count')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/global_d0200.png')
+    plt.savefig(reports_dir + '/global_d0120.png')
 
 
 
@@ -296,6 +307,180 @@ class OTCBBstg():
 
 
 
+'''
+3.1 Symbols(^SPX, ^NDX) Future during all times
+'''
+def option_chain(Symbols):
+
+    plt.figure(figsize=(18, 4*len(Symbols)))
+
+    for i, symbol in enumerate(Symbols):
+        opt_exps = options.get_expiration_dates(symbol)
+        # logger2.debug(opt_exps)
+
+        chain = options.get_options_chain(symbol)
+        logger2.info(chain['calls'].head())
+        logger2.info(chain['puts'].head())
+        df_call=pd.DataFrame(chain['calls'])
+        df_put=pd.DataFrame(chain['puts'])
+
+        df = yf.Ticker(symbol)
+        curr_price = df.fast_info['previousClose']
+        df_call['Strike'].dropna(axis=0, inplace=True)
+        df_call['Strike'] = df_call['Strike'].astype('float')
+        df_call['Volume'].dropna(axis=0, inplace=True)
+        df_call['Volume'].replace('-', 0, inplace=True)
+        df_call['Volume'] = df_call['Volume'].astype('float')
+
+        df_put['Strike'].dropna(axis=0, inplace=True)
+        df_put['Strike'] = df_put['Strike'].astype('float')
+        df_put['Volume'].dropna(axis=0, inplace=True)
+        df_put['Volume'].replace('-', 0, inplace=True)
+        df_put['Volume'] = df_put['Volume'].astype('float')
+
+        plt.subplot(len(Symbols), 1, i + 1)  
+        plt.title(f'{symbol} Option all the time')
+        plt.bar(x=df_call['Strike'], height=df_call['Volume'], color='orange', label='Call', width=3.5)
+        plt.bar(x=df_put['Strike'], height=df_put['Volume'], color='royalblue', label='Put', width=3.5)
+        plt.axvline(x=curr_price, color='green', linestyle=':', linewidth=2, label=curr_price)
+        plt.legend()
+        plt.grid()
+
+    plt.tight_layout()  # 서브플롯 간 간격 조절
+    plt.savefig(reports_dir + '/global_d0310.png')    
+
+
+'''
+3.2 Symbols(^SPX, ^NDX): Today's Options Chain for SPY Future
+'''
+def option_chain_today(Symbols):
+    
+    def get_option_sp500(x):
+        if (x.find('SPXW') < 0): #SPX
+            option = x[9]
+        elif (x.find('SPXW') == 0): #SPXW
+            option = x[10]
+        else:
+            return -1    
+        return option
+
+    def get_expdate_sp500(x):
+        if (x.find('SPXW') < 0):
+            _ = '20'+x[3:9]
+            exp_date = pd.to_datetime(_, format='%Y%m%d', yearfirst=True).strftime('%Y-%m-%d')
+        elif (x.find('SPXW') == 0):
+            _ = '20'+x[4:10]
+            exp_date = pd.to_datetime(_, format='%Y%m%d', yearfirst=True).strftime('%Y-%m-%d')
+        else:
+            return -1    
+        return exp_date
+    
+    def get_option_nasdaq100(x):
+        if (x.find('NDXP') < 0): #NDX
+            option = x[9]
+        elif (x.find('NDXP') == 0): #NDXP
+            option = x[10]
+        else:
+            return -1    
+        return option
+
+    def get_expdate_nasdaq100(x):
+        if (x.find('NDXP') < 0): #NDX
+            _ = '20'+x[3:9]
+            exp_date = pd.to_datetime(_, format='%Y%m%d', yearfirst=True).strftime('%Y-%m-%d')
+        elif (x.find('NDXP') == 0): #NDXP
+            _ = '20'+x[4:10]
+            exp_date = pd.to_datetime(_, format='%Y%m%d', yearfirst=True).strftime('%Y-%m-%d')
+        else:
+            return -1    
+        return exp_date
+    
+    plt.figure(figsize=(36, 4*len(Symbols)))  # *2 는 bar chart 를 call 과 put 을 각각 먼저 그려보기 위함임. 어떤 것이 먼저 덮을지 ....
+    for i, symbol in enumerate(Symbols):
+        df = yf.Ticker(symbol)
+        df_exp = df.options
+        buf = pd.DataFrame()
+        for j, date in enumerate(df_exp):
+        #     print(date, ' >>> ', end='')
+            opt = df.option_chain(date)
+            for x in opt:
+                try:
+                    temp = x[x['volume'] > 100.0]
+                except:
+                    if j == 0:
+                        # logger2.info(x)
+                        logger2.info('=====' + x['shortName'])
+                        logger2.info('regularMarketPrice: ' + str(x['regularMarketPrice']))
+                        logger2.info('regularMarketPreviousClose: '+ str(x['regularMarketPreviousClose']))                
+                        logger2.info('regularMarketChange: '+ str(x['regularMarketChange']))                
+                        logger2.info('regularMarketChangePercent: ' + str(x['regularMarketChangePercent']))
+                        
+                        logger2.info('regularMarketVolume: '+ str(x['regularMarketVolume']))
+                        logger2.info('averageDailyVolume10Day: '+ str(x['averageDailyVolume10Day']))                      
+                        logger2.info('averageDailyVolume3Month: '+ str(x['averageDailyVolume3Month']))    
+                        logger2.info('twoHundredDayAverage: '+ str(x['twoHundredDayAverage']))                
+
+                        logger2.info('fiftyDayAverage: '+ str(x['fiftyDayAverage']))
+                        logger2.info('fiftyDayAverageChange: '+ str(x['fiftyDayAverageChange']))                
+                        logger2.info('fiftyDayAverageChangePercent: '+ str(x['fiftyDayAverageChangePercent']))                       
+                        
+                        logger2.info('twoHundredDayAverage: '+ str(x['twoHundredDayAverage']))
+                        logger2.info('twoHundredDayAverageChange: '+ str(x['twoHundredDayAverageChange']))
+                        logger2.info('twoHundredDayAverageChangePercent: '+ str(x['twoHundredDayAverageChangePercent']))
+                        
+                        logger2.info('twoHundredDayAverageChange: '+ str(x['twoHundredDayAverageChange']))
+                        logger2.info('twoHundredDayAverageChangePercent: '+ str(x['twoHundredDayAverageChangePercent']))
+
+                        logger2.info('fiftyTwoWeekRange: '+ str(x['fiftyTwoWeekRange']))
+                        logger2.info('fiftyTwoWeekLowChange: '+ str(x['fiftyTwoWeekLowChange']))
+                        logger2.info('fiftyTwoWeekHighChangePercent: '+ str(x['fiftyTwoWeekHighChangePercent']))
+
+                if len(temp) > 0:
+                    # logger2.info(str(temp['contractSymbol'].values))
+                    # logger2.info(str(temp['volume'].values))                    
+                    buf = pd.concat([buf, temp], axis=0)
+        print('====== End ======')        
+
+        if symbol == '^SPX':
+            buf['Option'] = buf['contractSymbol'].apply(get_option_sp500)
+            buf['Exp_date'] = buf['contractSymbol'].apply(get_expdate_sp500)
+        elif symbol == '^NDX':
+            buf['Option'] = buf['contractSymbol'].apply(get_option_nasdaq100)
+            buf['Exp_date'] = buf['contractSymbol'].apply(get_expdate_nasdaq100)
+        else:
+            logger.error(f'Symbol not found: {symbol}')
+
+        buf_pivot = pd.pivot_table(buf, index=['Option','Exp_date'], values=['volume'], aggfunc=np.sum, fill_value=0)
+        # logger2.info(buf_pivot)
+
+        buf_pivot_call = buf_pivot.iloc[buf_pivot.index.get_level_values('Option') == 'C']
+        buf_pivot_call.reset_index(level=0, drop=False, inplace=True)
+        buf_pivot_put = buf_pivot.iloc[buf_pivot.index.get_level_values('Option') == 'P']
+        buf_pivot_put.reset_index(level=0, drop=False, inplace=True)
+        buf_pivot_put.sort_index(ascending=True, inplace=True)
+
+        plt.subplot(len(Symbols), 2, i*2 + 1)
+        plt.title(f"Today's Options Chain for {symbol}", fontdict={'fontsize':20, 'color':'g'})
+        plt.bar(x=buf_pivot_call.index, height=buf_pivot_call.volume, label='Call', color='orange')
+        plt.bar(x=buf_pivot_put.index, height=buf_pivot_put.volume, label='Put', color='royalblue')
+        plt.grid()
+        plt.legend()
+
+        plt.subplot(len(Symbols), 2, i*2 + 2)
+        plt.title(f"Today's Options Chain for {symbol}", fontdict={'fontsize':20, 'color':'g'})
+        plt.bar(x=buf_pivot_put.index, height=buf_pivot_put.volume, label='Put', color='royalblue')        
+        plt.bar(x=buf_pivot_call.index, height=buf_pivot_call.volume, label='Call', color='orange')
+        plt.grid()
+        plt.legend()        
+
+    plt.tight_layout()  # 서브플롯 간 간격 조절
+    plt.savefig(reports_dir + '/global_d0320.png')
+
+
+
+
+
+
 
 
 
@@ -309,19 +494,16 @@ if __name__ == "__main__":
     0. 공통 영역
     '''
 
-
-
     '''
     1. COT 분석과 리포트: Commitment of Traders (COT) 주간단위 Report
     '''
-
     COT_analyse()
     COT_report()
+
 
     '''
     2. COT BB Strategy 분석
     '''
-
     oct_bb = OTCBBstg()
 
     for cot in COT_SYMBOLS:
@@ -333,3 +515,15 @@ if __name__ == "__main__":
         logger2.info(f''.center(60, ' '))        
         logger2.info(f' {name} '.center(60, '#'))
         oct_bb.cot_bb_stg_report(symbol, ticker)
+
+    '''
+    3. Option Chain
+    http://theautomatic.net/2019/04/17/how-to-get-options-data-with-python/
+    '''
+
+    # option_chain(Symbols)
+    option_chain(Symbols)
+    option_chain_today(Symbols)
+
+
+
