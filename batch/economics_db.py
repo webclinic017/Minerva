@@ -11,6 +11,7 @@ import sys, os
 utils_dir = os.getcwd() + '/batch/utils'
 sys.path.append(utils_dir)
 from settings import *
+from global_ import *
 
 import re
 import requests
@@ -26,20 +27,7 @@ import os
 logger.warning(sys.argv[0])
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
-# 주요 관찰 대상국 설정
-nations = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR', 'IN', 'VN']
-urls = {
-    'CN':'https://macrovar.com/china/',
-    'EU':'https://macrovar.com/europe/', 
-    'JP':'https://macrovar.com/japan/', 
-    'KR':'https://macrovar.com/south-korea/', 
-    'US':'https://macrovar.com/united-states/', 
-    'SG':'https://macrovar.com/singapore/', 
-    'DE':'https://macrovar.com/germany/', 
-    'BR':'https://macrovar.com/brazil/',
-    'IN':'https://macrovar.com/india/',
-    'VN':'https://macrovar.com/vietnam/',
-}
+
 # 검색기간 설정
 _to_date = pd.to_datetime(to_date, format="%d/%m/%Y")
 term_days = relativedelta(weeks=1)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적! 평소에는 1주기간 데이터만으로도 가능

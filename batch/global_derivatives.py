@@ -143,6 +143,8 @@ def COT_report():
     df = buf[buf['date'].str.contains(str(max_date), case=False, na=False)]
     df = df.sort_values(['symbol','date'], ascending=False).reset_index(drop=True)
 
+    logger2.info(f' ################ COT recent Date: {max_date}')
+
     # 전체 그림의 크기를 설정
     plt.figure(figsize=(10, 3*len(COT_SYMBOLS)))
     for i, cot in enumerate(COT_SYMBOLS):
@@ -458,6 +460,9 @@ def option_chain_today(Symbols):
         buf_pivot_put = buf_pivot.iloc[buf_pivot.index.get_level_values('Option') == 'P']
         buf_pivot_put.reset_index(level=0, drop=False, inplace=True)
         buf_pivot_put.sort_index(ascending=True, inplace=True)
+
+        buf_pivot_call.index = pd.to_datetime(buf_pivot_call.index)
+        buf_pivot_put.index = pd.to_datetime(buf_pivot_put.index)
 
         plt.subplot(len(Symbols), 2, i*2 + 1)
         plt.title(f"Today's Options Chain for {symbol}", fontdict={'fontsize':20, 'color':'g'})
