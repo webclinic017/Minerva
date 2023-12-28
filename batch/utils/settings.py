@@ -148,8 +148,10 @@ global SIGMA_75, SIGMA_85
 SIGMA_75 = norm.ppf(0.75)  # 75%에 해당하는 Z-score
 SIGMA_85 = norm.ppf(0.85)  # 85%에 해당하는 Z-score
 
-
 ASSETS = ['stock', 'bond', 'commodity', 'cash']
+
+MY_TICKERS = ['SPY', 'QQQ'] # only stocks
+WATCH_TICKERS = ['SPY', 'QQQ'] # 관심종목들
 
 
 Major_ETFs = [

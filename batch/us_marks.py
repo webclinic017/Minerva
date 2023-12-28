@@ -41,8 +41,7 @@ logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 gtta = {'VNQ':20, 'GLD':10, 'DBC':10, 'IEF':5, 'LQD':5, 'BNDX':5, 'TLT':5, \
         'EEM':10, 'VEA':10, 'DWAS':5, 'SEIM':5, 'DFSV':5, 'DFLV':5}
 
-MY_TICKERS = ['SPY', 'QQQ'] # only stocks
-WATCH_TICKERS = ['SPY', 'QQQ'] # 관심종목들
+
 # Commitment of Traders (COT) report 참조
 COT_TICKERS = ['SPY', 'QQQ', 'UUP', 'FXY', 'TLT', 'VIXY', 'BCI']
 COT_SYMBOLS = ['ES', 'NQ', 'VI', 'DX', 'BA', 'J6', 'ZB', 'ZN', 'SQ', 'CL', 'NG', 'GC', ]
