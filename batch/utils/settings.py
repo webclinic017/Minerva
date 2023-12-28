@@ -121,6 +121,7 @@ CASH_SIGNAL = 0
 
 # 주요 관찰 대상국 설정 ('VN' 제외, Calendar에 없음.)
 nations = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR', 'IN']
+nations2 = ['CHN', 'EUR', 'JPN', 'KOR', 'USA', 'SGP', 'DEU', 'GBR', 'IND']
 urls = {
     'CN':'https://macrovar.com/china/',
     'EU':'https://macrovar.com/europe/', 
@@ -783,74 +784,12 @@ def get_trend(ticker):
     return country_weight*value_1 + market_weight*value_2
 
 
-'''
-pyminerva 로 보낼 녀석들
-'''
+def get_nation_iso3(country):
+    for i, nation in enumerate(nations):
+        if country == nation:
+            return nations2[i]
 
 
-def get_country_growth_pjt_byIMF(conn, country_sign2:str, month_term:int=0):
-    
-    def add_month(to_date2:str, term_month:int):
-        target_date = pd.to_datetime(to_date2)
-        term_month = relativedelta(weeks=term_month*4)
-        target_date2 = (target_date + term_month).date()
-        return target_date2
-    
-    target_year = add_month(to_date, month_term).year
-    print(target_year)
-    lei_gdp_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'NGDP_RPCH'", conn)
-    lei_inflation_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'PCPIPCH'", conn)
-    lei_export_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'TXG_RPCH'", conn)
-    logger2.info(f' {country_sign2} lei_gdp_rate:' + str(lei_gdp_rate))
-    logger2.info(f' {country_sign2} lei_inflation_rate:' + str(lei_inflation_rate))
-    logger2.info(f' {country_sign2} lei_export_rate:' + str(lei_export_rate))
-    print(lei_export_rate)
-    gdp = lei_gdp_rate[str(target_year)]
-    inflation = lei_inflation_rate[str(target_year)]
-    export = lei_export_rate[str(target_year)]
-    print(target_year)
-    print('gdp: ', gdp)
-    print('inflation: ', inflation)
-    print('export: ', export)    
-    
-    realGDP_rate = float(gdp) - float(inflation) * 0.3  # 한국에서 GDP 대비 소비비중????
-    if country_sign2 in ['KOR', 'JPN', 'CHN']: # 수출 주도형 국가: 한국, 일본, 중국
-        result = realGDP_rate + float(export) * 0.3 # GDP 대비 무역비중이 30% 가정 
-    elif country_sign2 in ['USA']:
-        result = realGDP_rate + float(export) * 0.05 # GDP 대비 무역비중이 0% 가정 
-    else:
-        result = realGDP_rate + export * 0.2 # 미국 빼고, 수출형 국가 빼고 그 나머지들.
-        
-    print(result)
 
 
-# OECD LEI 현재월값은 향후 6개월후 경제지표(반기단위 발표) 를 매월 수정본을 내고 있음. 수정한 월 + 6개월 전망으로 가정함.
-# 중기 전망으로는 사용할수 없음
-def get_country_growth_pjt_byOECD(conn, country_sign2:str, month_term:int=0):
-    
-    if month_term > 6:
-        print('month term 기간 최대 6개월까지 측정 가능 !!!')
-        return
-    
-    def add_month(to_date2:str, term_month:int):
-        target_date = pd.to_datetime(to_date2)
-        term_month = relativedelta(weeks=term_month*4)
-        target_date2 = (target_date + term_month).date()
-        return target_date2    
-    target_date = add_month(to_date, month_term)
 
-    lei = pd.read_sql_query(f"SELECT * FROM OECD WHERE LOCATION = '{country_sign2}' AND INDICATOR = 'CLI'", conn)
-    
-    result = sum((lei[-3:].Value/100)) / 3
-    strength = lei.iloc[-1].Value - lei.iloc[-3].Value
-    angle = strength / 2
-    
-    print(strength)
-    print(angle)
-
-    if (lei.iloc[-1].Value > lei.iloc[-2].Value) and (lei.iloc[-2].Value > lei.iloc[-3].Value):
-        slope = 'UP'
-    else:
-        slope = 'DOWN'
-                                                     
-    return result, slope

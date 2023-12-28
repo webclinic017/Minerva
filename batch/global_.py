@@ -720,11 +720,10 @@ class CalTrend():
             print('Country sign is not found.')
          
         result = (m2_growth * 0.6) + (asset_growth * 0.4)
-
-        logger2.info(' ')        
-        logger2.info(f'##### Market Growth: {result} %')           
-        logger2.info(f'##### M2 Growth: {m2_growth} %')
-        logger2.info(f'##### Asset Growth: {asset_growth} %')
+        
+        logger2.info(f'##### {country_sign} Market Growth: {result} %')           
+        logger2.info(f'##### {country_sign} M2 Growth: {m2_growth} %')
+        logger2.info(f'##### {country_sign} Asset Growth: {asset_growth} %')
 
         return result
 
@@ -754,6 +753,83 @@ class CalTrend():
         return 1
 
 
+    ###########################################################################   
+    '''
+    OECD LEI 현재월값은 향후 6개월이내 단기 경제지표(반기단위 발표) 발표. 
+    - 수정한 월 + 6개월 전망으로 가정함. 중기 전망으로는 사용할수 없음
+    - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
+    '''
+    def get_country_growth_pjt_byOECD(self, conn, country_sign2:str, month_term:int=6):
+        
+        if month_term > 6:
+            print('month term 기간 최대 6개월까지 측정 가능 !!!')
+            return
+        
+        def add_month(to_date2:str, term_month:int):
+            target_date = pd.to_datetime(to_date2)
+            term_month = relativedelta(weeks=term_month*4)
+            target_date2 = (target_date + term_month).date()
+            return target_date2
+
+        target_date2 = add_month(to_date, month_term)
+        logger2.info(f"##### target date: {target_date2}")   
+
+        lei = pd.read_sql_query(f"SELECT * FROM OECD WHERE LOCATION = '{country_sign2}' AND INDICATOR = 'CLI' ORDER BY TIME DESC LIMIT 3", conn)
+        logger2.info(f"leading economic index: {lei}")
+    
+        result = sum((lei[-3:].Value/100)) / 3
+        strength = lei.iloc[-1].Value - lei.iloc[-3].Value
+        angle = strength / 2        
+
+                                                        
+        return result
+
+
+    ###########################################################################    
+    '''
+    IMF LEI 를 중기 전망(month_term > 6)으로 사용함.
+    - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
+    '''
+    def get_country_growth_pjt_byIMF(self, conn, country_sign2:str, month_term:int=12):
+        
+        def add_month(to_date2:str, term_month:int):
+            target_date = pd.to_datetime(to_date2)
+            term_month = relativedelta(weeks=term_month*4)
+            target_date2 = (target_date + term_month).date()
+            return target_date2
+        
+        target_date2 = add_month(to_date, month_term)
+        logger2.info(f"##### target date: {target_date2}")
+        target_year = target_date2.year
+        lei_gdp_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'NGDP_RPCH'", conn)
+        lei_inflation_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'PCPIPCH'", conn)
+        lei_export_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'TXG_RPCH'", conn)
+        logger2.debug(f' {country_sign2} lei_gdp_rate:' + str(lei_gdp_rate))
+        logger2.debug(f' {country_sign2} lei_inflation_rate:' + str(lei_inflation_rate))
+        logger2.debug(f' {country_sign2} lei_export_rate:' + str(lei_export_rate))
+ 
+        gdp = lei_gdp_rate[str(target_year)]
+        inflation = lei_inflation_rate[str(target_year)]
+        export = lei_export_rate[str(target_year)]
+        logger2.debug(f'target year: ' + str(target_year))
+        logger2.debug(f'gdp: ' + str(gdp))
+        logger2.debug(f'inflation: ' + str(inflation))
+        logger2.debug(f'export: ' + str(export))    
+        
+        realGDP_rate = float(gdp) - float(inflation) * 0.3  # 한국에서 GDP 대비 소비비중????
+        if country_sign2 in ['KOR', 'JPN', 'CHN']: # 수출 주도형 국가: 한국, 일본, 중국
+            result = realGDP_rate + float(export) * 0.3 # GDP 대비 무역비중이 30% 가정 
+        elif country_sign2 in ['USA']:
+            result = realGDP_rate + float(export) * 0.05 # GDP 대비 무역비중이 0% 가정 
+        else:
+            result = realGDP_rate + float(export) * 0.2 # 미국 빼고, 수출형 국가 빼고 그 나머지들.
+
+        return result
+
+
+
+
+
     ###########################################################################    
     def cal_trend(self, country:str, market:str, business:str, month_term:int):
         if month_term == 0:
@@ -761,22 +837,22 @@ class CalTrend():
             m_growth = self.cal_market_growth(self.conn, country, market, month_term)
             b_growth = self.cal_busi_growth(self.conn, business, month_term)
         elif month_term <= 6:  # IMF 와 OECD 평균 전망치 적용
-            c_growth = 0
-            m_growth = 0
-            b_growth = 0
-            print('aaa')
+            if country == 'SG':
+                return None
+            country_sign2 = get_nation_iso3(country)
+            c_growth = self.get_country_growth_pjt_byOECD(self.conn, country_sign2, month_term)
+            m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+            b_growth = self.cal_busi_growth(self.conn, business, month_term)
         else : # IMF 전망치만 적용
-            country_sign2 = 'USA'
-            imf_growth = get_country_growth_pjt_byIMF(conn, country_sign2, month_term)
-            oecd_growth = get_country_growth_pjt_byOECD(conn, country_sign2, month_term)
-            print(imf_growth)
-            print(oecd_growth)
-            c_growth = (imf_growth + oecd_growth) / 2
+            country_sign2 = get_nation_iso3(country)
+            c_growth = self.get_country_growth_pjt_byIMF(self.conn, country_sign2, month_term)
+            m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+            b_growth = self.cal_busi_growth(self.conn, business, month_term)
 
         logger2.info(' ')        
-        logger2.info(f'##### Country Growth: {c_growth} %')           
-        logger2.info(f'##### Market Growth: {m_growth} %')
-        logger2.info(f'##### Business Growth: {b_growth} %')        
+        logger2.info(f'##### {country} Country Growth: {c_growth} %')           
+        logger2.info(f'##### {country} Market Growth: {m_growth} %')
+        logger2.info(f'##### {country} Business Growth: {b_growth} %')        
         
         return (c_growth + m_growth*0.3 + b_growth*0.3*0.5)
 
@@ -813,7 +889,7 @@ if __name__ == "__main__":
     for nation in nations:
         if nation in ['EU', 'BR']:  # 몇 가지 정보가 존재하지 않아 제외
             continue
-        trend = _trend.cal_trend(nation, 'stock', 'SPY', 0)     
+        trend = _trend.cal_trend(nation, 'stock', 'SPY', 4)     
         logger2.info(' ')
         logger2.info(f'##### {nation} total Trend: {trend} %')
         logger2.info(' ')
