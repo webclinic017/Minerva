@@ -461,10 +461,10 @@ if __name__ == "__main__":
     # create_Stock_Indices(conn, str_stock_indices)
 
     # 테이블내 데이터 만들어 넣기
-    # make_calendars(from_date, to_date)
-    # make_markets(**urls)
-    # make_indicators(**urls)
-    # make_stock_indices()
+    make_calendars(from_date, to_date)
+    make_markets(**urls)
+    make_indicators(**urls)
+    make_stock_indices()
     make_imf()
     make_oecd()
 
