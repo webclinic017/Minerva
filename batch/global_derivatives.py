@@ -407,35 +407,35 @@ def option_chain_today(Symbols):
             opt = df.option_chain(date)
             for x in opt:
                 try:
-                    temp = x[x['volume'] > 100.0]
+                    if symbol == '^SPX':
+                        temp = x[x['volume'] > 3000.0]
+                    else: # '^NDX'
+                        temp = x[x['volume'] > 100.0]
                 except:
                     if j == 0:
                         # logger2.info(x)
                         logger2.info('=====' + x['shortName'])
-                        logger2.info('regularMarketPrice: ' + str(x['regularMarketPrice']))
-                        logger2.info('regularMarketPreviousClose: '+ str(x['regularMarketPreviousClose']))                
-                        logger2.info('regularMarketChange: '+ str(x['regularMarketChange']))                
-                        logger2.info('regularMarketChangePercent: ' + str(x['regularMarketChangePercent']))
-                        
-                        logger2.info('regularMarketVolume: '+ str(x['regularMarketVolume']))
-                        logger2.info('averageDailyVolume10Day: '+ str(x['averageDailyVolume10Day']))                      
-                        logger2.info('averageDailyVolume3Month: '+ str(x['averageDailyVolume3Month']))    
-                        logger2.info('twoHundredDayAverage: '+ str(x['twoHundredDayAverage']))                
+                        logger2.info(f"regularMarketPrice: {x['regularMarketPrice']:,}")
+                        logger2.info(f"regularMarketPreviousClose: {x['regularMarketPreviousClose']:,}")
+                        logger2.info(f"regularMarketChange: {x['regularMarketChange']:,}")
+                        logger2.info(f"regularMarketChangePercent: {x['regularMarketChangePercent']:,}")
 
-                        logger2.info('fiftyDayAverage: '+ str(x['fiftyDayAverage']))
-                        logger2.info('fiftyDayAverageChange: '+ str(x['fiftyDayAverageChange']))                
-                        logger2.info('fiftyDayAverageChangePercent: '+ str(x['fiftyDayAverageChangePercent']))                       
-                        
-                        logger2.info('twoHundredDayAverage: '+ str(x['twoHundredDayAverage']))
-                        logger2.info('twoHundredDayAverageChange: '+ str(x['twoHundredDayAverageChange']))
-                        logger2.info('twoHundredDayAverageChangePercent: '+ str(x['twoHundredDayAverageChangePercent']))
-                        
-                        logger2.info('twoHundredDayAverageChange: '+ str(x['twoHundredDayAverageChange']))
-                        logger2.info('twoHundredDayAverageChangePercent: '+ str(x['twoHundredDayAverageChangePercent']))
+                        logger2.info(f"regularMarketVolume: {x['regularMarketVolume']:,}")
+                        logger2.info(f"averageDailyVolume10Day: {x['averageDailyVolume10Day']:,}")
+                        logger2.info(f"averageDailyVolume3Month: {x['averageDailyVolume3Month']:,}")
+                        logger2.info(f"twoHundredDayAverage: {x['twoHundredDayAverage']:,}")
+                    
+                        logger2.info(f"fiftyDayAverage: {x['fiftyDayAverage']:,}")
+                        logger2.info(f"fiftyDayAverageChange: {x['fiftyDayAverageChange']:,}")
+                        logger2.info(f"fiftyDayAverageChangePercent: {x['fiftyDayAverageChangePercent']:,}")
 
-                        logger2.info('fiftyTwoWeekRange: '+ str(x['fiftyTwoWeekRange']))
-                        logger2.info('fiftyTwoWeekLowChange: '+ str(x['fiftyTwoWeekLowChange']))
-                        logger2.info('fiftyTwoWeekHighChangePercent: '+ str(x['fiftyTwoWeekHighChangePercent']))
+                        logger2.info(f"twoHundredDayAverage: {x['twoHundredDayAverage']:,}")                        
+                        logger2.info(f"twoHundredDayAverageChange: {x['twoHundredDayAverageChange']:,}")
+                        logger2.info(f"twoHundredDayAverageChangePercent: {x['twoHundredDayAverageChangePercent']:,}")
+
+                        logger2.info(f"fiftyTwoWeekRange: {x['fiftyTwoWeekRange']}")
+                        logger2.info(f"fiftyTwoWeekLowChange: {x['fiftyTwoWeekLowChange']:,}")
+                        logger2.info(f"fiftyTwoWeekHighChangePercent: {x['fiftyTwoWeekHighChangePercent']:,}")
 
                 if len(temp) > 0:
                     # logger2.info(str(temp['contractSymbol'].values))
@@ -461,8 +461,8 @@ def option_chain_today(Symbols):
         buf_pivot_put.reset_index(level=0, drop=False, inplace=True)
         buf_pivot_put.sort_index(ascending=True, inplace=True)
 
-        buf_pivot_call.index = pd.to_datetime(buf_pivot_call.index)
-        buf_pivot_put.index = pd.to_datetime(buf_pivot_put.index)
+        # buf_pivot_call.index = pd.to_datetime(buf_pivot_call.index)
+        # buf_pivot_put.index = pd.to_datetime(buf_pivot_put.index)
 
         plt.subplot(len(Symbols), 2, i*2 + 1)
         plt.title(f"Today's Options Chain for {symbol}", fontdict={'fontsize':20, 'color':'g'})
