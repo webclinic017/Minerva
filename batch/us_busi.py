@@ -75,6 +75,9 @@ def make_plot(ticker, df, trend, tech_type, sbubplot_cnt, idx):
         # 75% 분포를 갖는 시그마: 0.6744897501960817
         h_limit = _df[tech_type].mean() + (SIGMA_75 * _df[tech_type].std())
         l_limit = _df[tech_type].mean() - (SIGMA_75 * _df[tech_type].std())
+        h_norm = _df[tech_type].mean() + _df[tech_type].std()
+        l_norm = _df[tech_type].mean() - _df[tech_type].std()
+
         try:
             _df['pivot'] = np.where((_df[tech_type] > h_limit) & (_df[tech_type].shift(1) <= h_limit), 1, 0)
             _df['pivot'] = np.where((_df[tech_type] < l_limit) & (_df[tech_type].shift() >= l_limit), -1, _df['pivot'])         
@@ -88,8 +91,11 @@ def make_plot(ticker, df, trend, tech_type, sbubplot_cnt, idx):
     plt.subplot(sbubplot_cnt, 1, idx)
     plt.plot(_df.index, _df[tech_type])
     plt.title(f"{ticker}: {tech_type} / {slope}", fontdict={'fontsize':20, 'color':'g'})    
-    plt.axhline(y=h_limit, linestyle='--', color='red',)
-    plt.axhline(y=l_limit, linestyle='--', color='red',)  
+    plt.axhline(y=h_limit, linestyle='-', lw=1.5, color='red',)
+    plt.axhline(y=l_limit, linestyle='-', lw=1.5, color='red',)  
+    plt.axhline(y=h_norm, linestyle='--', lw=0.7, color='green',)
+    plt.axhline(y=l_norm, linestyle='--', lw=0.7, color='green',)
+
     if latest_date != '9999-99-99':
         plt.plot(latest_date, _df[tech_type][latest_date], marker='o', color='red')
 
@@ -127,6 +133,35 @@ def bb(ticker, df, slope, tech_type, sbubplot_cnt, idx):
     latest_date = make_plot(ticker, df, slope, tech_type, sbubplot_cnt, idx)    
     
     return df, latest_date
+
+
+# Trend.Simple Moving Average (SMA)
+def sma(ticker, df, slope, tech_type, sbubplot_cnt, idx):
+    
+    df[tech_type] = df.ta.sma(20) - df.ta.sma(200)
+    slope = 'STAY'
+    latest_date = make_plot(ticker, df, slope, tech_type, sbubplot_cnt, idx)
+    
+    return df, latest_date
+
+
+# Momentum.Relative Strength Index (RSI)
+def rsi(ticker, df, slope, tech_type, sbubplot_cnt, idx):    
+    df[tech_type] = df.ta.rsi(14)
+    latest_date = make_plot(ticker, df, slope, tech_type, sbubplot_cnt, idx)
+    
+    return df, latest_date
+
+
+# Volume.Volume Weighted Average Price (VWAP)
+def vwap(ticker, df, slope, tech_type, sbubplot_cnt, idx):    
+    df[tech_type] = df.ta.vwap(15)
+    latest_date = make_plot(ticker, df, slope, tech_type, sbubplot_cnt, idx)
+    
+    return df, latest_date
+
+
+
 
 
 
@@ -187,6 +222,27 @@ if __name__ == "__main__":
         tech_type = 'bb'
         df, latest_date = bb(ticker, df, slope, tech_type, sbubplot_cnt, 3)
         print(latest_date)
+
+        # Trend.Simple Moving Average (SMA)
+        tech_type = 'sma'
+        df, latest_date = sma(ticker, df, slope, tech_type, sbubplot_cnt, 4)      
+        print(latest_date)
+
+        # Momentum.Relative Strength Index (RSI)
+        tech_type = 'rsi'
+        df, latest_date = rsi(ticker, df, slope, tech_type, sbubplot_cnt, 5)      
+        print(latest_date)    
+
+        # Volume.Volume Weighted Average Price (VWAP)
+        tech_type = 'vwap'
+        df, latest_date = vwap(ticker, df, slope, tech_type, sbubplot_cnt, 6)      
+        print(latest_date)
+
+
+
+
+
+
 
         plt.tight_layout()  # 서브플롯 간 간격 조절
         plt.savefig(reports_dir + f'/us_b0100_{ticker}.png')

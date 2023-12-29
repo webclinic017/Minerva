@@ -119,21 +119,7 @@ CMDT_SIGNAL = 0  # Commodity
 CASH_SIGNAL = 0
 '''
 
-# 주요 관찰 대상국 설정 ('VN' 제외, Calendar에 없음.)
-nations = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR', 'IN']
-nations2 = ['CHN', 'EUR', 'JPN', 'KOR', 'USA', 'SGP', 'DEU', 'GBR', 'IND']
-urls = {
-    'CN':'https://macrovar.com/china/',
-    'EU':'https://macrovar.com/europe/', 
-    'JP':'https://macrovar.com/japan/', 
-    'KR':'https://macrovar.com/south-korea/', 
-    'US':'https://macrovar.com/united-states/', 
-    'SG':'https://macrovar.com/singapore/', 
-    'DE':'https://macrovar.com/germany/', 
-    'BR':'https://macrovar.com/brazil/',
-    'IN':'https://macrovar.com/india/',
-    # 'VN':'https://macrovar.com/vietnam/',
-}
+
 
 # 신뢰구간
 global CONF_INTVL
@@ -148,10 +134,49 @@ global SIGMA_75, SIGMA_85
 SIGMA_75 = norm.ppf(0.75)  # 75%에 해당하는 Z-score
 SIGMA_85 = norm.ppf(0.85)  # 85%에 해당하는 Z-score
 
+# 주요 관찰 대상국 설정 ('VN' 제외, Calendar에 없음.)
+NATIONS = ['CN', 'EU', 'JP', 'KR', 'US', 'SG', 'DE', 'BR', 'IN']
+NATIONS2 = ['CHN', 'EUR', 'JPN', 'KOR', 'USA', 'SGP', 'DEU', 'GBR', 'IND']
+urls = {
+    'CN':'https://macrovar.com/china/',
+    'EU':'https://macrovar.com/europe/', 
+    'JP':'https://macrovar.com/japan/', 
+    'KR':'https://macrovar.com/south-korea/', 
+    'US':'https://macrovar.com/united-states/', 
+    'SG':'https://macrovar.com/singapore/', 
+    'DE':'https://macrovar.com/germany/', 
+    'BR':'https://macrovar.com/brazil/',
+    'IN':'https://macrovar.com/india/',
+    # 'VN':'https://macrovar.com/vietnam/',
+}
 ASSETS = ['stock', 'bond', 'commodity', 'cash']
+# 보유종목들
+MY_TICKERS = {
+    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'EU':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'JP':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'KR':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'SG':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'DE':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'BR':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'IN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'CN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+}
 
-MY_TICKERS = ['SPY', 'QQQ'] # only stocks
-WATCH_TICKERS = ['SPY', 'QQQ'] # 관심종목들
+# 관심종목들
+WATCH_TICKERS = {
+    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'EU':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'JP':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'KR':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'SG':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'DE':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'BR':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'IN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'CN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+}
 
 
 Major_ETFs = [
@@ -787,9 +812,9 @@ def get_trend(ticker):
 
 
 def get_nation_iso3(country):
-    for i, nation in enumerate(nations):
+    for i, nation in enumerate(NATIONS):
         if country == nation:
-            return nations2[i]
+            return NATIONS2[i]
 
 
 

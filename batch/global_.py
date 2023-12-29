@@ -20,7 +20,9 @@ from settings import *
 
 import requests
 import yfinance as yf
+import pandas_ta as ta
 from bs4 import BeautifulSoup as bs
+
 
 # logging
 logger.warning(sys.argv[0])
@@ -273,16 +275,14 @@ class CalTrend():
     '''
     1) cal_trend
       - cal_country_growth
+        . get_GDP_rate
+        . get_inflation
+        . get_export
       - cal_market_growth
+        . M2(증가량 배수)
+        . 자산시장별 growth
       - cal_busi_growth
-    2) cal_country_growth
-      - get_GDP_rate
-      - get_inflation
-      - get_export
-    3) cal_market_growth
-      - 
-    4) cal_busi_growth
-      - 
+        . ETF growth
     '''
 
     def __init__(self):
@@ -482,17 +482,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset')        
             
@@ -514,17 +514,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset')        
 
@@ -540,17 +540,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset')        
 
@@ -572,17 +572,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset')       
 
@@ -598,17 +598,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset') 
 
@@ -624,17 +624,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset') 
 
@@ -650,17 +650,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset') 
 
@@ -676,17 +676,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset') 
 
@@ -702,17 +702,17 @@ class CalTrend():
                 
             elif market_name == 'bond':
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                growth = (y10[0] - y10[-1]) / len(y10) 
-                print(growth) 
+                asset_growth = (y10[0] - y10[-1]) / len(y10) 
+                print(asset_growth) 
                 
             elif market_name == 'commodity':
                 gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                growth = (gold[0] - gold[-1]) / len(gold) 
-                print(growth)
+                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                print(asset_growth)
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                growth = (currency[0] - currency[-1]) / len(currency) 
-                print(growth)
+                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                print(asset_growth)
             else:
                 print(f'Error: {country_sign}  {market_name} Not found Asset')                 
 
@@ -739,18 +739,25 @@ class CalTrend():
         - cn:  
         month_term: 0, 3, 12, 36 개월후 예측치 산정
     '''
-    def cal_busi_growth(self, conn, ticker:str, month_term:int):
-        '''
-            business: 각 섹터별 ETF
-            - 특별히 업종을 주도하는 섹터만 집중 투자하는 경우만 활용
-            - US: spy/qqq, shy/tlt/tmf, gld/bci, o/vnq, dollar
-            - kr: kodex200/tiger200it, kodex국고채3년/kosef국고채10년/kbstar kis국고채30년enhanced, 금현물, 맥쿼리인프라, 원
-            - jp: 노무라닛케이225etf, yen
-            - eu:
-            - cn:  
-            month_term: 0, 3, 12, 36 개월후 예측치 산정
-        '''
-        return 1
+    def cal_busi_growth(self, conn, ticker:str, month_term:int=0):
+        df = pd.DataFrame() # Empty DataFrame
+        try:
+            df = pd.read_csv(f"batch/reports/data/{ticker}.csv", sep=",")
+            # VWAP requires the DataFrame index to be a DatetimeIndex.
+            # Replace "datetime" with the appropriate column from your DataFrame
+            df.set_index(pd.DatetimeIndex(df["date"]), inplace=True)
+            df = df[df['date'] >= from_date_ST2]            
+        except:
+            ticker = yf.Ticker(ticker)
+            df = ticker.history(start=from_date_MT2)
+            df.set_index(pd.DatetimeIndex(df.index), inplace=True)
+            df = df[df.index >= from_date_ST2]                
+
+        # Calculate Returns and append to the df DataFrame
+        df.ta.percent_return(cumulative=True, append=True)
+        result = df['CUMPCTRET_1'][-1] * 100
+
+        return result
 
 
     ###########################################################################   
@@ -832,29 +839,30 @@ class CalTrend():
 
     ###########################################################################    
     def cal_trend(self, country:str, market:str, business:str, month_term:int):
+        ticker = business
         if month_term == 0:
             c_growth = self.cal_country_growth(self.conn, country, month_term)
             m_growth = self.cal_market_growth(self.conn, country, market, month_term)
-            b_growth = self.cal_busi_growth(self.conn, business, month_term)
+            b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
         elif month_term <= 6:  # IMF 와 OECD 평균 전망치 적용
             if country == 'SG':
                 return None
             country_sign2 = get_nation_iso3(country)
             c_growth = self.get_country_growth_pjt_byOECD(self.conn, country_sign2, month_term)
             m_growth = self.cal_market_growth(self.conn, country, market, month_term)
-            b_growth = self.cal_busi_growth(self.conn, business, month_term)
+            b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
         else : # IMF 전망치만 적용
             country_sign2 = get_nation_iso3(country)
             c_growth = self.get_country_growth_pjt_byIMF(self.conn, country_sign2, month_term)
             m_growth = self.cal_market_growth(self.conn, country, market, month_term)
-            b_growth = self.cal_busi_growth(self.conn, business, month_term)
+            b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
 
         logger2.info(' ')        
         logger2.info(f'##### {country} Country Growth: {c_growth} %')           
         logger2.info(f'##### {country} Market Growth: {m_growth} %')
         logger2.info(f'##### {country} Business Growth: {b_growth} %')        
         
-        return (c_growth + m_growth*0.3 + b_growth*0.3*0.5)
+        return (c_growth + m_growth*0.3 + b_growth*0.3*0.7)
 
 
 '''
@@ -886,10 +894,23 @@ if __name__ == "__main__":
     '''
     _trend = CalTrend()
 
-    for nation in nations:
+    for nation, assets in WATCH_TICKERS.items():
+
         if nation in ['EU', 'BR']:  # 몇 가지 정보가 존재하지 않아 제외
-            continue
-        trend = _trend.cal_trend(nation, 'stock', 'SPY', 4)     
-        logger2.info(' ')
-        logger2.info(f'##### {nation} total Trend: {trend} %')
-        logger2.info(' ')
+            continue        
+        for asset_grp in assets:
+
+            for asset, tickers in asset_grp.items():
+
+                for ticker in tickers:
+                    print(nation)
+                    print(asset)                    
+                    print(ticker)
+                    
+                    if ticker == '':
+                        continue
+
+                    trend = _trend.cal_trend(nation, asset, ticker, 0)     
+                    logger2.info(' ')
+                    logger2.info(f'##### {nation} / {asset} / {ticker} total Trend: {trend} %')
+                    logger2.info(' ')
