@@ -102,19 +102,15 @@ COT_SYMBOLS = [
 1.1.5 CN
 '''
 def COT_analyse():
-    buf = get_cot_analysis_by_dates()
-    df = buf[buf['sector']  == 'INDICES']
-    df = pd.concat([df, buf[buf['sector']  == 'CURRENCIES']])
-    df = pd.concat([df, buf[buf['sector']  == 'ENERGIES']])
-    df = pd.concat([df, buf[buf['sector']  == 'FINANCIALS']])
-
+    df = get_cot_analysis_by_dates()
     df = df.sort_values(['symbol','date'], ascending=False).reset_index(drop=True)
-    events = df['symbol'].unique()
     # 전체 그림의 크기를 설정
-    plt.figure(figsize=(10, 3*len(events)))
-    for i, event in enumerate(events):
-        result = df[df['symbol'].str.contains(event, case=False, na=False)]
+    plt.figure(figsize=(10, 4*len(COT_SYMBOLS)))
+    for i, cot in enumerate(COT_SYMBOLS):
+        result = df[df['symbol'].str.contains(cot['symbol'], case=False, na=False)]
         result['date'] = result['date'].apply(parse_date)
+        if result.empty:
+            continue
         name = result.iloc[0]['name']
         situation = result.iloc[0]['marketSituation']
         sentiment = result.iloc[0]['marketSentiment']
@@ -125,7 +121,7 @@ def COT_analyse():
             reversalTrend = 'Reversal Trend YES'
         else:
             reversalTrend = 'Keep Staying'
-        plt.subplot(len(events), 1, i + 1)
+        plt.subplot(len(COT_SYMBOLS), 1, i + 1)
         plt.title(name+': '+str(previousNetPosition)+ ' -> ' +str(netPostion)+' / '+situation+' / '+sentiment+' / '+reversalTrend)
         plt.plot(result['date'], result['currentLongMarketSituation'], color='royalblue', label='current long')
         plt.plot(result['date'], result['currentShortMarketSituation'], color='red', label='current short')
@@ -506,29 +502,29 @@ if __name__ == "__main__":
     COT_report()
 
 
-    '''
-    2. COT BB Strategy 분석
-    '''
-    oct_bb = OTCBBstg()
+    # '''
+    # 2. COT BB Strategy 분석
+    # '''
+    # oct_bb = OTCBBstg()
 
-    for cot in COT_SYMBOLS:
-        symbol = cot['symbol']
-        ticker = cot['ticker']
-        name = cot['name']
-        oct_bb.set_cot_file(symbol)
+    # for cot in COT_SYMBOLS:
+    #     symbol = cot['symbol']
+    #     ticker = cot['ticker']
+    #     name = cot['name']
+    #     oct_bb.set_cot_file(symbol)
 
-        logger2.info(f''.center(60, ' '))        
-        logger2.info(f' {name} '.center(60, '#'))
-        oct_bb.cot_bb_stg_report(symbol, ticker)
+    #     logger2.info(f''.center(60, ' '))        
+    #     logger2.info(f' {name} '.center(60, '#'))
+    #     oct_bb.cot_bb_stg_report(symbol, ticker)
 
-    '''
-    3. Option Chain
-    http://theautomatic.net/2019/04/17/how-to-get-options-data-with-python/
-    '''
+    # '''
+    # 3. Option Chain
+    # http://theautomatic.net/2019/04/17/how-to-get-options-data-with-python/
+    # '''
 
+    # # option_chain(Symbols)
     # option_chain(Symbols)
-    option_chain(Symbols)
-    option_chain_today(Symbols)
+    # option_chain_today(Symbols)
 
 
 

@@ -41,13 +41,6 @@ logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 gtta = {'VNQ':20, 'GLD':10, 'DBC':10, 'IEF':5, 'LQD':5, 'BNDX':5, 'TLT':5, \
         'EEM':10, 'VEA':10, 'DWAS':5, 'SEIM':5, 'DFSV':5, 'DFLV':5}
 
-
-# Commitment of Traders (COT) report 참조
-COT_TICKERS = ['SPY', 'QQQ', 'UUP', 'FXY', 'TLT', 'VIXY', 'BCI']
-COT_SYMBOLS = ['ES', 'NQ', 'VI', 'DX', 'BA', 'J6', 'ZB', 'ZN', 'SQ', 'CL', 'NG', 'GC', ]
-# S&P 500 E-Mini (ES), Nasdaq 100 E-Mini (NQ), S&P 500 VIX (VI), US Dollar Index (DX), Bitcoin Micro (BA), Japanese Yen (J6), 
-# 30-Year T-Bond (ZB), 10-Year T-Note (ZN), 3-Month SOFR (SQ), Crude Oil (CL), Natural Gas (NG), Gold (GC)
-
 TIMEFRAMES = ['1min', '1hour', '1day']
 
 def find_5days_ago():
@@ -1161,10 +1154,6 @@ if __name__ == "__main__":
     for ticker in WATCH_TICKERS:
         gaSellHoldBuy_strategy(ticker)
         
-'''
-    for symbol in COT_SYMBOLS:  # financialmodeling.com 에서 해당 API 에 대한 비용을 요구하고 있음.
-        cot_report_on(symbol)   # 유로화후 적용 예정 --> 유료화 적용완료 20231210??? 
-'''
 
     # 2. Bonds
     # get_yields()
