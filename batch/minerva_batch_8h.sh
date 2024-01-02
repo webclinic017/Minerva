@@ -2,6 +2,8 @@
 source ~/anaconda3/bin/activate minerenv #correct
 cd /home/jarvis/codes/Minerva/ #correct
 
+mv ./batch/report/reports.log ./batch/report/reports.log.old
+
 cp ./database/Economics.db ./database/Economics.db.backup
 python ./batch/economics_db.py
 
@@ -16,5 +18,7 @@ python ./batch/de_ecos.py
 python ./batch/us_ecos.py
 python ./batch/us_marks.py
 python ./batch/global_derivatives.py
+
+python ./batch/email.py
 
 conda deactivate
