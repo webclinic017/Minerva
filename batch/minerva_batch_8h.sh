@@ -12,7 +12,7 @@ python ./batch/kr_ecos.py
 python ./batch/kr_marks.py
 python ./batch/jp_ecos.py
 python ./batch/in_ecos.py
-python ./batch/global.py
+python ./batch/global_.py
 python ./batch/cn_ecos.py
 python ./batch/de_ecos.py
 python ./batch/us_ecos.py
