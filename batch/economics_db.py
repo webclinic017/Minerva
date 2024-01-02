@@ -10,14 +10,16 @@
 import sys, os
 utils_dir = os.getcwd() + '/batch/utils'
 sys.path.append(utils_dir)
+
 from settings import *
-from global_ import *
 
 import re
 import requests
 from bs4 import BeautifulSoup as bs
 import yfinance as yf
 import os
+import webbrowser
+import shutil
 
 
 '''
@@ -169,9 +171,7 @@ def write_table(table_name, data):
     elif table_name == 'Indicators':
         data.dropna(subset=['Country', 'Indicator', 'Date'], inplace=True)
     elif table_name == 'Stock_Indices':
-        data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)
-    elif table_name == 'IMF':
-        data.dropna(subset=['Date', 'WEO Country Code', 'ISO'], inplace=True)         
+        data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)       
     else:
         logger.error('Exception: Table Name Not found.')
 
@@ -191,11 +191,8 @@ def write_table(table_name, data):
                 _key = f"Country = '{buf['Country'][i]}' and Indicator = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
             elif table_name == 'Stock_Indices':
                 _key = f"symbol = '{buf['symbol'][i]}' and name = '{buf['name'][i]}' and timestamp = '{buf['timestamp'][i]}'"
-            elif table_name == 'IMF':
-                _key = f"Date = '{buf['Date'][i]}' and 'WEO Country Code' = '{buf['WEO Country Code'][i]}' and ISO = '{buf['ISO'][i]}'"                
             else:
                 logger.error('Exception: Table Name Not found 2.')            
-
 
             # print(f'delete from {table_name} where {_key}')  # DEBUG
             cur.execute(f'delete from {table_name} where {_key}')
@@ -340,21 +337,203 @@ def make_stock_indices(**kwargs):
 
 '''
 5. IMF Data 구성
-- IMF 메일 오면 사이트 들어가서 아래 디렉토리로 다운로드 받고, 마지막줄 지우고 파일명 IMF.csv 로 만들고 작업들어가게 만듬
+https://www.imf.org/en/Publications/SPROLLS/world-economic-outlook-databases#sort=%40imfdate%20descending 사이트에서 
+최신 업데이트 정보목록을 선택하여 들어간후, Entire Dataset 버튼 > By Country 버튼 누르면 다운로드 완료.
+Download 사이트에서 해당 파일의 이름을 IMF_outlook.xls 로 변경후 batch/reports/data/으로 이동한후 DB 업로드 프로그램 수행
+- 20240103 현재 https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx 파일이 최신임
 '''
-def make_imf():
+def make_imf_outlook():
+
     table_name = 'IMF'
-    df = pd.read_csv('./batch/reports/data/IMF.csv')
-    df = df.reset_index(drop=True)
-    write_dump_table(table_name, df)
+
+    url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
+    if webbrowser.open(url):
+        download_directory = "/Users/jarvis/Downloads"
+        destination_directory = "./batch/reports/data"
+
+        new_file_name = "IMF.xls"  # 원하는 새로운 파일 이름으로 수정
+
+        # 이동 대상 파일의 경로
+        source_file_path = os.path.join(download_directory, "WEOOct2023all.xls")  # 원본 파일 이름으로 수정
+
+        # 이동할 디렉토리가 없으면 생성
+        os.makedirs(destination_directory, exist_ok=True)
+
+        # 파일 이동 및 이름 변경
+        destination_file_path = os.path.join(destination_directory, new_file_name)
+        shutil.move(source_file_path, destination_file_path)
+
+        logger2.info(f"File moved successfully to: {destination_file_path}")
+
+        df = pd.read_csv('./batch/reports/data/IMF.csv')
+        df = df.reset_index(drop=True)
+        write_dump_table(table_name, df)
 
 
 '''
 6. OECD Data 구성
-- OECD 사이트 들어가서 아래 디렉토리로 다운로드 받고, OECD.csv 로 만들고 작업들어가게 만듬
+- ref: https://medium.com/@akshaybagal/oecd-stats-website-your-go-to-for-comprehensive-statistics-datasets-on-oecd-countries-2ae04e4aa044
+- OECD 아래 사이트 들어가서 > Export > Developer API > 'Generate API Queries' 버튼 눌러서 나온 url 으로 구성, # 2025년 까지를 2030년으로 길게 늘려둠. ^^
+  https://stats.oecd.org/Index.aspx?DataSetCode=EO
+- id_to_name_mappings:
+{'Country': {'AUS': 'Australia',
+  'AUT': 'Austria',
+  'BEL': 'Belgium',
+  'CAN': 'Canada',
+  'CZE': 'Czechia',
+  'DNK': 'Denmark',
+  'FIN': 'Finland',
+  'FRA': 'France',
+  'DEU': 'Germany',
+  'GRC': 'Greece',
+  'HUN': 'Hungary',
+  'ISL': 'Iceland',
+  'IRL': 'Ireland',
+  'ITA': 'Italy',
+  'JPN': 'Japan',
+  'KOR': 'Korea',
+  'LUX': 'Luxembourg',
+  'MEX': 'Mexico',
+  'NLD': 'Netherlands',
+  'NZL': 'New Zealand',
+  'NOR': 'Norway',
+  'POL': 'Poland',
+  'PRT': 'Portugal',
+  'SVK': 'Slovak Republic',
+  'ESP': 'Spain',
+  'SWE': 'Sweden',
+  'CHE': 'Switzerland',
+  'TUR': 'Türkiye',
+  'GBR': 'United Kingdom',
+  'USA': 'United States',
+  'OTO': 'OECD - Total',
+  'BRA': 'Brazil',
+  'CHL': 'Chile',
+  'CHN': "China (People's Republic of)",
+  'EST': 'Estonia',
+  'IND': 'India',
+  'IDN': 'Indonesia',
+  'ISR': 'Israel',
+  'RUS': 'Russia',
+  'SVN': 'Slovenia',
+  'ZAF': 'South Africa',
+  'WLD': 'World',
+  'DAE': 'Dynamic Asian Economies',
+  'OOP': 'Other oil producers',
+  'COL': 'Colombia',
+  'LVA': 'Latvia',
+  'NMEC': 'Non-OECD Economies',
+  'LTU': 'Lithuania',
+  'CRI': 'Costa Rica',
+  'ARG': 'Argentina',
+  'ROU': 'Romania',
+  'BGR': 'Bulgaria',
+  'HRV': 'Croatia',
+  'PER': 'Peru'},
+ 'Variable': {'CBGDPR': 'Current account balance as a percentage of GDP',
+  'EXCHUD': 'Exchange rate, national currency per USD',
+  'MGSVD': 'Imports of goods and services, volume in USD (national accounts basis)',
+  'TGSVD': 'Goods and services trade, volume in USD',
+  'XGSVD': 'Exports of goods and services, volume in USD (national accounts basis)',
+  'NLGQ': 'General government net lending as a percentage of GDP',
+  'GGFLQ': 'General government gross financial liabilities as a percentage of GDP',
+  'GDP': 'Gross domestic product, nominal value, market prices',
+  'GDPV': 'Gross domestic product, volume, market prices',
+  'ITV': 'Gross fixed capital formation, total, volume',
+  'CGV': 'Government final consumption expenditure, volume',
+  'CPV': 'Private final consumption expenditure, volume',
+  'XGSV_ANNPCT': 'Exports of goods and services, volume, growth (national accounts basis)',
+  'MGSV_ANNPCT': 'Imports of goods and services, volume, growth (national accounts basis)',
+  'PGDP_ANNPCT': 'Gross domestic product, market prices, deflator, growth',
+  'PCORE_YTYPCT': 'Core inflation',
+  'CPV_ANNPCT': 'Private final consumption expenditure, volume, growth',
+  'CPI_YTYPCT': 'Headline inflation',
+  'CGV_ANNPCT': 'Government final consumption expenditure, volume, growth',
+  'ITV_ANNPCT': 'Gross fixed capital formation, total, volume, growth',
+  'GDPV_ANNPCT': 'Gross domestic product, volume, growth',
+  'CPI': 'Consumer price index',
+  'PXGS': 'Exports of goods and services, deflator (national accounts basis)',
+  'PMGS': 'Imports of goods and services, deflator (national accounts basis)',
+  'PGDP': 'Gross domestic product, market prices, deflator',
+  'UNR': 'Unemployment rate',
+  'ET': 'Total employment (labour force survey basis)',
+  'LF': 'Labour force',
+  'IRL': 'Long-term interest rate on government bonds',
+  'IRS': 'Short-term interest rate',
+  'GGFLMQ': 'Gross public debt, Maastricht criterion as a percentage of GDP',
+  'PCOREH_YTYPCT': 'Harmonised core inflation',
+  'CPIH_YTYPCT': 'Harmonised headline inflation',
+  'CPIH': 'Consumer price index, harmonised',
+  'WPBRENT': 'Crude oil price, FOB, USD per barrel, spot Brent',
+  'PCOREH': 'Core inflation index, harmonised',
+  'MGSV': 'Imports of goods and services, volume (national accounts basis)',
+  'PCORE': 'Core inflation index',
+  'XGSV': 'Exports of goods and services, volume (national accounts basis)',
+  'CQ_FBGSV': 'Net exports, contributions to changes in real GDP',
+  'GDPVD': 'Gross domestic product, volume in USD, at constant purchasing power parities',
+  'GDP_ANNPCT': 'Gross domestic product, nominal value, growth',
+  'EXCH': 'Exchange rate, USD per national currency',
+  'YDH': 'Net disposable income of households and non-profit institutions serving households',
+  'NLGXQ': 'General government primary balance as a percentage of GDP',
+  'PPP': 'Purchasing power parity, national currency per USD',
+  'CQ_ISKV': 'Change in inventories, contributions to changes in real GDP',
+  'ITISKV': 'Gross capital formation, total, volume',
+  'GFAR': 'General government gross financial assets as a percentage of GDP',
+  'YDH_G': 'Gross disposable income of household and non-profit institutions serving households',
+  'GDPML': 'Mainland gross domestic product , nominal value, market prices',
+  'GDPMLV': 'Mainland gross domestic product, volume, market prices',
+  'GDPV_USD': 'Gross domestic product, volume in USD, constant exchange rates'},
+ 'Frequency': {'A': 'Annual'},
+ 'Time': {'2016': '2016',
+  '2017': '2017',
+  '2018': '2018',
+  '2019': '2019',
+  '2020': '2020',
+  '2021': '2021',
+  '2022': '2022',
+  '2023': '2023',
+  '2024': '2024',
+  '2025': '2025'}}
 '''
-def make_oecd():
+def make_oecd_outlook():
+
     table_name = 'OECD'
+
+    url = "https://stats.oecd.org/SDMX-JSON/data/EO/AUS+AUT+BEL+CAN+CHL+COL+CRI+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+OTO+WLD+NMEC+ARG+BRA+BGR+CHN+HRV+IND+IDN+PER+ROU+RUS+ZAF+DAE+OOP.EXT+CBGDPR+EXCHUD+EXCH+XGSVD+TGSVD+MGSVD+GOV+GFAR+GGFLQ+NLGQ+NLGXQ+GGFLMQ+EXP+CQ_ISKV+XGSV+CGV+ITISKV+GDP+GDPVD+GDPV_USD+GDPV+ITV+MGSV+GDPML+GDPMLV+CQ_FBGSV+CPV+SEL+PCORE_YTYPCT+XGSV_ANNPCT+CGV_ANNPCT+PGDP_ANNPCT+GDP_ANNPCT+GDPV_ANNPCT+ITV_ANNPCT+PCOREH_YTYPCT+CPIH_YTYPCT+CPI_YTYPCT+MGSV_ANNPCT+CPV_ANNPCT+HOU+YDH_G+YDH+PRI+CPI+CPIH+PCORE+PCOREH+PXGS+PGDP+PMGS+PPP+LAB+LF+ET+UNR+MON+IRL+IRS+OIL+WPBRENT.A/all?startTime=2016&endTime=2030&dimensionAtObservation=allDimensions"
+    response = requests.request("GET", url)
+
+    data = response.json()
+    data_values = data['dataSets'][0]['observations']
+    dimensions = data['structure']['dimensions']['observation']
+
+    id_to_name_mappings = {
+        dim['name']: {item['id']: item['name'] for item in dim['values']}
+        for dim in dimensions
+    }
+
+    dimension_values = [dim['values'] for dim in dimensions]
+
+    def get_id_from_index(dim_index, index):
+        return dimension_values[dim_index][index]['id']
+
+    def map_id_to_name(dim_name, id):
+        return id_to_name_mappings[dim_name].get(id, id)
+
+    rows = []
+    for key, value in data_values.items():
+        indices = key.split(':')  # Split keys into separate dimension indices
+        country = map_id_to_name('Country', get_id_from_index(0, int(indices[0])))
+        variable = map_id_to_name('Variable', get_id_from_index(1, int(indices[1])))
+        frequency = map_id_to_name('Frequency', get_id_from_index(2, int(indices[2])))  # Corrected typo here
+        time = map_id_to_name('Time', get_id_from_index(3, int(indices[3])))
+        data_value = value[0]  # Extract the data value
+        rows.append([country, variable, frequency, time, data_value])  # Append the row to the list of rows
+
+    df = pd.DataFrame(rows, columns=['Country', 'Variable', 'Frequency', 'Time', 'Value'])
+    write_dump_table(table_name, df)
+
+    return df
+    
     df = pd.read_csv('./batch/reports/data/OECD.csv')
     df = df.reset_index(drop=True)
     write_dump_table(table_name, df)
@@ -454,22 +633,28 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    # # 테이블 생성 (최초 생성시)
-    # create_Calendars(conn, str_calendars)
-    # create_Markets(conn, str_markets)
-    # create_Indicators(conn, str_indicators)
-    # create_Stock_Indices(conn, str_stock_indices)
+    '''
+    # 테이블 생성 (최초 생성시만 Active 해서 사용 !!!)
+    create_Calendars(conn, str_calendars)
+    create_Markets(conn, str_markets)
+    create_Indicators(conn, str_indicators)
+    create_Stock_Indices(conn, str_stock_indices)
+    '''
 
+    '''
     # 테이블내 데이터 만들어 넣기
+    '''
     make_calendars(from_date, to_date)
     make_markets(**urls)
     make_indicators(**urls)
     make_stock_indices()
-    make_imf()
-    make_oecd()
+    make_imf_outlook()
+    make_oecd_outlook()
 
 
+    '''
     # 테이블 저장공간 키구성순을 위한 재구성작업
+    '''
     reorg_tables(conn)
 
 
