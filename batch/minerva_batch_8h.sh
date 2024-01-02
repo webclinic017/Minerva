@@ -19,6 +19,6 @@ python ./batch/us_ecos.py
 python ./batch/us_marks.py
 python ./batch/global_derivatives.py
 
-python ./batch/email.py
+python ./batch/email_.py
 
 conda deactivate
