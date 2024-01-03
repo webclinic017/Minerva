@@ -26,7 +26,7 @@ import shutil
 공통 영역
 '''
 # logging
-logger.warning(sys.argv[0])
+logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 
@@ -194,8 +194,8 @@ def write_table(table_name, data):
             else:
                 logger.error('Exception: Table Name Not found 2.')            
 
-            # print(f'delete from {table_name} where {_key}')  # DEBUG
-            cur.execute(f'delete from {table_name} where {_key}')
+            print(f'delete from {table_name} where {_key}')  # DEBUG
+            cur.execute(f"delete from {table_name} where {_key}")
             cur.execute('commit')
             delete_count += 1
 
@@ -280,12 +280,16 @@ def make_calendars(from_date, to_date):
     cals = pd.DataFrame()
     for i in range(1):  # 최초 구성시는 20? 이후 매일 3회 배치작업으로 구성하고 있으니 1바퀴만 돌면 괜찮을듯.
         buf = get_calendar(from_date=from_date, to_date=to_date)
+        buf = buf[buf['event'] != "New Year's Day"] # New Year's Day 제거, 's 로 syntax error 유발
+        buf = buf[buf['event'] != "New Year's Eve"] # New Year's Eve 제거, 's 로 syntax error 유발 
+        print(buf)
         for i in range(len(NATIONS)):
             buf2 = buf[buf['country'] == NATIONS[i]]
             cals = pd.concat([cals, buf2], axis=0)
         to_date = pd.to_datetime(from_date)
         from_date = (to_date - term_days).date()
         to_date = to_date.date()
+
 
     logger2.info(f'##### 최근 1주일동안의 Calendars 표 ####')
     logger2.info(cals)

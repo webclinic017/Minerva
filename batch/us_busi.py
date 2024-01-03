@@ -27,7 +27,7 @@ from scipy import signal
 0. 공통영역 설정
 '''
 # logging
-# logger.warning(sys.argv[0])
+# logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 # logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 ta_list = ['mfi', 'ppo', 'bb', 'sma', 'rsi', 'vwap']

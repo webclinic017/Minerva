@@ -2,7 +2,9 @@
 Prgram 명: Glance of Global countries
 Author: jeongmin Kang
 Mail: jarvisNim@gmail.com
-글로벌 경쟁국들의 투자를 위한 경제지표(거시/미시) 부문 엿보기
+글로벌 경쟁국들의 투자를 위한 경제지표(거시/미시) 부문 에측 전망치(Outlook) 제공
+- OECD
+- IMF
 * investing.com/calendar 포함
 History
 20231111  Create
@@ -25,7 +27,7 @@ from bs4 import BeautifulSoup as bs
 
 
 # logging
-logger.warning(sys.argv[0])
+logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # 3개월단위로 순차적으로 읽어오는 경우의 시작/종료 일자 셋팅
@@ -34,11 +36,57 @@ three_month_days = relativedelta(weeks=12)
 from_date = (to_date_2 - three_month_days).date()
 to_date_2 = to_date_2.date()
 
+database = 'Economics.db'
+db_file = 'database/' + database
+conn, engine = create_connection(db_file)
+
 
 '''
 1. Economics Area
 1.1 Leading Indicators OECD: CLI (Composite leading indicator)
 '''
+
+def eco_oecd():
+
+    # Economics database 에서 쿼리후 시작하는 루틴
+    M_table = 'OECD'
+    # M_countries = "('OECD - Total', 'United States', 'Korea', 'Japan', 'China (People's Republic of)', 'Germany')"
+    M_countries = ['United States', 'Korea', 'Japan', 'Germany', 'China', 'OECD - Total']
+
+    for country in M_countries:
+
+        M_query = f"SELECT * from {M_table} WHERE Country like '{country}%' ORDER by Variable ASC, Time ASC"
+
+        try:
+            df = pd.read_sql_query(M_query, conn)
+            df = df.sort_values(['Variable', 'Time'], ascending=True).reset_index(drop=True)
+            # logger2.info(df.head(5))
+        except Exception as e:
+            logger.error('Exception: {}'.format(e))
+
+        events = df['Variable'].unique()
+
+        # 전체 그림의 크기를 설정
+        plt.figure(figsize=(16, 3*len(events)))
+        for i, event in enumerate(events):
+            result = df[df['Variable'] == event]        
+            if result.empty:
+                continue
+            result.dropna()
+            country = result.iloc[0]['Country']
+            result['Time'] = pd.to_datetime(result['Time']).dt.year
+            result['Variable'] = result['Variable']
+            plt.subplot(len(events), 1, i + 1)
+            plt.plot(result['Time'], result['Value'])
+            plt.title(f"{country}: {event}")
+            plt.xlabel('Time')
+            plt.ylabel('Value')
+
+        plt.tight_layout()  # 서브플롯 간 간격 조절
+        plt.savefig(reports_dir + f'/global_0100_{country}.png')
+
+    return df
+
 
 def cli():
     CLI_OECD_Total = fred.get_series(series_id='OECDLOLITONOSTSAM', observation_start=from_date_MT)
@@ -54,7 +102,7 @@ def cli():
     logger2.info('CLI_Usa: \n' + str(CLI_Usa[-3:]))
     logger2.info('CLI_Korea: \n' + str(CLI_Korea[-3:]))
     logger2.info('CLI_China: \n' + str(CLI_China[-3:]))
-    logger2.info('CLI_Germany: \n' + str(CLI_Germany[-3:]))  
+    logger2.info('CLI_Germany: \n' + str(CLI_Germany[-3:]))
 
     plt.figure(figsize=(15,6))
     plt.title(f"Leading indicators: CLI (Composite leading indicator)", fontdict={'fontsize':20, 'color':'g'})
@@ -837,7 +885,11 @@ class CalTrend():
 
 
 
-    ###########################################################################    
+    ###########################################################################
+    '''
+    OECD 는 2023년말 기준으로 2개년치 2024, 2025년 전망치 제공
+    IMF 는 2023년말 기준으로 5개년치 2024, 2025, 2026, 2027, 2028년 전망치 제공
+    '''
     def cal_trend(self, country:str, market:str, business:str, month_term:int):
         ticker = business
         if month_term == 0:
@@ -874,6 +926,7 @@ if __name__ == "__main__":
     '''
     1. Economic Area
     '''
+    eco_oecd()
     # cli()
     # m1()
     # cpi()
@@ -892,25 +945,25 @@ if __name__ == "__main__":
     4. Calculate Trend (Class)
 
     '''
-    _trend = CalTrend()
+    # _trend = CalTrend()
 
-    for nation, assets in WATCH_TICKERS.items():
+    # for nation, assets in WATCH_TICKERS.items():
 
-        if nation in ['EU', 'BR']:  # 몇 가지 정보가 존재하지 않아 제외
-            continue        
-        for asset_grp in assets:
+    #     if nation in ['EU', 'BR']:  # 몇 가지 정보가 존재하지 않아 제외
+    #         continue        
+    #     for asset_grp in assets:
 
-            for asset, tickers in asset_grp.items():
+    #         for asset, tickers in asset_grp.items():
 
-                for ticker in tickers:
-                    print(nation)
-                    print(asset)                    
-                    print(ticker)
+    #             for ticker in tickers:
+    #                 print(nation)
+    #                 print(asset)                    
+    #                 print(ticker)
                     
-                    if ticker == '':
-                        continue
+    #                 if ticker == '':
+    #                     continue
 
-                    trend = _trend.cal_trend(nation, asset, ticker, 0)     
-                    logger2.info(' ')
-                    logger2.info(f'##### {nation} / {asset} / {ticker} total Trend: {trend} %')
-                    logger2.info(' ')
+    #                 trend = _trend.cal_trend(nation, asset, ticker, 0)     
+    #                 logger2.info(' ')
+    #                 logger2.info(f'##### {nation} / {asset} / {ticker} total Trend: {trend} %')
+    #                 logger2.info(' ')

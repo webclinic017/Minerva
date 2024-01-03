@@ -3,8 +3,8 @@ source ~/anaconda3/bin/activate minerenv #correct
 cd /home/jarvis/codes/Minerva/ #correct
 
 mv ./batch/reports/reports.log ./batch/reports/reports.log.old
-
 cp ./database/Economics.db ./database/Economics.db.backup
+
 python ./batch/economics_db.py
 
 python ./batch/sentiment.py

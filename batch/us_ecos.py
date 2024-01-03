@@ -23,7 +23,7 @@ import yfinance as yf
 0. 공통영역 설정
 '''
 # logging
-logger.warning(sys.argv[0])
+logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # 3개월단위로 순차적으로 읽어오는 경우의 시작/종료 일자 셋팅
@@ -72,7 +72,7 @@ def eco_calendars(from_date, to_date):
         cals = pd.read_sql_query(M_query, conn)
         logger2.info(cals[-30:])
     except Exception as e:
-        print('Exception: {}'.format(e))
+        logger.error('Exception: {}'.format(e))
 
     events = ['EIA Distillate Fuel Production Change ', 'Retail Sales Ex Autos MoM ', \
             'U-6 Unemployment Rate ', 'Real Consumer Spending QoQ ', '10-Year TIPS Auction', \

@@ -33,7 +33,7 @@ from tensorflow.keras.layers import Dense
 from math import sqrt, exp
 
 # logging
-logger.warning(sys.argv[0])
+logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 '''

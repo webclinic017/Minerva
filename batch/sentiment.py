@@ -19,7 +19,7 @@ sys.path.append(utils_dir)
 from settings import *
 
 # logging
-logger.warning(sys.argv[0])
+logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # local import
