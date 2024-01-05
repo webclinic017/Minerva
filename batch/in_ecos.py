@@ -62,13 +62,20 @@ def eco_calendars(from_date, to_date):
     events = ['Eco Watchers Survey Current ', 'GDP Price Index YoY ', 'GDP External Demand QoQ ', 'Exports YoY ', 'Eco Watchers Survey Outlook ', 'Capital Spending YoY ', 'BSI Large Manufacturing QoQ ', 'Leading Economic Index ', 'Average Cash Earnings YoY ', 'GDP Growth Annualized ', 'Tokyo Core CPI YoY ', 'Coincident Index ', 'Tertiary Industry Index MoM ', 'Inflation Rate MoM ', 'Tankan Large Manufacturing Outlook ', 'Jobs/applications ratio ', 'Stock Investment by Foreigners ', 'Inflation Rate Ex-Food and Energy YoY ', 'Housing Starts YoY ', 'Household Spending YoY ', 'Core Inflation Rate YoY ', 'Tankan Large All Industry Capex ', 'PPI MoM ', 'Overtime Pay YoY ', 'Machinery Orders YoY ', 'Jibun Bank Services PMI ', 'Tankan Large Non-Manufacturing Index ', 'Current Account ', 'BoJ Interest Rate Decision', 'Unemployment Rate ', 'Industrial Production MoM ', 'Reuters Tankan Index ', 'Imports YoY ', '5 Year Note Yield', 'Foreign Exchange Reserves ', '5-Year JGB Auction', '52-Week Bill Auction', 'Tankan Non-Manufacturing Outlook ', 'GDP Growth Rate QoQ ', 'Machinery Orders MoM ', 'Foreign Bond Investment ', 'Household Spending MoM ', 'Jibun Bank Manufacturing PMI ', 'Industrial Production MoM. ', 'GDP Capital Expenditure QoQ ', 'Balance of Trade ', '6-Month Bill Auction', 'Jibun Bank Composite PMI ', '40-Year JGB Auction', '5-Year Note Yield', 'Industrial Production YoY ', 'PPI YoY ', 'Retail Sales YoY ', 'Inflation Rate YoY ', '30-Year JGB Auction', 'Tankan Large Manufacturers Index ', 'Tokyo CPI YoY ', 'Tankan Small Manufacturers Index ', '2 Year Note Yield', 'Bank Lending YoY ', 'Consumer Confidence ', '2-Year JGB Auction', '3-Month Bill Auction', 'Machine Tool Orders YoY ', 'BoJ Nakamura Spech', 'GDP Private Consumption QoQ ', 'Retail Sales MoM ', 'Tokyo CPI Ex Food and Energy YoY ', 'Construction Orders YoY ', 'Capacity Utilization MoM ']
 
     # 전체 그림의 크기를 설정
-    plt.figure(figsize=(10, 3*len(events)))
+    plt.figure(figsize=(16, 4*len(events)))
     for i, event in enumerate(events):
         result = cals[cals['event'].str.contains(event, case=False, na=False)]
+        if result.empty:
+            continue
         result['date'] = result['date'].apply(parse_date)
         plt.subplot(len(events), 1, i + 1)
         plt.plot(result['date'], result['actual'])
+        max_val = max(result['actual'])
+        min_val = min(result['actual'])
+        if (max_val > 0) and (min_val < 0):       # 시각효과     
+            plt.axhline(y=0, linestyle='--', color='red', linewidth=1)            
         plt.title(event)
+        plt.grid()
         plt.xlabel('date')
         plt.ylabel('actual')
 

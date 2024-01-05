@@ -16,6 +16,7 @@ sys.path.append(utils_dir)
 
 from settings import *
 
+
 '''
 0. 공통영역 설정
 '''
@@ -39,6 +40,9 @@ to_date_2 = to_date_2.date()
 database = 'Economics.db'
 db_file = 'database/' + database
 conn, engine = create_connection(db_file)
+
+alpha = pd.DataFrame(columns=['country', 'date', 'researcher', 'trend', 'country_growth',\
+                            'market_growth', 'busi_growth', 'status_now', 'status_6m', 'status_12m'])
 
 
 '''
@@ -78,7 +82,12 @@ def eco_oecd():
             result['Variable'] = result['Variable']
             plt.subplot(len(events), 1, i + 1)
             plt.plot(result['Time'], result['Value'])
-            plt.title(f"{country}: {event}")
+            max_val = max(result['Value'])
+            min_val = min(result['Value'])
+            if (max_val > 0) and (min_val < 0):       # 시각효과     
+                plt.axhline(y=0, linestyle='--', color='red', linewidth=1)
+            plt.title(f"OECD Outlook {country}: {event}")
+            plt.grid()
             plt.xlabel('Time')
             plt.ylabel('Value')
 
@@ -318,20 +327,20 @@ def container_Freight():
 '''
 4. calculate trend
 - country growth, market growth, business growth
+1) cal_trend
+    - cal_country_growth
+    . get_GDP_rate
+    . get_inflation
+    . get_export
+    - cal_market_growth
+    . M2(증가량 배수)
+    . 자산시장별 growth
+    - cal_busi_growth
+    . ETF growth
+2) Status decision
+    - Status_Now, Status_6m, Status_12m
 '''
-class CalTrend():
-    '''
-    1) cal_trend
-      - cal_country_growth
-        . get_GDP_rate
-        . get_inflation
-        . get_export
-      - cal_market_growth
-        . M2(증가량 배수)
-        . 자산시장별 growth
-      - cal_busi_growth
-        . ETF growth
-    '''
+class CalcuTrend():
 
     def __init__(self):
         database = 'Economics.db'
@@ -451,14 +460,14 @@ class CalTrend():
 
     ########################################################################### 
     '''
-    국가단위의 현재와 미래의 성장율을 도출하는 루틴으로,
-    1. 현재: realGDP실적 성장율(+- 예측치대비)
-    1.1 fmp.calendar.com 에서 추출한 realGDP (= nominalGDP - Inflation) 로 계산한 값
-        - 잠재성장률대비 real GDP YoY, (include KR.Export) = nominal GDP - Inflation
-    1.2 macrovar.com 에서 추출한 realGDP
+    I. 국가단위의 현재와 미래의 성장율을 도출하는 루틴으로,
+        1. 현재: realGDP실적 성장율(+- 예측치대비)
+        1.1 fmp.calendar.com 에서 추출한 realGDP (= nominalGDP - Inflation) 로 계산한 값
+            - 잠재성장률대비 real GDP YoY, (include KR.Export) = nominal GDP - Inflation
+        1.2 macrovar.com 에서 추출한 realGDP
 
-    2. 미래: (LEI 성장율 예측 (각종 기관들의 값 평균치 활용, IMF, OECD...) + ML perdict) / 2
-    2.1 IMF 전망치: 
+        2. 미래: (LEI 성장율 예측 (각종 기관들의 값 평균치 활용, IMF, OECD...) + ML perdict) / 2
+        2.1 IMF 전망치: 
     '''        
     def cal_country_growth(self, conn, country_sign:str, month_term:int=0):
        
@@ -484,7 +493,7 @@ class CalTrend():
     
     ###########################################################################    
     '''
-    business: M2(증가량 배수) 와 자산시장별 변화율 비교
+    II. business: M2(증가량 배수) 와 자산시장별 변화율 비교
         - 주식, 채권, 원자재, 부동산, 현금
         - US: S&P500/Nasdaq, 국채3년/10년/30년 수익률, GOLD/OIL, LITZ, DOLLOAR
         - KR: KOSPI/KOSDAQ, 국채3년/10년/30년 수익률, 금현물, LITZ, WON
@@ -778,7 +787,7 @@ class CalTrend():
 
     ###########################################################################    
     '''
-    business: 각 섹터별 ETF growth 
+    III. business: 각 섹터별 ETF growth 
         - 특별히 업종을 주도하는 섹터만 집중 투자하는 경우만 활용
         - US: spy/qqq, shy/tlt/tmf, gld/bci, o/vnq, dollar
         - kr: kodex200/tiger200it, kodex국고채3년/kosef국고채10년/kbstar kis국고채30년enhanced, 금현물, 맥쿼리인프라, 원
@@ -808,12 +817,29 @@ class CalTrend():
         return result
 
 
-    ###########################################################################   
+
+
+
+
+
+
+
+    ###################################
     '''
-    OECD LEI 현재월값은 향후 6개월이내 단기 경제지표(반기단위 발표) 발표. 
-    - 수정한 월 + 6개월 전망으로 가정함. 중기 전망으로는 사용할수 없음
-    - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
+    IV. 국가/시장/사업단위의 성장률을 근거로 트랜드, 사이클상 현위치, 그리고 현재/6개월/12개월 전망을 도출하는 마지막 단계.
+        - 입력받은 연구기관, 국가/시장/사업단위 성장률 정보와 Alpha 테이블 history 정보를 기반으로 
+          사이클상의 어느 위치에 와 있으며, 6개월, 12개월 전망은 어떻게 될 것인지 판단하는 루틴
+        - OECD 는 2023년말 기준으로 2개년치 2024, 2025년 전망치 제공
+        - IMF 는 2023년말 기준으로 5개년치 2024, 2025, 2026, 2027, 2028년 전망치 제공
+        - World Bank
+        - JP Morgan..
     '''
+
+    # ##############################################################
+    # IV-1. OECD LEI 현재월값은 향후 6개월이내 단기 경제지표(반기단위 발표) 발표. 
+    # - 수정한 월 + 6개월 전망으로 가정함. 중기 전망으로는 사용할수 없음
+    # - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
+    # ##############################################################
     def get_country_growth_pjt_byOECD(self, conn, country_sign2:str, month_term:int=6):
         
         if month_term > 6:
@@ -838,13 +864,11 @@ class CalTrend():
 
                                                         
         return result
-
-
-    ###########################################################################    
-    '''
-    IMF LEI 를 중기 전망(month_term > 6)으로 사용함.
-    - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
-    '''
+  
+    # ##############################################################
+    # IV-2. IMF LEI 를 중기 전망(month_term > 6)으로 사용함.
+    # - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
+    # ##############################################################    
     def get_country_growth_pjt_byIMF(self, conn, country_sign2:str, month_term:int=12):
         
         def add_month(to_date2:str, term_month:int):
@@ -880,16 +904,12 @@ class CalTrend():
             result = realGDP_rate + float(export) * 0.2 # 미국 빼고, 수출형 국가 빼고 그 나머지들.
 
         return result
-
-
-
-
-
-    ###########################################################################
-    '''
-    OECD 는 2023년말 기준으로 2개년치 2024, 2025년 전망치 제공
-    IMF 는 2023년말 기준으로 5개년치 2024, 2025, 2026, 2027, 2028년 전망치 제공
-    '''
+    
+    # ##############################################################    
+    # 국가/시장/사업단위의 성장률을 근거로 트랜드, 사이클상 현위치, 그리고 현재/6개월/12개월 전망을 도출하는 마지막 단계.
+    # - 입력받은 연구기관, 국가/시장/사업단위 성장률 정보와 Alpha 테이블 history 정보를 기반으로 
+    #   사이클상의 어느 위치에 와 있으며, 6개월, 12개월 전망은 어떻게 될 것인지 판단하는 루틴
+    # ##############################################################    
     def cal_trend(self, country:str, market:str, business:str, month_term:int):
         ticker = business
         if month_term == 0:
@@ -912,10 +932,14 @@ class CalTrend():
         logger2.info(' ')        
         logger2.info(f'##### {country} Country Growth: {c_growth} %')           
         logger2.info(f'##### {country} Market Growth: {m_growth} %')
-        logger2.info(f'##### {country} Business Growth: {b_growth} %')        
-        
-        return (c_growth + m_growth*0.3 + b_growth*0.3*0.7)
+        logger2.info(f'##### {country} Business Growth: {b_growth} %')    
 
+        trend = c_growth + m_growth*0.3 + b_growth*0.3*0.7
+        
+        return trend, c_growth, m_growth, b_growth
+
+
+################################################################# Class CalcuTrend 끝나는 지점. ########
 
 '''
 Main Fuction
@@ -927,43 +951,44 @@ if __name__ == "__main__":
     1. Economic Area
     '''
     eco_oecd()
-    # cli()
-    # m1()
-    # cpi()
+    cli()
+    m1()
+    cpi()
 
     '''
     2. Market Area
     '''
-    # cds()
+    cds()
 
     '''
     3. Business Area
     '''
-    # container_Freight()
+    container_Freight()
 
     '''
-    4. Calculate Trend (Class)
+    4. Calculate Trend (Class): 
 
     '''
-    # _trend = CalTrend()
+    _trend = CalcuTrend()
 
-    # for nation, assets in WATCH_TICKERS.items():
+    for nation, assets in WATCH_TICKERS.items():
 
-    #     if nation in ['EU', 'BR']:  # 몇 가지 정보가 존재하지 않아 제외
-    #         continue        
-    #     for asset_grp in assets:
+        if nation in ['EU', 'BR']:  # 몇 가지 정보가 존재하지 않아 제외
+            continue        
+        for asset_grp in assets:
 
-    #         for asset, tickers in asset_grp.items():
+            for asset, tickers in asset_grp.items():
 
-    #             for ticker in tickers:
-    #                 print(nation)
-    #                 print(asset)                    
-    #                 print(ticker)
+                for ticker in tickers:
+                    print(nation)
+                    print(asset)                    
+                    print(ticker)
                     
-    #                 if ticker == '':
-    #                     continue
+                    if ticker == '':
+                        continue
 
-    #                 trend = _trend.cal_trend(nation, asset, ticker, 0)     
-    #                 logger2.info(' ')
-    #                 logger2.info(f'##### {nation} / {asset} / {ticker} total Trend: {trend} %')
-    #                 logger2.info(' ')
+                    trend, c_growth, m_growth, b_growth = _trend.cal_trend(nation, asset, ticker, 0)     
+                    logger2.info(' ')
+                    logger2.info(f'##### {nation} / {asset} / {ticker} total Trend: {trend} %')
+                    logger2.info(' ')
+                    # make_alpha(nation, to_date_2, 'Total', trend, c_growth, m_growth, b_growth)

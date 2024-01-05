@@ -104,11 +104,13 @@ COT_SYMBOLS = [
 def COT_analyse():
     df = get_cot_analysis_by_dates()
     df = df.sort_values(['symbol','date'], ascending=False).reset_index(drop=True)
+ 
     # 전체 그림의 크기를 설정
-    plt.figure(figsize=(10, 4*len(COT_SYMBOLS)))
+    plt.figure(figsize=(16, 4*len(COT_SYMBOLS)))
     for i, cot in enumerate(COT_SYMBOLS):
         result = df[df['symbol'].str.contains(cot['symbol'], case=False, na=False)]
         result['date'] = result['date'].apply(parse_date)
+        max_date = max(result['date'])
         if result.empty:
             continue
         name = result.iloc[0]['name']
@@ -125,7 +127,8 @@ def COT_analyse():
         plt.title(name+': '+str(previousNetPosition)+ ' -> ' +str(netPostion)+' / '+situation+' / '+sentiment+' / '+reversalTrend)
         plt.plot(result['date'], result['currentLongMarketSituation'], color='royalblue', label='current long')
         plt.plot(result['date'], result['currentShortMarketSituation'], color='red', label='current short')
-        plt.xlabel('date')
+        plt.axhline(y=50, linestyle='--', color='green', linewidth=1)
+        plt.xlabel(f'Recent Date: {max_date}')
         plt.ylabel('percentage')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
@@ -142,7 +145,7 @@ def COT_report():
     logger2.info(f' ################ COT recent Date: {max_date}')
 
     # 전체 그림의 크기를 설정
-    plt.figure(figsize=(10, 3*len(COT_SYMBOLS)))
+    plt.figure(figsize=(16, 4*len(COT_SYMBOLS)))
     for i, cot in enumerate(COT_SYMBOLS):
         result = df[df['symbol'].str.contains(cot['symbol'], case=False, na=False)]
         result['date'] = result['date'].apply(parse_date)
@@ -182,8 +185,10 @@ def COT_report():
         plt.subplot(len(COT_SYMBOLS), 1, i + 1)
         plt.title(name+'/ contracts: '+str(open_interest_all)+'/ changes: '+str(change_in_open_interest_all))
         plt.bar(categories, values, color='royalblue', label='contracts')
-        plt.bar(categories2, values2, color='orange', label='Changes')        
+        plt.bar(categories2, values2, color='orange', label='Changes')
+        plt.legend()
         plt.ylabel('count')
+        plt.xlabel(f'Recent Date: {max_date}')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
     plt.savefig(reports_dir + '/global_d0120.png')

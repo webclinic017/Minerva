@@ -140,10 +140,17 @@ def eco_calendars(from_date, to_date):
     plt.figure(figsize=(10, 3*len(events)))
     for i, event in enumerate(events):
         result = cals[cals['event'].str.contains(event, case=False, na=False)]
+        if result.empty:
+            continue        
         result['date'] = result['date'].apply(parse_date)
         plt.subplot(len(events), 1, i + 1)
         plt.plot(result['date'], result['actual'])
+        max_val = max(result['actual'])
+        min_val = min(result['actual'])
+        if (max_val > 0) and (min_val < 0):       # 시각효과     
+            plt.axhline(y=0, linestyle='--', color='red', linewidth=1)                
         plt.title(event)
+        plt.grid()         
         plt.xlabel('date')
         plt.ylabel('actual')
 

@@ -27,8 +27,9 @@ import shutil
 '''
 # logging
 logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
+logger2.info('')
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
-
+logger2.info('')
 
 # 검색기간 설정
 _to_date = pd.to_datetime(to_date, format="%d/%m/%Y")
@@ -47,6 +48,21 @@ conn, engine = create_connection(database)
 
 
 # 테이블 정의
+
+str_alpha = '(\
+    Country TEXT NOT NULL,\
+    Researcher TEXT NOT NULL,\
+    Date TEXT NOT NULL,\
+    Trend NUMERIC,\
+    Country_Growth NUMERIC,\
+    Market_Growth NUMERIC,\
+    Busi_Growth NUMERIC,\
+    Status_Now TEXT,\
+    Status_6mo TEXT,\
+    Status_12mo TEXT,\
+    PRIMARY KEY (Country, Researcher, Date))'
+
+
 str_calendars = '(\
         date	TEXT NOT NULL,\
         country	TEXT NOT NULL,\
@@ -117,22 +133,27 @@ str_stock_indices = '(\
     PRIMARY KEY (symbol, name, timestamp))'
 
 
-
-# financemodeling.com 추출한 경제 캘린더 <=== 검증완료: 수기 작성과 어플리케이션 작성 모두 멀티 Primary key 구성 가능
+'''
+financemodeling.com 추출한 경제 캘린더 <=== 검증완료: 수기 작성과 어플리케이션 작성 모두 멀티 Primary key 구성 가능
+'''
 def create_Calendars(conn, str_calendar):
     with conn:
         cur = conn.cursor()
         cur.execute(f'CREATE TABLE if not exists Calendars {str_calendars}')
     return conn
 
-# MacroVar.com 에서 추출한 Financial Markets <== 현재는 사이트의 정보 업데이트가 미흡하여 미활용, 주기적으로 확인필요
+'''
+MacroVar.com 에서 추출한 Financial Markets <== 현재는 사이트의 정보 업데이트가 미흡하여 미활용, 주기적으로 확인필요
+'''
 def create_Markets(conn, str_markets):
     with conn:
         cur = conn.cursor()
         cur.execute(f'CREATE TABLE if not exists Markets {str_markets}')
     return conn
 
-# MacroVar.com 에서 추출한 Macroeconomic Indicators
+'''
+MacroVar.com 에서 추출한 Macroeconomic Indicators
+'''
 def create_Indicators(conn, str_indicators):
     with conn:
         cur = conn.cursor()
@@ -140,13 +161,27 @@ def create_Indicators(conn, str_indicators):
 
     return conn
 
-# financialmodelingprep.com 에서 추출한 Stock Market Indices
+'''
+financialmodelingprep.com 에서 추출한 Stock Market Indices
+'''
 def create_Stock_Indices(conn, str_indicators):
     with conn:
         cur = conn.cursor()
         cur.execute(f'CREATE TABLE if not exists Stock_Indices {str_stock_indices}')
 
-    return conn    
+    return conn
+
+'''
+각종 Research 에서 추출한 Trend, Country/Market/Business Growth 를 가지고 현 사이클 단계 확인과 6,12개월 전망
+- Researcher: OECD, IMF, Tech, Senti >> Total
+- Stauts: Buttom -> Bull-1 -> Bull-2 -> Top -> Bear-1 -> Bear-2
+'''
+def create_Alpha(conn, str_alpha):
+    with conn:
+        cur = conn.cursor()
+        cur.execute(f'CREATE TABLE if not exists Alpha {str_calendars}')
+    return conn
+
 
 # 테이블 데이터 read
 def read_table(table_name):
@@ -171,7 +206,9 @@ def write_table(table_name, data):
     elif table_name == 'Indicators':
         data.dropna(subset=['Country', 'Indicator', 'Date'], inplace=True)
     elif table_name == 'Stock_Indices':
-        data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)       
+        data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)
+    elif table_name == 'Alpha':
+        data.dropna(subset=['Country', 'Researcher', 'Date'], inplace=True)
     else:
         logger.error('Exception: Table Name Not found.')
 
@@ -191,6 +228,9 @@ def write_table(table_name, data):
                 _key = f"Country = '{buf['Country'][i]}' and Indicator = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
             elif table_name == 'Stock_Indices':
                 _key = f"symbol = '{buf['symbol'][i]}' and name = '{buf['name'][i]}' and timestamp = '{buf['timestamp'][i]}'"
+            elif table_name == 'Alpha':
+                _key = f"Country = '{buf['Country'][i]}' and Researcher = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
+
             else:
                 logger.error('Exception: Table Name Not found 2.')            
 
@@ -204,8 +244,10 @@ def write_table(table_name, data):
 
             insert_count += _cnt
 
+    logger2.info('')
     logger2.info(f'{table_name} delete Count: ' + str({delete_count}))
     logger2.info(f'{table_name} insert Count: ' + str({insert_count}))
+    logger2.info('')
 
 
 # 덤프 테이블 데이터 replace
@@ -215,7 +257,9 @@ def write_dump_table(table_name, data):
     _cnt = data.to_sql(table_name, con=engine, if_exists='replace', chunksize=1000, index=False, method='multi')
     
     insert_count += _cnt
+    logger2.info('')    
     logger2.info(f'Dump {table_name} replace Count: ' + str({insert_count}))
+    logger2.info('')    
 
 
 # macrovar.com 에서 markets 표 읽어오기
@@ -290,9 +334,9 @@ def make_calendars(from_date, to_date):
         from_date = (to_date - term_days).date()
         to_date = to_date.date()
 
-
-    logger2.info(f'##### 최근 1주일동안의 Calendars 표 ####')
-    logger2.info(cals)
+    logger2.info('')
+    logger2.info(f'최근 1주일동안의 Calendars 표'.center(60, '*'))
+    logger2.info(cals.head(20))
 
     cals = cals.reset_index(drop=True)    
     write_table(table_name, cals)
@@ -300,13 +344,15 @@ def make_calendars(from_date, to_date):
 
 '''
 2. Markets 테이블 데이터 구성
+- macrovar.com 에서 markets 표 읽어오기
 '''
 def make_markets(**kwargs):
     table_name = 'Markets'
     df = pd.DataFrame()
     for key, value in kwargs.items():
         buf = get_markets(key, value, table_name)
-        logger2.info(f'##### {buf.Country[0]} Markets 표 ####')
+        logger2.info('')
+        logger2.info(f'macrovar.com 의 markets 표: {buf.Country[0]} '.center(60, '*'))
         logger2.info(buf)        
         df = pd.concat([df, buf])
 
@@ -315,13 +361,14 @@ def make_markets(**kwargs):
 
 '''
 3. Indicators 테이블 데이터 구성
+- macrovar.com 에서 indicator 표 읽어오기
 '''
 def make_indicators(**kwargs):
     table_name = 'Indicators'
     df = pd.DataFrame()
     for key, value in kwargs.items():
         buf = get_indicators(key, value, table_name)
-        logger2.info(f'##### {buf.Country[0]} Indicators 표 ####')
+        logger2.info(f'macrovar.com 의 indicator 표: {buf.Country[0]} '.center(60, '*'))
         logger2.info(buf)          
         df = pd.concat([df, buf])
 
@@ -542,6 +589,21 @@ def make_oecd_outlook():
     df = df.reset_index(drop=True)
     write_dump_table(table_name, df)
 
+'''
+7. Alpha 테이블 생성
+각종 Researcher 에서 추출한 Trend, Country/Market/Business Growth 를 가지고 현 사이클 단계 확인과 6,12개월 전망
+- Researcher: OECD, IMF, Tech, Senti >> Total
+- Stauts: Buttom -> Bull-1 -> Bull-2 -> Top -> Bear-1 -> Bear-2
+'''
+
+
+
+def make_alpha(data):
+    table_name = 'Alpha'
+
+    df = df.reset_index(drop=True)
+    write_table(table_name, df)
+
 
 
 
@@ -639,11 +701,13 @@ if __name__ == "__main__":
 
     '''
     # 테이블 생성 (최초 생성시만 Active 해서 사용 !!!)
+    create_Alpha(conn, str_Alpha)
     create_Calendars(conn, str_calendars)
     create_Markets(conn, str_markets)
     create_Indicators(conn, str_indicators)
     create_Stock_Indices(conn, str_stock_indices)
     '''
+    create_alpha(conn, str_alpha)
 
     '''
     # 테이블내 데이터 만들어 넣기

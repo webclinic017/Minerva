@@ -15,7 +15,7 @@ utils_dir = os.getcwd() + '/batch/utils'
 sys.path.append(utils_dir)
 
 from settings import *
-from global_ import CalTrend
+from global_ import CalcuTrend
 
 import requests
 import yfinance as yf
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     1. Technical Analysis
     '''
 
-    _trend = CalTrend()
+    _trend = CalcuTrend() # 다음에는 Alpha 테이블에서 읽어온 것으로 처리하도록 변경해야함.
 
     
     for x in WATCH_TICKERS['US']:

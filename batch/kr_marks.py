@@ -69,31 +69,33 @@ yesterday = _yest.date().strftime('%Y%m%d')
 def per_pbr():
 
     df = stock.get_index_fundamental(yesterday, 'KOSPI')[:18]
-    logger2.info('##### KOSPI Fundamentals #####')
+    logger2.info(' KOSPI Fundamentals '.center(60, '*'))
     logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
     df = stock.get_index_fundamental(yesterday, 'KOSDAQ')[:10]
-    logger2.info('##### KOSDAQ Fundamentals #####')
+    logger2.inof('')
+    logger2.info(' KOSDAQ Fundamentals '.center(60, '*'))
     logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
     from_day = change_date_type(from_date_MT)
     plt.figure(figsize=(16, 4*len(core_tickers)))
     for i, ticker in enumerate(core_tickers):
         buf = stock.get_index_fundamental(from_day, today, ticker)
+        buf.dropna()
         plt.subplot(len(core_tickers), 1, i + 1)
         plt.grid()
         plt.plot(buf.index, buf['PER'], color='royalblue')
         if ticker == '1028':
-            plt.title('KOSPI200')
+            plt.title('KOSPI200 PER')
             plt.axhline(y=15, linestyle='--', color='red', linewidth=1, label='15X 과매도')
         else:
-            plt.title('KOSDAQ')
+            plt.title('KOSDAQ PER')
             plt.axhline(y=30, linestyle='--', color='red', linewidth=1, label='30X 과매도')
         plt.xlabel('Date')
         plt.ylabel('PER')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_m0110.png')
+    plt.savefig(reports_dir + '/kr_m0110.png')
 
     plt.figure(figsize=(16, 4*len(core_tickers)))
     for i, ticker in enumerate(core_tickers):
@@ -103,16 +105,16 @@ def per_pbr():
         plt.plot(buf.index, buf['PBR'], color='royalblue')
         
         if ticker == '1028':
-            plt.title('KOSPI200')
+            plt.title('KOSPI200 PBR')
             plt.axhline(y=0.8, linestyle='--', color='red', linewidth=1, label='0.8X 과매도')
         else:
-            plt.title('KOSDAQ')
+            plt.title('KOSDAQ PBR')
             plt.axhline(y=1.5, linestyle='--', color='red', linewidth=1, label='1.5X 과매도')
         plt.xlabel('Date')
         plt.ylabel('PBR')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_m0111.png')
+    plt.savefig(reports_dir + '/kr_m0111.png')
 
 
 '''
@@ -141,7 +143,7 @@ def short_selling():
         plt.legend()
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_m0120.png')
+    plt.savefig(reports_dir + '/kr_m0120.png')
 
     # 공매도 금액
     plt.figure(figsize=(16, 4*len(rep_tickers)))
@@ -165,7 +167,7 @@ def short_selling():
         plt.legend()
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_m0121.png')
+    plt.savefig(reports_dir + '/kr_m0121.png')
 
     
 '''
@@ -187,7 +189,7 @@ def ticket_short_selling(own_tickers:list):
         plt.legend()
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_m0130.png')
+    plt.savefig(reports_dir + '/kr_m0130.png')
 
 
 '''
@@ -221,7 +223,7 @@ def get_yields():
     plt.axhline(y=4.0, linestyle='--', color='green', linewidth=1)
     
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/korea_m0210.png')
+    plt.savefig(reports_dir + '/kr_m0210.png')
 
 
 '''
