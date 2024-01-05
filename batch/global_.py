@@ -124,7 +124,7 @@ def cli():
     plt.plot(CLI_Germany, label='CLI_Germany')
     plt.grid()
     plt.legend()
-    plt.savefig(reports_dir + '/global_e0100.png')
+    plt.savefig(reports_dir + '/global_0100.png')
 
 
 '''
@@ -175,7 +175,7 @@ def m1():
 
     # 이미지 파일로 저장
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/global_e0120.png')
+    plt.savefig(reports_dir + '/global_0120.png')
 
 
 '''
@@ -205,7 +205,7 @@ def cpi():
     plt.plot(cpi_korea, label='CPI for South Korea')
     plt.plot(cpi_china, label='CPI for China')
     plt.legend()
-    plt.savefig(reports_dir + '/global_e0130.png')
+    plt.savefig(reports_dir + '/0130.png')
 
 
 
@@ -321,7 +321,7 @@ def container_Freight():
     plt.plot(df_hrci, label='Howe Robinson') 
     plt.plot(df_bdi, label='Baltic Dry') 
     plt.legend()
-    plt.savefig(reports_dir + '/global_e0310.png')
+    plt.savefig(reports_dir + '/global_0310.png')
 
 
 '''

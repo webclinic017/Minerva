@@ -127,11 +127,11 @@ def short_selling():
     for i, ticker in enumerate(rep_tickers):
         buf = stock.get_shorting_investor_volume_by_date(from_day, yesterday, ticker)
         plt.subplot(len(core_tickers), 1, i + 1)
-        plt.grid()
-        plt.plot(buf.index, buf['기관'], linewidth=0.5, label='기관', linestyle='--')
-        plt.plot(buf.index, buf['개인'], linewidth=0.5, label='개인', linestyle='--')
-        plt.plot(buf.index, buf['외국인'], linewidth=0.5, label='외국인', linestyle='--')
-        plt.plot(buf.index, buf['합계'], color='royalblue', label='합계')    
+        plt.plot(buf.index, buf['기관'], linewidth=1, label='기관', linestyle='-')
+        plt.plot(buf.index, buf['개인'], linewidth=1, label='개인', linestyle='-')
+        plt.plot(buf.index, buf['외국인'], linewidth=1, label='외국인', linestyle='-')
+        plt.plot(buf.index, buf['합계'], linewidth=0.8, color='gray', label='합계', linestyle='--')    
+        plt.grid()    
         if ticker == 'KOSPI':
             plt.title('KOSPI Short Selling Volume')
         elif ticker == 'KOSDAQ':
@@ -151,17 +151,17 @@ def short_selling():
     for i, ticker in enumerate(rep_tickers):
         buf = stock.get_shorting_investor_value_by_date(from_day, yesterday, ticker)
         plt.subplot(len(core_tickers), 1, i + 1)
-        plt.grid()
-        plt.plot(buf.index, buf['기관'], linewidth=0.5, label='기관', linestyle='--')
-        plt.plot(buf.index, buf['개인'], linewidth=0.5, label='개인', linestyle='--')
-        plt.plot(buf.index, buf['외국인'], linewidth=0.5, label='외국인', linestyle='--')
-        plt.plot(buf.index, buf['합계'], color='royalblue', label='합계')    
-    if ticker == 'KOSPI':
-        plt.title('KOSPI Short Selling Amount')
-    elif ticker == 'KOSDAQ':
-        plt.title('KOSDAQ Short Selling Amount')
-    else:
-        logger2.info('Short Selling parameter not found.')
+        plt.plot(buf.index, buf['기관'], linewidth=1, label='기관', linestyle='-')
+        plt.plot(buf.index, buf['개인'], linewidth=1, label='개인', linestyle='-')
+        plt.plot(buf.index, buf['외국인'], linewidth=1, label='외국인', linestyle='-')
+        plt.plot(buf.index, buf['합계'], linewidth=0.8, color='gray', label='합계', linestyle='--')    
+        plt.grid()        
+        if ticker == 'KOSPI':
+            plt.title('KOSPI Short Selling 총금액(Amount)')
+        elif ticker == 'KOSDAQ':
+            plt.title('KOSDAQ Short Selling 총금액(Amount)')
+        else:
+            logger2.info('Short Selling parameter not found.')
         plt.xlabel('Date')
         plt.ylabel('공매도 금액')
         plt.legend()

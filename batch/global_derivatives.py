@@ -507,29 +507,28 @@ if __name__ == "__main__":
     COT_report()
 
 
-    # '''
-    # 2. COT BB Strategy 분석
-    # '''
-    # oct_bb = OTCBBstg()
+    '''
+    2. COT BB Strategy 분석
+    '''
+    oct_bb = OTCBBstg()
 
-    # for cot in COT_SYMBOLS:
-    #     symbol = cot['symbol']
-    #     ticker = cot['ticker']
-    #     name = cot['name']
-    #     oct_bb.set_cot_file(symbol)
+    for cot in COT_SYMBOLS:
+        symbol = cot['symbol']
+        ticker = cot['ticker']
+        name = cot['name']
+        oct_bb.set_cot_file(symbol)
 
-    #     logger2.info(f''.center(60, ' '))        
-    #     logger2.info(f' {name} '.center(60, '#'))
-    #     oct_bb.cot_bb_stg_report(symbol, ticker)
+        logger2.info(f''.center(60, ' '))        
+        logger2.info(f' {name} '.center(60, '#'))
+        oct_bb.cot_bb_stg_report(symbol, ticker)
 
-    # '''
-    # 3. Option Chain
-    # http://theautomatic.net/2019/04/17/how-to-get-options-data-with-python/
-    # '''
+    '''
+    3. Option Chain
+    http://theautomatic.net/2019/04/17/how-to-get-options-data-with-python/
+    '''
 
-    # # option_chain(Symbols)
-    # option_chain(Symbols)
-    # option_chain_today(Symbols)
+    option_chain(Symbols)
+    option_chain_today(Symbols)
 
 
 
