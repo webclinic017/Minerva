@@ -73,7 +73,7 @@ def per_pbr():
     logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
     df = stock.get_index_fundamental(yesterday, 'KOSDAQ')[:10]
-    logger2.inof('')
+    logger2.info('')
     logger2.info(' KOSDAQ Fundamentals '.center(60, '*'))
     logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
