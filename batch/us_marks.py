@@ -171,7 +171,8 @@ def sma_strategy(tickers:list, short_sma=20, long_sma=200):
         data = pd.concat([data, buf])
         
     return data
-        
+
+
 def timing_strategy(tickers, short_sma, long_sma):
     result = sma_strategy(tickers, short_sma, long_sma)
     buf = result[result['Pivot'] == 1].reset_index()
@@ -1131,6 +1132,7 @@ if __name__ == "__main__":
 
     # settings.py 에서 get_stock_history with timeframe 파일 만들어 줌. 
     for ticker in WATCH_TICKERS:
+        print(ticker)
         get_stock_history(ticker, TIMEFRAMES)
     
     for ticker in WATCH_TICKERS:
