@@ -5,40 +5,13 @@ __author__ = "jarvisNim in GitHub"
 __version__ = "0.0.2"
 
 
-from .Monitor.m_sentiment import (
-    get_bond_countries,
-    get_bond_historical_data,
-    get_bond_information,
-    get_bond_recent_data,
-    get_bonds,
-    get_bonds_dict,
-    get_bonds_list,
-    get_bonds_overview,
-    search_bonds,
+from .economics import (
+    get_trend,
+    get_country_growth,
+    get_market_growth,
+    get_business_growth,
 )
-from .certificates import (
-    get_certificate_countries,
-    get_certificate_historical_data,
-    get_certificate_information,
-    get_certificate_recent_data,
-    get_certificates,
-    get_certificates_dict,
-    get_certificates_list,
-    get_certificates_overview,
-    search_certificates,
-)
-from .commodities import (
-    get_commodities,
-    get_commodities_dict,
-    get_commodities_list,
-    get_commodities_overview,
-    get_commodity_groups,
-    get_commodity_historical_data,
-    get_commodity_information,
-    get_commodity_recent_data,
-    search_commodities,
-)
-from .crypto import (
+from .option import (
     get_crypto_historical_data,
     get_crypto_information,
     get_crypto_recent_data,
@@ -48,7 +21,7 @@ from .crypto import (
     get_cryptos_overview,
     search_cryptos,
 )
-from .currency_crosses import (
+from .currency import (
     get_available_currencies,
     get_currency_cross_historical_data,
     get_currency_cross_information,
@@ -70,17 +43,6 @@ from .etfs import (
     get_etfs_overview,
     search_etfs,
 )
-from .funds import (
-    get_fund_countries,
-    get_fund_historical_data,
-    get_fund_information,
-    get_fund_recent_data,
-    get_funds,
-    get_funds_dict,
-    get_funds_list,
-    get_funds_overview,
-    search_funds,
-)
 from .indices import (
     get_index_countries,
     get_index_historical_data,
@@ -93,7 +55,6 @@ from .indices import (
     search_indices,
 )
 from .news import economic_calendar
-from .search import search_quotes
 from .stocks import (
     get_stock_company_profile,
     get_stock_countries,
@@ -115,27 +76,27 @@ from .technical import moving_averages, pivot_points, technical_indicators
 
 
 
-class PyMinerva:
-    def __init__(self):
-        pass
+# class PyMinerva:
+#     def __init__(self):
+#         pass
 
-    @staticmethod
-    def lower(string: str):
-        """
-        Converts a string to lowercase
-        """
-        return string.lower()
+#     @staticmethod
+#     def lower(string: str):
+#         """
+#         Converts a string to lowercase
+#         """
+#         return string.lower()
 
-    @staticmethod
-    def upper(string: str):
-        """
-        Converts a string to uppercase
-        """
-        return string.upper()
+#     @staticmethod
+#     def upper(string: str):
+#         """
+#         Converts a string to uppercase
+#         """
+#         return string.upper()
 
-    @staticmethod
-    def title(string: str):
-        """
-        Converts a string to titlecase
-        """
-        return string.title()
+#     @staticmethod
+#     def title(string: str):
+#         """
+#         Converts a string to titlecase
+#         """
+#         return string.title()
