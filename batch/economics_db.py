@@ -103,7 +103,7 @@ str_indicators = '(\
     YOY NUMERIC,\
     Trend TEXT,\
     Slope TEXT,\
-    ZS5Y INTEGER,\
+    Percentile INTEGER,\
     PRIMARY KEY (Country, Indicator, Date))'
 
 str_stock_indices = '(\
@@ -234,7 +234,7 @@ def write_table(table_name, data):
             else:
                 logger.error('Exception: Table Name Not found 2.')            
 
-            print(f'delete from {table_name} where {_key}')  # DEBUG
+            # print(f'delete from {table_name} where {_key}')  # DEBUG
             cur.execute(f"delete from {table_name} where {_key}")
             cur.execute('commit')
             delete_count += 1
@@ -310,7 +310,7 @@ def get_indicators(country, url, table_name):
     buf['YOY'] = indicators['Y/Y%']
     buf['Trend'] = indicators.Trend
     buf['Slope'] = indicators.Slope
-    buf['ZS5Y'] = indicators.ZS5Y
+    buf['Percentile'] = indicators['Percentile']
 
     return buf
 
@@ -326,7 +326,7 @@ def make_calendars(from_date, to_date):
         buf = get_calendar(from_date=from_date, to_date=to_date)
         buf = buf[buf['event'] != "New Year's Day"] # New Year's Day 제거, 's 로 syntax error 유발
         buf = buf[buf['event'] != "New Year's Eve"] # New Year's Eve 제거, 's 로 syntax error 유발 
-        print(buf)
+        # print(buf)
         for i in range(len(NATIONS)):
             buf2 = buf[buf['country'] == NATIONS[i]]
             cals = pd.concat([cals, buf2], axis=0)
@@ -352,7 +352,7 @@ def make_markets(**kwargs):
     for key, value in kwargs.items():
         buf = get_markets(key, value, table_name)
         logger2.info('')
-        logger2.info(f'macrovar.com 의 markets 표: {buf.Country[0]} '.center(60, '*'))
+        logger2.info(f' macrovar.com 의 markets 표: {buf.Country[0]} '.center(60, '*'))
         logger2.info(buf)        
         df = pd.concat([df, buf])
 
@@ -707,7 +707,8 @@ if __name__ == "__main__":
     create_Indicators(conn, str_indicators)
     create_Stock_Indices(conn, str_stock_indices)
     '''
-    create_Alpha(conn, str_alpha)
+    # create_Alpha(conn, str_alpha)
+    create_Indicators(conn, str_indicators)    
 
     '''
     # 테이블내 데이터 만들어 넣기
