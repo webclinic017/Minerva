@@ -707,7 +707,7 @@ if __name__ == "__main__":
     create_Indicators(conn, str_indicators)
     create_Stock_Indices(conn, str_stock_indices)
     '''
-    create_alpha(conn, str_alpha)
+    create_Alpha(conn, str_alpha)
 
     '''
     # 테이블내 데이터 만들어 넣기
