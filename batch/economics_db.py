@@ -20,6 +20,7 @@ import yfinance as yf
 import os
 import webbrowser
 import shutil
+import platform
 
 
 '''
@@ -398,8 +399,23 @@ def make_imf_outlook():
     table_name = 'IMF'
 
     url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
+
+
     if webbrowser.open(url):
-        download_directory = "/Users/jarvis/Downloads"
+        
+        # 현재 운영체제 확인
+        current_os = platform.system()
+        # 운영체제에 따른 조건문
+        if current_os == 'Darwin':  # mac OS
+            # print("현재 운영체제는 Windows입니다.")
+            download_directory = "/Users/jarvis/Downloads"  # Mac OS
+        elif current_os == 'Linux':
+            # print("현재 운영체제는 Linux입니다.")
+            download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
+        else:
+            info.error("##### 지원하지 않는 운영체제입니다.")
+        
+        
         destination_directory = "./batch/reports/data"
 
         new_file_name = "IMF.xls"  # 원하는 새로운 파일 이름으로 수정
@@ -412,11 +428,13 @@ def make_imf_outlook():
 
         # 파일 이동 및 이름 변경
         destination_file_path = os.path.join(destination_directory, new_file_name)
+        time.sleep(5)
         shutil.move(source_file_path, destination_file_path)
 
         logger2.info(f"File moved successfully to: {destination_file_path}")
 
-        df = pd.read_csv('./batch/reports/data/IMF.csv')
+        df = pd.read_excel('./batch/reports/data/IMF.xls', engine='xlrd', skipfooter=3)
+        time.sleep(5)
         df = df.reset_index(drop=True)
         write_dump_table(table_name, df)
 
@@ -589,14 +607,62 @@ def make_oecd_outlook():
     df = df.reset_index(drop=True)
     write_dump_table(table_name, df)
 
+
 '''
-7. Alpha 테이블 생성
+7. WorldBank Data 생성
+https://www.worldbank.org/en/news/press-release/2024/01/09/global-economic-prospects-january-2024-press-release?intcid=ecr_hp_headerA_2024-01-09-GEPPressRelease
+사이트에서  (향후 하반기 업데이트시는 다른 사이트일듯.), 'Download growth data' 버튼 누르면 다운로드 완료.
+Download 사이트에서 해당 파일의 이름을 WorldBank.xls 로 변경후 batch/reports/data/으로 이동한후 DB 업로드 프로그램 수행
+- 20240110 현재 https://bit.ly/GEP-Jan-2024-GDP-growth-data 파일이 최신임
+'''
+def make_worldbank_outlook():
+
+    table_name = 'WorldBank'
+
+    url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
+    if webbrowser.open(url):
+        
+        # 현재 운영체제 확인
+        current_os = platform.system()
+        # 운영체제에 따른 조건문
+        if current_os == 'Darwin':  # mac OS
+            # print("현재 운영체제는 Windows입니다.")
+            download_directory = "/Users/jarvis/Downloads"  # Mac OS
+        elif current_os == 'Linux':
+            # print("현재 운영체제는 Linux입니다.")
+            download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
+        else:
+            info.error("##### 지원하지 않는 운영체제입니다.")
+        
+        
+        destination_directory = "./batch/reports/data"
+
+        new_file_name = "WorldBank.xls"  # 원하는 새로운 파일 이름으로 수정
+
+        # 이동 대상 파일의 경로
+        source_file_path = os.path.join(download_directory, "GEP-Jan-2024-GDP-growth-data.xlsx")  # 원본 파일 이름으로 수정
+
+        # 이동할 디렉토리가 없으면 생성
+        os.makedirs(destination_directory, exist_ok=True)
+
+        # 파일 이동 및 이름 변경
+        destination_file_path = os.path.join(destination_directory, new_file_name)
+        shutil.move(source_file_path, destination_file_path)
+
+        logger2.info(f"File moved successfully to: {destination_file_path}")
+
+        df = pd.read_csv('./batch/reports/data/WorldBank.csv')
+        df = df.reset_index(drop=True)
+        write_dump_table(table_name, df)
+
+
+
+'''
+8. Alpha 테이블 생성
 각종 Researcher 에서 추출한 Trend, Country/Market/Business Growth 를 가지고 현 사이클 단계 확인과 6,12개월 전망
 - Researcher: OECD, IMF, Tech, Senti >> Total
 - Stauts: Buttom -> Bull-1 -> Bull-2 -> Top -> Bear-1 -> Bear-2
 '''
-
-
 
 def make_alpha(data):
     table_name = 'Alpha'
@@ -708,17 +774,16 @@ if __name__ == "__main__":
     create_Stock_Indices(conn, str_stock_indices)
     '''
     # create_Alpha(conn, str_alpha)
-    create_Indicators(conn, str_indicators)    
 
     '''
     # 테이블내 데이터 만들어 넣기
     '''
-    make_calendars(from_date, to_date)
-    make_markets(**urls)
-    make_indicators(**urls)
-    make_stock_indices()
+    # make_calendars(from_date, to_date)
+    # make_markets(**urls)
+    # make_indicators(**urls)
+    # make_stock_indices()
     make_imf_outlook()
-    make_oecd_outlook()
+    # make_oecd_outlook()
 
 
     '''
