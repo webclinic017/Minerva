@@ -401,7 +401,7 @@ def make_imf_outlook():
 
     url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
 
-
+    time.sleep(10)
     if webbrowser.open(url):
         
         # 현재 운영체제 확인
