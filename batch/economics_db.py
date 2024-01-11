@@ -397,6 +397,7 @@ Download 사이트에서 해당 파일의 이름을 IMF_outlook.xls 로 변경�
 def make_imf_outlook():
 
     table_name = 'IMF'
+    print('aaa')
 
     url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
 
