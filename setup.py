@@ -2,12 +2,21 @@
 # PyPi
 python setup.py sdist bdist_wheel
 python -m twine upload dist/*
+    (To use this API token:
+    Set your username to __token__
+    Set your password to the token value, including the pypi- prefix
+    pypi-AgEIcHlwaS5vcmcCJDZlYTA3ZTMyLTA3OGUtNDIzMC04MzI0LWE1ZjNhYTFhMGIxYQACKlszLCJkYjIwYjVkZS1mMzJmLTRlMjYtOTVhZi01Y2I4M2Y4NzQyOTEiXQAABiBc0SiVKwcIP9yi4seYhGatyUkijFc9WVOPluWkGCIw5A
+    )
 python -m pip install pyminerva
-https://pypi.org/project/pyminerva/0.0.4/
+# https://pypi.org/project/pyminerva/0.0.X/
+pip install --upgrade pyminerva
 
 # test PyPi
 python setup.py sdist bdist_wheel
-python -m twine upload --repository testpypi dist/*  
+python -m twine upload --repository testpypi dist/*
+    (To use this API token:
+    Set your username to __token__
+    Set your password to the token value, including the pypi- prefix)
 python -m pip install --index-url https://test.pypi.org/simple/ --no-deps minerv
 https://test.pypi.org/project/minerv/
 
@@ -26,7 +35,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='pyminerva',
-    version='0.0.4',    # version.directory.file
+    version='0.0.10',    # version.directory.file
     description='To get an insight from Financial Data Anlaysis',
     url='',
     author='Jeongmin Kang',

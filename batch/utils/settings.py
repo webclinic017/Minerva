@@ -153,28 +153,33 @@ COUNTRIES = {
 ASSETS = ['stock', 'bond', 'commodity', 'cash']
 # 보유종목들
 MY_TICKERS = {
-    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'KR':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],    
-    'EU':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'JP':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'CN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'DE':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],    
-    'IN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'SG':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'US':[{'bond':['TLT','EDV','HYG','LQD','TMF','IEF','SHV','SHY']}, {'stock':['SPY','QQQ','BAC','ENB','O','SCHD','SOXL','VNQ']}, {'commodity':['GLD']}, {'currency':['UUP']}, ],
+    'KR':[{'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']}, {'stock':['530107.KS','252670.KS']}, {'commodity':['']}, {'currency':['']}, ],    
+    'EU':[{'bond':['']}, {'stock':['']}, {'commodity':['']}, {'currency':['']}, ],
+    'JP':[{'bond':['1482.T','1487.T','2620.T','2621.T']}, {'stock':['1325.T','1545.T','1547.T','1571.T','1573.T','1678.T','2034.T','2563.T']}, 
+          {'commodity':['']}, {'currency':['']}, ],
+    'CN':[{'bond':['']}, {'stock':['510330.SS','002304.SZ','002594.SZ']}, {'commodity':['']}, {'currency':['']}, ],
+    'DE':[{'bond':['DBXG.DE','IBB1.DE','IS04.DE','IUSU.DE','VGEB.DE','VUTY.AS']}, {'stock':['BAS.DE','BNP.PA','CS.PA','GLE.PA']}, 
+          {'commodity':['']}, {'currency':['']}, ],    
+    'IN':[{'bond':['']}, {'stock':['','']}, {'commodity':['']}, {'currency':['']}, ],
+    'SG':[{'bond':['A35.SI']}, {'stock':['AJBU.SI','C6L.SI','CLR.SI','D05.SI','M44U.SI','ME8U.SI','Y92.SI','Z74.SI']}, 
+          {'commodity':['GLD']}, {'currency':['UUP']}, ],
 }
 
 # 관심종목들
 WATCH_TICKERS = {
-    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'KR':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],    
-    'EU':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'JP':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'CN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'US':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'DE':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],    
-    'IN':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
-    'SG':[{'bond':['TLT']}, {'stock':['SPY','QQQ']}, {'commodity':['GLD']}, {'cash':['']}],
+    'US':[{'bond':['TLT','EDV','HYG','LQD','TMF','IEF','SHV','SHY']}, {'stock':['SPY','QQQ','BAC','ENB','O','SCHD','SOXL','VNQ']}, {'commodity':['GLD']}, {'currency':['UUP']}, ],
+    'KR':[{'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']}, \
+          {'stock':['008770.KS','530107.KS','252670.KS']}, {'commodity':['']}, {'currency':['']}, ],    
+    'EU':[{'bond':['']}, {'stock':['']}, {'commodity':['']}, {'currency':['']}, ],
+    'JP':[{'bond':['1482.T','1487.T','2620.T','2621.T']}, {'stock':['1325.T','1545.T','1547.T','1571.T','1573.T','1678.T','2034.T','2563.T']}, 
+          {'commodity':['']}, {'currency':['']}, ],
+    'CN':[{'bond':['']}, {'stock':['510330.SS','002304.SZ','002594.SZ']}, {'commodity':['']}, {'currency':['']}, ],
+    'DE':[{'bond':['DBXG.DE','IBB1.DE','IS04.DE','IUSU.DE','VGEB.DE','VUTY.AS']}, {'stock':['BAS.DE','BNP.PA','CS.PA','GLE.PA']}, 
+          {'commodity':['']}, {'currency':['']}, ],    
+    'IN':[{'bond':['']}, {'stock':['','']}, {'commodity':['']}, {'currency':['']}, ],
+    'SG':[{'bond':['A35.SI']}, {'stock':['AJBU.SI','C6L.SI','CLR.SI','D05.SI','M44U.SI','ME8U.SI','Y92.SI','Z74.SI']}, 
+          {'commodity':['GLD']}, {'currency':['UUP']}, ],
 }
 
 urls = {

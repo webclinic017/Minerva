@@ -2,9 +2,11 @@
 # See LICENSE for details.
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import yfinance as yf
 
-from utils import constant as cst
-from data.techs_data import (
+from .utils import constant as cst
+from .data.techs_data import (
     daily_returns,
     cumulative_returns,
     max_drawdown,
@@ -60,10 +62,6 @@ def analyse_DrawDown(tickers:list):
 
     if tickers is not None and not isinstance(tickers, list): # input
         raise ValueError("ERR#0025: specified tickers value not valid.")
-
-
-    if ddown is None: # output
-        raise ValueError("ERR#0025: ddown not found or unable to retrieve.")
     
     
     threshold_value = -0.3
@@ -85,7 +83,8 @@ def analyse_DrawDown(tickers:list):
         plt.ylabel('Draw Down %')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(f'drawdown_{tickers}.png')
+    plt.show()
+    # plt.savefig(f'drawdown_{tickers}.png')
 
     return ddown 
 

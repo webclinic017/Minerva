@@ -38,17 +38,17 @@ from math import sqrt, exp
 logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
-gtta = {'VNQ':20, 'GLD':10, 'DBC':10, 'IEF':5, 'LQD':5, 'BNDX':5, 'TLT':5, \
-        'EEM':10, 'VEA':10, 'DWAS':5, 'SEIM':5, 'DFSV':5, 'DFLV':5}
+# gtta = {'VNQ':20, 'GLD':10, 'DBC':10, 'IEF':5, 'LQD':5, 'BNDX':5, 'TLT':5, \
+#         'EEM':10, 'VEA':10, 'DWAS':5, 'SEIM':5, 'DFSV':5, 'DFLV':5}
 
 TIMEFRAMES = ['1min', '1hour', '1day']
 
-def find_5days_ago():
-    _day5 = datetime.now() - timedelta(days=5)
-    return _day5
+def find_30days_ago():
+    _day30 = datetime.now() - timedelta(days=30)
+    return _day30
 
-_day5_ago = find_5days_ago()
-day5_ago = _day5_ago.date().strftime('%Y-%m-%d')
+_day30_ago = find_30days_ago()
+day30_ago = _day30_ago.date().strftime('%Y-%m-%d')
 
 
 '''
@@ -139,10 +139,6 @@ def multiAsset_basket():
 
 
 
-
-
-
-
 '''
 1. stocks
 1.1 Timing Model & GTTA (Global Tactical Asset Allocation) Strategy
@@ -153,37 +149,45 @@ SELL RULE: Sell and move to cash when monthly price < 10-month SMA.
 GTAA consists of five global asset classes: US stocks, foreign stocks, bonds, real estate and commodities.
 '''
 # 새로운 포트폴리오 구성하는 방안으로 설정하면.
-def sma_strategy(tickers:list, short_sma=20, long_sma=200):
+def sma_strategy(ticker:str, short_sma=20, long_sma=200):
     data = pd.DataFrame()
-    for tick in tickers:
-        #Download ticker price data from yfinance
-        ticker = yf.Ticker(tick)
-        buf = ticker.history(period='36mo') # test: 10mo, real: 36mo
-        #Calculate 10 and 20 days moving averages
-        sma20 = buf.ta.sma(short_sma, append=True)
-        sma200 = buf.ta.sma(long_sma, append=True)
-        buf.ta.rsi(close="Close", length=14, append=True)        
-        #Create a column with buy and sell signals
-        buf['Ticker'] = tick
-        buf['Signal'] = 0.0
-        buf['Signal'] = sma20 - sma200
-        buf['Pivot'] = np.where((buf['Signal'].shift(1)*buf['Signal']) < 0, 1, 0)  # 1로 되는 일자부터 매수 또는 매도후 현금
-        data = pd.concat([data, buf])
+
+    #Download ticker price data from yfinance
+    ticker = yf.Ticker(ticker)
+    buf = ticker.history(period='36mo') # test: 10mo, real: 36mo
+    #Calculate 10 and 20 days moving averages
+    sma20 = buf.ta.sma(short_sma, append=True)
+    sma200 = buf.ta.sma(long_sma, append=True)
+    buf.ta.rsi(close="Close", length=14, append=True)       
+    #Create a column with buy and sell signals
+    buf['Ticker'] = ticker
+    buf['Signal'] = 0.0
+    buf['Signal'] = sma20 - sma200
+    buf['Pivot'] = np.where((buf['Signal'].shift(1)*buf['Signal']) < 0, 1, 0)  # 1로 되는 일자부터 매수 또는 매도후 현금
+    data = pd.concat([data, buf])
         
     return data
 
 
-def timing_strategy(tickers, short_sma, long_sma):
-    result = sma_strategy(tickers, short_sma, long_sma)
+def timing_strategy(ticker, short_sma, long_sma):
+
+    result = sma_strategy(ticker, short_sma, long_sma)
     buf = result[result['Pivot'] == 1].reset_index()
     # 날짜를 기준으로 최대 날짜의 인덱스를 찾기
     latest_indices = buf.groupby('Ticker')['Date'].idxmax()
     # 최대 날짜의 거래 내역을 발췌
     latest_records = buf.loc[latest_indices]
     # Change rate 비율만큼 Buy/Sell 실행할것, 초기 설정은 임계값 상승돌파하면 75% 추가매수, 하락돌파하면 75% 매도
-    pivot_tickers = latest_records[latest_records['Date']  >= day5_ago]  # for test: '2023-05-16'
+    # pivot_tickers = latest_records[latest_records['Date']  >= day5_ago]  # for test: '2023-05-16'
+    pivot_tickers = latest_records[latest_records['Date']  >= day30_ago]  # for test: '2023-05-16'
+
+    if pivot_tickers.empty:
+        logger2.info(' ##### 30일 이내 피봇 전환일자 없음.')
+        return None
     pivot_tickers['Change_rate'] = np.where((pivot_tickers['Signal']) > 0, 1.75, 0.25)
-    logger2.info(f'##### {long_sma}일 이동평균과 {short_sma}일 이동평균: Timing Strategy 에 따라 매도/매수 비중 조절할 것 !!! #####')
+    change_date = pivot_tickers['Date'].values
+    change_rate = float(pivot_tickers['Change_rate'].values) * 100
+    logger2.info(f'##### {long_sma}일 이동평균과 {short_sma}일 이동평균: Timing Strategy 에 따라 {change_date} 일부터 비중 {change_rate} % 로 조정할 것 !!! #####')
     logger2.info(pivot_tickers)
     # 검증용 백데이터 제공
     tick = pivot_tickers['Ticker']
@@ -467,8 +471,23 @@ def control_chart_strategy(ticker):
     np.set_printoptions(suppress=True)
     pd.options.mode.chained_assignment = None
 
-    def get_data(ticker_file):
-        df = pd.read_csv(ticker_file)
+    def get_data(ticker, ticker_file):
+
+        try:
+            df = pd.read_csv(ticker_file)
+        except:
+            ticker = yf.Ticker(ticker)
+            df = ticker.history(period='36mo')
+            if len(df) <= 0:
+                logger2.info(f'ticker not found: {ticker}')
+                return None
+            
+            df = df.reset_index()
+            df['Date'] = df['Date'].dt.date
+            df = df[['Date','Close']]
+            df.columns = ['date', 'close']
+            if len(df) > 0: df.to_csv(ticker_file, index=False)
+
         df['date'] = pd.to_datetime(df['date'])
         df = df.set_index('date').resample('5T').agg('last')
         df = df.dropna()
@@ -559,7 +578,7 @@ def control_chart_strategy(ticker):
         df['rule6'] = np.where((df['zone'] != df['zone'].shift()).rolling(window=14).sum() >= 14, 1, -1)
         return df.drop(['sma','1std','2std','zone'], axis=1)
 
-    df = get_data(ticker_file)
+    df = get_data(ticker, ticker_file)
 
     logger2.info('         ')
     logger2.info('Rule 1 — One Point Beyond the 3σ Control Limit')
@@ -1120,41 +1139,51 @@ if __name__ == "__main__":
     '''
     0. 공통
     '''
-    multiAsset_basket()
+    # multiAsset_basket()
 
 
     '''
     1. Stock
     '''
-    timing_strategy(gtta.keys(), 20, 200) # 200일 이평 vs 20일 이평
-    timing_strategy(gtta.keys(), 1, 200) # 200일 이평 vs 어제 종가
-    max_dd_strategy(WATCH_TICKERS) # max draw down strategy : 바닥에서 분할 매수구간 찾기
 
-    # settings.py 에서 get_stock_history with timeframe 파일 만들어 줌. 
-    for ticker in WATCH_TICKERS:
-        print(ticker)
-        get_stock_history(ticker, TIMEFRAMES)
-    
-    for ticker in WATCH_TICKERS:
-        volatility_bollinger_strategy(ticker, TIMEFRAMES) # 임계값 찾는 Generic Algorithm 보완했음.
+    buf = []
+    for x in WATCH_TICKERS['US']:
+        for a, t in x.items():
+            buf.append(t)
+    tickers = [item for subs in buf for item in subs]
+    max_dd_strategy(tickers) # max draw down strategy : 바닥에서 분할 매수구간 찾기
 
-    for ticker in WATCH_TICKERS:
-        vb_genericAlgo_strategy(ticker) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm       
 
-    for ticker in WATCH_TICKERS:
-        vb_genericAlgo_strategy2(ticker) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm           
+    for x in WATCH_TICKERS['US']:
 
-    for ticker in WATCH_TICKERS:
-        reversal_strategy(ticker, TIMEFRAMES) 
+        for asset, tickers in x.items():
 
-    for ticker in WATCH_TICKERS:     
-        trend_following_strategy(ticker)  # 단기 매매 아님. 중장기 매매 기법, 1day 데이터만으로 실행
+            for ticker in tickers:
 
-    for ticker in WATCH_TICKERS:
-        control_chart_strategy(ticker)
-        
-    for ticker in WATCH_TICKERS:
-        gaSellHoldBuy_strategy(ticker)
+                if ticker == '':
+                    continue
+
+                # settings.py 에서 get_stock_history with timeframe 파일 만들어 줌.
+                logger2.info('')                
+                logger2.info(f' ##### {ticker}')
+
+                get_stock_history(ticker, TIMEFRAMES)
+                timing_strategy(ticker, 20, 200) # 200일 이평 vs 20일 이평
+
+                volatility_bollinger_strategy(ticker, TIMEFRAMES) # 임계값 찾는 Generic Algorithm 보완했음.
+
+                vb_genericAlgo_strategy(ticker) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm       
+
+                vb_genericAlgo_strategy2(ticker) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm           
+
+                reversal_strategy(ticker, TIMEFRAMES) 
+
+                trend_following_strategy(ticker)  # 단기 매매 아님. 중장기 매매 기법, 1day 데이터만으로 실행
+
+                control_chart_strategy(ticker)
+
+                gaSellHoldBuy_strategy(ticker)
+
         
 
     # 2. Bonds

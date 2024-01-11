@@ -1,8 +1,7 @@
 # Copyright 2023-2025 Jeongmin Kang, jarvisNim @ GitHub
 # See LICENSE for details.
 
-import yfinance as yf
-import matplotlib.pyplot as plt
+import numpy as np
 
 def daily_returns(prices):
     res = (prices/prices.shift(1) - 1.0)[1:]

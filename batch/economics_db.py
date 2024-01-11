@@ -435,10 +435,30 @@ def make_imf_outlook():
 
         logger2.info(f"File moved successfully to: {destination_file_path}")
 
-        df = pd.read_excel('./batch/reports/data/IMF.xls', engine='xlrd', skipfooter=3)
-        time.sleep(5)
-        df = df.reset_index(drop=True)
-        write_dump_table(table_name, df)
+        f = open('./batch/reports/data/IMF.xls', "rb")
+        text = f.read().decode(errors='replace')
+
+        import csv
+
+        class CsvTextBuilder(object):
+            def __init__(self):
+                self.csv_string = []
+
+            def write(self, row):
+                self.csv_string.append(row)
+
+
+        csvfile = CsvTextBuilder()
+        writer = csv.writer(csvfile)
+        writer.writerows(text)
+        csv_string = csvfile.csv_string
+        print(csv_string)
+
+
+        # df = pd.read_excel('./batch/reports/data/IMF.xls', engine='xlrd', skipfooter=3)
+        # time.sleep(5)
+        # df = df.reset_index(drop=True)
+        # write_dump_table(table_name, df)
 
 
 '''
