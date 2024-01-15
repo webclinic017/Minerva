@@ -397,7 +397,6 @@ Download 사이트에서 해당 파일의 이름을 IMF_outlook.xls 로 변경�
 def make_imf_outlook():
 
     table_name = 'IMF'
-    print('aaa')
 
     url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
 
@@ -406,17 +405,19 @@ def make_imf_outlook():
         # 현재 운영체제 확인
         current_os = platform.system()
         print(current_os)
-        # 운영체제에 따른 조건문
-        if current_os == 'Darwin':  # mac OS
-            # print("현재 운영체제는 Windows입니다.")
-            download_directory = "/Users/jarvis/Downloads"  # Mac OS
-        elif current_os == 'Linux':
-            # print("현재 운영체제는 Linux입니다.")
-            download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
-        else:
-            info.error("##### 지원하지 않는 운영체제입니다.")
+        sleep(10)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요     
+   
+    # 운영체제에 따른 조건문
+    if current_os == 'Darwin':  # mac OS
+        # print("현재 운영체제는 Windows입니다.")
+        download_directory = "/Users/jarvis/Downloads"  # Mac OS
+    elif current_os == 'Linux':
+        # print("현재 운영체제는 Linux입니다.")
+        download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
+    else:
+        info.error("##### 지원하지 않는 운영체제입니다.")
         
-    sleep(7)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요
+
     destination_directory = "./batch/reports/data"
     new_file_name = "IMF.csv"  # 본디 구형 xls 파일로 다운로드 받아야하나, 파일안에 utf8 오류발생해서 강제로 csv 파일로 바꾸어서 읽어드리도록 편법사용
 
