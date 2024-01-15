@@ -403,10 +403,11 @@ def make_imf_outlook():
     # if webbrowser.open(url):
     #     sleep(10)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요     
 
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
     if response.status_code == 200:
         current_os = platform.system()
         print(current_os)
+
     else:
         print(f"다운로드 실패. 응답 코드: {response.status_code}")
 
