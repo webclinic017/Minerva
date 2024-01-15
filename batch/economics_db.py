@@ -403,10 +403,11 @@ def make_imf_outlook():
     if webbrowser.open(url):
       
         # 현재 운영체제 확인
-        current_os = platform.system()
-        print(current_os)
+
         sleep(10)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요     
    
+    current_os = platform.system()
+    print(current_os)
     # 운영체제에 따른 조건문
     if current_os == 'Darwin':  # mac OS
         # print("현재 운영체제는 Windows입니다.")
