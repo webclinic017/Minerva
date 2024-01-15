@@ -179,7 +179,7 @@ def google_trend_search(keywords:list):
         fig.write_image(reports_dir + "/sentiments_0040.png", width=1200, height=600)
     except Exception as e:
         print('Exception: {}'.format(e))
-        logger.error(e)
+        logger.error(' >>> ' + e)
 
     # https://github.com/GeneralMills/pytrends/pull/542: 현재 v5 버전에서 문제가 생겨 삭제되어버렸음. 후속 개선기능 아직 없음.
     # # warnings.filterwarnings('FutureWarning')
@@ -193,7 +193,7 @@ def google_trend_search(keywords:list):
         buf = df.loc[['United States', 'South Korea', 'China', 'Germany', 'Japan', 'Austria', ]]
     except Exception as e:
         print('Exception: {}'.format(e))
-        logger.error(e)
+        logger.error(' >>> ' + e)
 
 
 '''

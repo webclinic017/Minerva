@@ -193,7 +193,7 @@ def read_table(table_name):
         # logger2.info(buf)
         return buf
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
 
 # 테이블 데이터 insert
 def write_table(table_name, data):
@@ -211,7 +211,7 @@ def write_table(table_name, data):
     elif table_name == 'Alpha':
         data.dropna(subset=['Country', 'Researcher', 'Date'], inplace=True)
     else:
-        logger.error('Exception: Table Name Not found.')
+        logger.error(' >>> Exception: Table Name Not found.')
 
     data = data.reset_index(drop=True) 
 
@@ -233,7 +233,7 @@ def write_table(table_name, data):
                 _key = f"Country = '{buf['Country'][i]}' and Researcher = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
 
             else:
-                logger.error('Exception: Table Name Not found 2.')            
+                logger.error(' >>> Exception: Table Name Not found 2.')            
 
             # print(f'delete from {table_name} where {_key}')  # DEBUG
             cur.execute(f"delete from {table_name} where {_key}")
@@ -401,9 +401,8 @@ def make_imf_outlook():
 
     url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
 
-    time.sleep(10)
     if webbrowser.open(url):
-        
+      
         # 현재 운영체제 확인
         current_os = platform.system()
         print(current_os)
@@ -417,48 +416,31 @@ def make_imf_outlook():
         else:
             info.error("##### 지원하지 않는 운영체제입니다.")
         
-        
-        destination_directory = "./batch/reports/data"
+    sleep(7)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요
+    destination_directory = "./batch/reports/data"
+    new_file_name = "IMF.csv"  # 본디 구형 xls 파일로 다운로드 받아야하나, 파일안에 utf8 오류발생해서 강제로 csv 파일로 바꾸어서 읽어드리도록 편법사용
 
-        new_file_name = "IMF.xls"  # 원하는 새로운 파일 이름으로 수정
+    # 이동 대상 파일의 경로
+    source_file_path = os.path.join(download_directory, "WEOOct2023all.xls")  # 현재 20240115 기준으로는 옆 파일이 가장 최근값임.
 
-        # 이동 대상 파일의 경로
-        source_file_path = os.path.join(download_directory, "WEOOct2023all.xls")  # 원본 파일 이름으로 수정
+    # 이동할 디렉토리가 없으면 생성
+    os.makedirs(destination_directory, exist_ok=True)
 
-        # 이동할 디렉토리가 없으면 생성
-        os.makedirs(destination_directory, exist_ok=True)
+    # 파일 이동 및 이름 변경
+    destination_file_path = os.path.join(destination_directory, new_file_name)
+    shutil.move(source_file_path, destination_file_path)
 
-        # 파일 이동 및 이름 변경
-        destination_file_path = os.path.join(destination_directory, new_file_name)
-        time.sleep(5)
-        shutil.move(source_file_path, destination_file_path)
-
-        logger2.info(f"File moved successfully to: {destination_file_path}")
-
-        f = open('./batch/reports/data/IMF.xls', "rb")
-        text = f.read().decode(errors='replace')
-
-        import csv
-
-        class CsvTextBuilder(object):
-            def __init__(self):
-                self.csv_string = []
-
-            def write(self, row):
-                self.csv_string.append(row)
+    logger2.info(f"File moved successfully to: {destination_file_path}")
 
 
-        csvfile = CsvTextBuilder()
-        writer = csv.writer(csvfile)
-        writer.writerows(text)
-        csv_string = csvfile.csv_string
-        print(csv_string)
+
+    df = pd.read_csv('./batch/reports/data/IMF.csv', sep='\t', skip_blank_lines=True, skipfooter=3, encoding_errors='replace')
+    df = df.reset_index(drop=True)
+    write_dump_table(table_name, df)
 
 
-        # df = pd.read_excel('./batch/reports/data/IMF.xls', engine='xlrd', skipfooter=3)
-        # time.sleep(5)
-        # df = df.reset_index(drop=True)
-        # write_dump_table(table_name, df)
+
+
 
 
 '''
@@ -641,9 +623,9 @@ def make_worldbank_outlook():
 
     table_name = 'WorldBank'
 
-    url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
+    url = 'https://bit.ly/GEP-Jan-2024-GDP-growth-data'
+
     if webbrowser.open(url):
-        
         # 현재 운영체제 확인
         current_os = platform.system()
         # 운영체제에 따른 조건문
@@ -656,26 +638,27 @@ def make_worldbank_outlook():
         else:
             info.error("##### 지원하지 않는 운영체제입니다.")
         
-        
-        destination_directory = "./batch/reports/data"
+    sleep(10)
+    destination_directory = "./batch/reports/data"
+    new_file_name = "WorldBank.xlsx"  # 원하는 새로운 파일 이름으로 수정
 
-        new_file_name = "WorldBank.xls"  # 원하는 새로운 파일 이름으로 수정
+    # 이동 대상 파일의 경로
+    source_file_path = os.path.join(download_directory, "GEP-Jan-2024-GDP-growth-data.xlsx")  # 원본 파일 이름으로 수정
 
-        # 이동 대상 파일의 경로
-        source_file_path = os.path.join(download_directory, "GEP-Jan-2024-GDP-growth-data.xlsx")  # 원본 파일 이름으로 수정
+    # 이동할 디렉토리가 없으면 생성
+    os.makedirs(destination_directory, exist_ok=True)
 
-        # 이동할 디렉토리가 없으면 생성
-        os.makedirs(destination_directory, exist_ok=True)
+    # 파일 이동 및 이름 변경s
+    destination_file_path = os.path.join(destination_directory, new_file_name)
+    shutil.move(source_file_path, destination_file_path)
 
-        # 파일 이동 및 이름 변경
-        destination_file_path = os.path.join(destination_directory, new_file_name)
-        shutil.move(source_file_path, destination_file_path)
+    logger2.info(f"File moved successfully to: {destination_file_path}")
 
-        logger2.info(f"File moved successfully to: {destination_file_path}")
-
-        df = pd.read_csv('./batch/reports/data/WorldBank.csv')
-        df = df.reset_index(drop=True)
-        write_dump_table(table_name, df)
+    df = pd.read_excel('./batch/reports/data/WorldBank.xlsx', skiprows=range(0, 3),)
+    df = df.reset_index(drop=True)
+    df.columns = ['Category_1', 'Category_2', 'Category_3', 'Category_4', 'Category_5', '_2021', '_2022', '_2023e',\
+                  '_2024f', '_2025f', 'filler' ,'_2023e_d', '_2024f_d', '_2025f_d']
+    write_dump_table(table_name, df)
 
 
 
@@ -685,14 +668,11 @@ def make_worldbank_outlook():
 - Researcher: OECD, IMF, Tech, Senti >> Total
 - Stauts: Buttom -> Bull-1 -> Bull-2 -> Top -> Bear-1 -> Bear-2
 '''
-
 def make_alpha(data):
     table_name = 'Alpha'
 
     df = df.reset_index(drop=True)
     write_table(table_name, df)
-
-
 
 
 '''
@@ -714,7 +694,7 @@ def reorg_tables(conn):
     try:
         cur.execute('DROP TABLE Markets_backup;')
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Markets_backup {str_markets};')
     cur.execute('INSERT INTO Markets_backup SELECT * FROM Markets ORDER BY Date;')    
@@ -731,7 +711,7 @@ def reorg_tables(conn):
     try:
         cur.execute('DROP TABLE Indicators_backup;')
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Indicators_backup {str_indicators};')
     cur.execute('INSERT INTO Indicators_backup SELECT * FROM Indicators ORDER BY Country, Indicator, Date;')    
@@ -748,7 +728,7 @@ def reorg_tables(conn):
     try:
         cur.execute('DROP TABLE Calendars_backup;')
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Calendars_backup {str_calendars};')
     cur.execute('INSERT INTO Calendars_backup SELECT * FROM Calendars ORDER BY country, date;')    
@@ -765,7 +745,7 @@ def reorg_tables(conn):
     try:
         cur.execute('DROP TABLE Stock_Indices_backup;')
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
         pass
     cur.execute(f'CREATE TABLE Stock_Indices_backup {str_stock_indices};')
     cur.execute('INSERT INTO Stock_Indices_backup SELECT * FROM Stock_Indices ORDER BY symbol, name, timestamp;')    
@@ -800,12 +780,13 @@ if __name__ == "__main__":
     '''
     # 테이블내 데이터 만들어 넣기
     '''
-    # make_calendars(from_date, to_date)
-    # make_markets(**urls)
-    # make_indicators(**urls)
-    # make_stock_indices()
+    make_calendars(from_date, to_date)
+    make_markets(**urls)
+    make_indicators(**urls)
+    make_stock_indices()
     make_imf_outlook()
-    # make_oecd_outlook()
+    make_oecd_outlook()
+    make_worldbank_outlook()
 
 
     '''

@@ -292,7 +292,7 @@ def show_vb_stategy_result(timeframe, df):
     try:
         logger2.info(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
 
 def volatility_bollinger_strategy(ticker:str, TIMEFRAMES:list):
     # Iterate over each timeframe, apply the strategy and show the result
@@ -345,7 +345,7 @@ def show_reversal_stategy_result(timeframe, df):
     try:
         logger2.info(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")  # if wins + losses == 0
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
 
 def reversal_strategy(ticker:str, TIMEFRAMES:list):
     # Iterate over each timeframe, apply the strategy and show the result

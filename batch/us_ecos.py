@@ -72,7 +72,7 @@ def eco_calendars(from_date, to_date):
         cals = pd.read_sql_query(M_query, conn)
         logger2.info(cals[-30:])
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
 
     events = ['EIA Distillate Fuel Production Change ', 'Retail Sales Ex Autos MoM ', \
             'U-6 Unemployment Rate ', 'Real Consumer Spending QoQ ', '10-Year TIPS Auction', \

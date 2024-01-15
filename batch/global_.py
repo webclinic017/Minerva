@@ -66,7 +66,7 @@ def eco_oecd():
             df = df.sort_values(['Variable', 'Time'], ascending=True).reset_index(drop=True)
             # logger2.info(df.head(5))
         except Exception as e:
-            logger.error('Exception: {}'.format(e))
+            logger.error(' >>> Exception: {}'.format(e))
 
         events = df['Variable'].unique()
 
@@ -360,7 +360,7 @@ class CalcuTrend():
                                         ORDER BY date DESC LIMIT 2", conn)
                 # print(gdp)
             else:
-                logger.error(f'Country Sign is not found: {country_sign}' )
+                logger.error(f' >>> Country Sign is not found: {country_sign}' )
 
             
             try:
@@ -517,7 +517,7 @@ class CalcuTrend():
             else:
                 m2_growth = m2_growth * 0.95
         except Exception as e:
-            logger.error('Exception: {}'.format(e))  
+            logger.error(' >>> Exception: {}'.format(e))  
             
         #2.2 Assets
         if country_sign == 'US':
@@ -550,7 +550,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset')        
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')        
             
         elif country_sign == 'KR':
             if market_name == 'stock':
@@ -582,7 +582,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset')        
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')        
 
         elif country_sign == 'JP':
             if market_name == 'stock':
@@ -608,7 +608,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset')        
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')        
 
         elif country_sign == 'CN':
             if market_name == 'stock':
@@ -640,7 +640,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset')       
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')       
 
         elif country_sign == 'DE':
             if market_name == 'stock':
@@ -666,7 +666,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
 
         elif country_sign == 'EU':
             if market_name == 'stock':
@@ -692,7 +692,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
 
         elif country_sign == 'SG':
             if market_name == 'stock':
@@ -718,7 +718,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
 
         elif country_sign == 'BR':
             if market_name == 'stock':
@@ -744,7 +744,7 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
 
         elif country_sign == 'IN':
             if market_name == 'stock':
@@ -770,10 +770,10 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f'Error: {country_sign}  {market_name} Not found Asset')                 
+                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')                 
 
         else:
-            logger.error(f'Error: {country_sign}: Country sign is not found.')
+            logger.error(f' >>> Error: {country_sign}: Country sign is not found.')
          
         result = (m2_growth * 0.6) + (asset_growth * 0.4)
         
@@ -839,7 +839,7 @@ class CalcuTrend():
     # - 수정한 월 + 6개월 전망으로 가정함. 중기 전망으로는 사용할수 없음
     # - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
     # ##############################################################
-    def get_country_growth_pjt_byOECD(self, conn, country_sign3:str, month_term:int=6):  # country_sign3: United States
+    def get_country_growth_fore_byOECD(self, conn, country_sign3:str, month_term:int=6):  # country_sign3: United States
         
         def add_month(to_date2:str, term_month:int):
             target_date = pd.to_datetime(to_date2)
@@ -868,7 +868,7 @@ class CalcuTrend():
     # IV-2. IMF LEI 를 중기 전망(month_term > 6)으로 사용함.
     # - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
     # ##############################################################    
-    def get_country_growth_pjt_byIMF(self, conn, country_sign2:str, month_term:int=12):
+    def get_country_growth_fore_byIMF(self, conn, country_sign2:str, month_term:int=6):
         
         def add_month(to_date2:str, term_month:int):
             target_date = pd.to_datetime(to_date2)
@@ -903,13 +903,66 @@ class CalcuTrend():
             result = realGDP_rate + float(export) * 0.2 # 미국 빼고, 수출형 국가 빼고 그 나머지들.
 
         return result
-    
+
+    # ##############################################################
+    # IV-2. IMF LEI 를 중기 전망(month_term > 6)으로 사용함.
+    # - 향후 전망시 6개월 이전까지는 OECD 예상치로, 6개월 이후는 IMF 전망치로 산정
+    # ##############################################################    
+    def get_country_growth_fore_byWorldBank(self, conn, country_sign3:str, month_term:int=6):
+        
+        def add_month(to_date2:str, term_month:int):
+            target_date = pd.to_datetime(to_date2)
+            term_month = relativedelta(weeks=term_month*4)
+            target_date2 = (target_date + term_month).date()
+            return target_date2
+
+        target_date2 = add_month(to_date, month_term)
+        logger2.info(f"##### target date: {target_date2}")
+        
+        # Gross domestic product, market prices, deflator, growth
+        if country_sign3 == "United States":
+            if target_date2.year == 2024:
+                buff = f"SELECT _2024f FROM WorldBank WHERE Category_3 = 'United States'"
+            elif target_date2.year == 2025:
+                buff = f"SELECT _2025f FROM WorldBank WHERE Category_3 = 'United States'"
+            else:
+                logger.error(' >>> World Bank Target Date is not valid1.')
+        elif country_sign3 == "China (People's Republic of)":
+            if target_date2.year == 2024:
+                buff = f"SELECT _2024f FROM WorldBank WHERE Category_4 = 'China'"
+            elif target_date2.year == 2025:
+                buff = f"SELECT _2025f FROM WorldBank WHERE Category_4 = 'China'"
+            else:
+                logger.error(' >>> World Bank Target Date is not valid2.')
+        elif country_sign3 == "Japan":
+            if target_date2.year == 2024:
+                buff = f"SELECT _2024f FROM WorldBank WHERE Category_3 = 'Japan'"
+            elif target_date2.year == 2025:
+                buff = f"SELECT _2025f FROM WorldBank WHERE Category_3 = 'Japan'"
+            else:
+                logger.error(' >>> World Bank Target Date is not valid3.')                    
+        elif country_sign3 == "Germany":
+            if target_date2.year == 2024:
+                buff = f"SELECT _2024f FROM WorldBank WHERE Category_3 = 'Euro area'"
+            elif target_date2.year == 2025:
+                buff = f"SELECT _2025f FROM WorldBank WHERE Category_3 = 'Euro area'"
+            else:
+                logger.error(' >>> World Bank Target Date is not valid4.')          
+        else:
+            logger.error(' >>> country_sign3 is not found at World Bank.')
+
+        val = pd.read_sql_query(buff, conn)                                    
+        result = float(val.values)
+        logger2.info(f'##### {country_sign3} GDP Growth: {result} %')         
+                                                        
+        return result
+        
     # ##############################################################    
     # 국가/시장/사업단위의 성장률을 근거로 트랜드, 사이클상 현위치, 그리고 현재/6개월/12개월 전망을 도출하는 마지막 단계.
     # - 입력받은 연구기관, 국가/시장/사업단위 성장률 정보와 Alpha 테이블 history 정보를 기반으로 
     #   사이클상의 어느 위치에 와 있으며, 6개월, 12개월 전망은 어떻게 될 것인지 판단하는 루틴
     # ##############################################################    
-    def cal_trend(self, country:str, market:str, business:str, month_term:int):  # country = 'US'. 'KR'...
+    def cal_trend(self, country:str, market:str, business:str, researcher:str, month_term:int):  # country = 'US'. 'KR'...
 
         ticker = business
         country_sign2 = COUNTRIES[country][0]['alpha3']
@@ -922,19 +975,32 @@ class CalcuTrend():
             c_growth = self.cal_country_growth(self.conn, country, month_term)
             m_growth = self.cal_market_growth(self.conn, country, market, month_term)
             b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
-        elif month_term <= 6:  # IMF 와 OECD 평균 전망치 적용
-            country_sign2 = COUNTRIES[country][0]['alpha3']
-            if country in ['SG']:
-                c_growth = 2.2  # 23년 성장률 값으로 대체, OECD outlook 대상 아님.
+        else:
+            if researcher == 'OECD':
+                # country_sign2 = COUNTRIES[country][0]['alpha3']
+                if country in ['SG']:
+                    c_growth = 2.2  # 23년 성장률 값으로 대체, OECD outlook 대상 아님.
+                else:
+                    c_growth = self.get_country_growth_fore_byOECD(self.conn, country_sign3, month_term)
+                m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+                b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
+            elif researcher == 'IMF': # IMF 전망치만 적용
+                # country_sign2 = COUNTRIES[country][0]['alpha3']
+                c_growth = self.get_country_growth_fore_byIMF(self.conn, country_sign2, month_term)
+                m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+                b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
+            elif researcher == 'WorldBank':
+                if country_sign3  in ['United States', 'Japan', "China (People's Republic of)", 'India']:
+                    # country_sign2 = COUNTRIES[country][0]['alpha3']
+                    c_growth = self.get_country_growth_fore_byWorldBank(self.conn, country_sign3, month_term)
+
+                else:
+                    c_growth = 1 # 결국 이전값 대비 변화율이 필요하므로 괜찮음.
+
+                m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+                b_growth = self.cal_busi_growth(self.conn, ticker, month_term)                
             else:
-                c_growth = self.get_country_growth_pjt_byOECD(self.conn, country_sign3, month_term)
-            m_growth = self.cal_market_growth(self.conn, country, market, month_term)
-            b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
-        else : # IMF 전망치만 적용
-            country_sign2 = COUNTRIES[country][0]['alpha3']
-            c_growth = self.get_country_growth_pjt_byIMF(self.conn, country_sign2, month_term)
-            m_growth = self.cal_market_growth(self.conn, country, market, month_term)
-            b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
+                logger.error('>>> researcher is not found.')
            
     
         logger2.info(f'##### {country} Country Growth: {c_growth} %')           
@@ -954,29 +1020,31 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    # '''
-    # 1. Economic Area
-    # '''
-    # eco_oecd()
-    # cli()
-    # m1()
-    # cpi()
+    '''
+    1. Economic Area
+    '''
+    eco_oecd()
+    cli()
+    m1()
+    cpi()
 
-    # '''
-    # 2. Market Area
-    # '''
-    # cds()
+    '''
+    2. Market Area
+    '''
+    cds()
 
-    # '''
-    # 3. Business Area
-    # '''
-    # container_Freight()
+    '''
+    3. Business Area
+    '''
+    container_Freight()
 
     '''
     4. Calculate Trend (Class): 
 
     '''
     _trend = CalcuTrend()
+    # researcher = 'WorldBank'
+    month_term = 20
 
     for nation, assets in WATCH_TICKERS.items():
 
@@ -989,10 +1057,29 @@ if __name__ == "__main__":
 
                 for ticker in tickers:
 
-                    if ticker == '':
-                        continue
+                    for researcher in RESEARCHERS:
 
-                    trend, c_growth, m_growth, b_growth = _trend.cal_trend(nation, asset, ticker, 20)     
-                    logger2.info(f'##### total Trend {nation}/{asset}/{ticker} : {trend} %')
-                    logger2.info(' ')
+                        if ticker == '':
+                            continue
+
+                        if researcher == 'OECD':
+                            if month_term > 0 and month_term < 49:
+                                pass
+                            else:
+                                logger.warning(' >>> OECD month_term is not valid.')
+
+                        if researcher == 'IMF':
+                            if month_term > 0 and month_term < 61:
+                                pass
+                            else:
+                                logger.warning(' >>> IMF month_term is not valid.')
+
+                        if researcher == 'WorldBank':
+                            if (month_term > 0 and month_term < 49):
+                                pass
+                            else:
+                                logger.warning('World Bank month_term is not valid.')
+                        trend, c_growth, m_growth, b_growth = _trend.cal_trend(nation, asset, ticker, researcher, month_term)     
+                        logger2.info(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {trend} %')
+                        logger2.info(' ')
                     # make_alpha(nation, to_date_2, 'Total', trend, c_growth, m_growth, b_growth)

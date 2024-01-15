@@ -51,7 +51,7 @@ def eco_calendars(from_date, to_date):
         logger2.info('Calendar 경제지표'.center(60, '*'))
         logger2.info(cals[-30:])
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
 
     events = ['Interest Rate Decision', 'PPI MoM ', 'Exports YoY ', 'GDP Growth Rate QoQ ', 'CPI ', \
             'Industrial Production MoM ', 'Business Confidence ', 'GDP Growth Rate QoQ Adv ', \
@@ -103,7 +103,7 @@ def eco_indicators(from_date, to_date):
         logger2.info('Indicator 경제지표'.center(60, '*'))
         logger2.info(indis[:30])
     except Exception as e:
-        logger.error('Exception: {}'.format(e))
+        logger.error(' >>> Exception: {}'.format(e))
 
     indicators = ['balance of trade', 'bank lending rate', 'business confidence', 'capacity utilization', 'capital flows',\
                   'car registrations', 'central bank balance sheet', 'consumer confidence', 'consumer price index',\
@@ -563,7 +563,7 @@ def deflator():
         start_date = datetime.strptime(from_date_MT, '%d/%m/%Y').strftime('%Y%m%d')
         end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m%d')    
     else:
-        logger.error("cycle_type Error !!!")
+        logger.error(" >>> cycle_type Error !!!")
         
     item_1 = ['10101', '10201', '10301', '10401', '10601']
     item_2 = []

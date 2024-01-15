@@ -152,6 +152,7 @@ COUNTRIES = {
 
 ASSETS = ['stock', 'bond', 'commodity', 'cash']
 # 보유종목들
+
 MY_TICKERS = {
     'US':[{'bond':['TLT','EDV','HYG','LQD','TMF','IEF','SHV','SHY']}, {'stock':['SPY','QQQ','BAC','ENB','O','SCHD','SOXL','VNQ']}, {'commodity':['GLD']}, {'currency':['UUP']}, ],
     'KR':[{'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']}, {'stock':['530107.KS','252670.KS']}, {'commodity':['']}, {'currency':['']}, ],    
@@ -195,6 +196,7 @@ urls = {
     # 'VN':'https://macrovar.com/vietnam/',
 }
 
+RESEARCHERS = ['OECD', 'IMF', 'WorldBank',]
 
 Major_ETFs = [
     'AMLP', 'DUST', 'NUGT', 'JDST', 'XLE', 'XLF', 'QQQ', 'FXI', 'EWZ', 'EFA',
@@ -544,7 +546,7 @@ def db_insert(M_db, M_table, M_query, M_buffer, conn, engine, logger, logger2):
     try:
         if M_db['Date'].str.contains(to_date2).any():
             buf = 'Duplicated: ' + M_db['Date']
-            logger.error(buf)
+            logger.error(' >>> ' + buf)
             delete_Crack_By_Date(conn, 'Sent_Crack', date=to_date2)
         M_buffer.to_sql(M_table, con=engine, if_exists='append', chunksize=1000, index=False, method='multi')
     except Exception as e:
@@ -581,7 +583,7 @@ def get_calendar(from_date, to_date=to_date2):
         response = requests.get(url).json()
         calendar = pd.DataFrame(response)
     except Exception as e:
-        logger.error(response)
+        logger.error(' >>> ' + response)
         print("################# financilamodeling.com api error: "+ e)    
 
     # calendar = calendar.iloc[::-1]
