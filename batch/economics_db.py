@@ -407,7 +407,7 @@ def make_imf_outlook():
     if response.status_code == 200:
         current_os = platform.system()
         print(current_os)
-
+        sleep(10)
     else:
         print(f"다운로드 실패. 응답 코드: {response.status_code}")
 
