@@ -238,7 +238,10 @@ def cds():
 3. Business Area
 3.1 Containerized Freight Index
 - 해상운임지수: 경기가 다시 활성화 되는지 여부 모니터링 (20220906)
+3.2 Max Draw Down 
+- 
 '''
+
 def container_Freight():
     # CCFI (China Containerized Freight Index)
     # 중국컨테이너운임지수는 중국 교통부가 주관하고 상하이 항운교역소가 집계하는 중국발 컨테이너운임지수로 1998년 4월 13일 처음 공시되었다. 
@@ -320,6 +323,50 @@ def container_Freight():
     plt.plot(df_bdi, label='Baltic Dry') 
     plt.legend()
     plt.savefig(reports_dir + '/global_0310.png')
+
+
+# 3.2 Max Draw Down
+def daily_returns(prices):
+    res = (prices/prices.shift(1) - 1.0)[1:]
+    res.columns = ['return']
+    return res
+
+def cumulative_returns(returns):
+    res = (returns + 1.0).cumprod()
+    res.columns = ['cumulative return']
+    return res
+
+def max_drawdown(cum_returns):
+    max_returns = np.fmax.accumulate(cum_returns)
+    res = cum_returns / max_returns - 1
+    res.columns = ['max drawdown']
+    return res
+
+def max_drawdown_strategy(country:str, tickers:list):
+    threshold_value = -0.3
+    plt.figure(figsize=(16,4*len(tickers)))
+    for i, tick in enumerate(tickers):
+        if tick == '':
+            continue
+        ticker = yf.Ticker(tick)
+        prices = ticker.history(period='12y')['Close'] # 12: life cycle
+        dret = daily_returns(prices)
+        cret = cumulative_returns(dret)
+        ddown = max_drawdown(cret)
+        ddown[ddown.values < -0.3]
+
+        plt.subplot(len(tickers), 1, i + 1)
+        plt.grid()
+        plt.bar(ddown.index, ddown, color='royalblue')
+        plt.title(ticker)
+        plt.axhline(y=threshold_value, color='red', linestyle='--', label='Threshold')
+        plt.xlabel('Date')
+        plt.ylabel('Draw Down %')
+
+    plt.tight_layout()  # 서브플롯 간 간격 조절
+    plt.savefig(reports_dir + f'/global_0320_{country}.png')
+
+
 
 
 '''
@@ -1018,28 +1065,42 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    # '''
-    # 1. Economic Area
-    # '''
-    # eco_oecd()
-    # cli()
-    # m1()
-    # cpi()
-
-    # '''
-    # 2. Market Area
-    # '''
-    # cds()
-
-    # '''
-    # 3. Business Area
-    # '''
-    # container_Freight()
+    '''
+    1. Economic Area
+    '''
+    eco_oecd()
+    cli()
+    m1()
+    cpi()
 
     '''
-    4. Calculate Trend (Class): 
+    2. Market Area
+    '''
+    cds()
 
     '''
+    3. Business Area
+    3.1 Maximum drawdown
+    3.2 해상운임지수
+    '''
+    
+    for nation, assets in WATCH_TICKERS.items():  # 국가별
+        buf = []        
+        for asset_grp in assets:  # 국가별 / 자산별 /
+            for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
+                buf.append(tickers)
+        tot_tickers = [item for subs in buf for item in subs]
+        logger2.info(tot_tickers)
+        max_drawdown_strategy(nation, tot_tickers) # max draw down strategy : 바닥에서 분할 매수구간 찾기
+
+    # 3.2 해상운임지수
+    container_Freight()
+
+
+    '''
+    4. Calculate Trend: 
+    '''
+
     obj_trend = CalcuTrend()
     # researcher = 'WorldBank'
     month_terms = [0, 3, 6, 12, 18, 24]  # 현재와 n 개월 전망치 값
@@ -1123,7 +1184,7 @@ if __name__ == "__main__":
                         buffer['Trend_12mo'] = [_trend_12]
                         buffer['Trend_18mo'] = [_trend_18]
                         buffer['Trend_24mo'] = [_trend_24]
-                        print(buffer)
+                        logger2.info(buffer)
 
                         df_alpha = pd.concat([df_alpha, buffer])
 

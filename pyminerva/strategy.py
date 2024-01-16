@@ -1,147 +1,28 @@
-'''
-Prgram 명: 미국시장부문의 투자 전략
-Author: jeongmin Kang
-Mail: jarvisNim@gmail.com
-마켓은 주식/채권/원자재/현금등의 금융자산의 오픈된 시장을 의미하며, 
-이 시장내에서의 다양한 개별적 전략(Strategy)들을 수립하고 이에 대한 백테스트 결과까지 도출하고 
-주기적으로 이를 검증하며 매수/매도 기회를 포착하는 것을 목적으로 함. 
-History
-2023/11/16  Creat
-20231119  https://github.com/crapher/medium 참조
-          parameter 값을 최적화하기 위해서는 generic algorithm 을 사용하는 것을 default 로 정함.
-'''
+# Copyright 2023-2025 Jeongmin Kang, jarvisNim @ GitHub
+# See LICENSE for details.
 
-import sys, os
-utils_dir = os.getcwd() + '/batch/utils'
-sys.path.append(utils_dir)
-
-from settings import *
-
-'''
-0. 공통영역 설정
-'''
+import pandas as pd
+import matplotlib.pyplot as plt
 import yfinance as yf
-import pandas_ta as ta
-import pygad
-import pygad.kerasga
-import gym
 
-from scipy import signal
-from tqdm import tqdm
-from sklearn.model_selection import train_test_split
-from gym import spaces
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from math import sqrt, exp
-
-# logging
-logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
-logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
-
-# gtta = {'VNQ':20, 'GLD':10, 'DBC':10, 'IEF':5, 'LQD':5, 'BNDX':5, 'TLT':5, \
-#         'EEM':10, 'VEA':10, 'DWAS':5, 'SEIM':5, 'DFSV':5, 'DFLV':5}
-
-TIMEFRAMES = ['1min', '1hour', '1day']
-
-def find_30days_ago():
-    _day30 = datetime.now() - timedelta(days=30)
-    return _day30
-
-_day30_ago = find_30days_ago()
-day30_ago = _day30_ago.date().strftime('%Y-%m-%d')
-
+from .utils import constant as cst
+from .utils.strategy_funcs import (
+    daily_returns,
+    cumulative_returns,
+    max_drawdown,
+)
 
 '''
-01. Simulate Multi-Asset Baskets With Correlated Price Paths
-- https://medium.com/codex/simulate-multi-asset-baskets-with-correlated-price-paths-using-python-472cbec4e379
+공통 영역
 '''
-def multiAsset_basket():
-    sp500 = fred.get_series('SP500', observation_start=from_date_MT)    
-    nasdaq_comp = fred.get_series('NASDAQCOM', observation_start=from_date_MT)
-    oil_wti = fred.get_series('DCOILWTICO', observation_start=from_date_MT)
-    bond_10y = fred.get_series('DGS10', observation_start=from_date_MT)
-    dollar_idx = fred.get_series('DTWEXBGS', observation_start=from_date_MT)
-
-    sp500_norm = (sp500-sp500.min()) / (sp500.max()-sp500.min())
-    nasdaq_comp_norm = (nasdaq_comp-nasdaq_comp.min()) / (nasdaq_comp.max()-nasdaq_comp.min())
-    oil_wti_norm = (oil_wti-oil_wti.min()) / (oil_wti.max()-oil_wti.min())
-    bond_10y_norm = (bond_10y-bond_10y.min()) / (bond_10y.max()-bond_10y.min())
-    dollar_idx_norm = (dollar_idx-dollar_idx.min()) / (dollar_idx.max()-dollar_idx.min())
-
-    # Manually input number of stocks
-    NUMBER_OF_ASSETS = 5
-    ASSET_TICKERS = ["sp500", "Nasdaq", "Oil", "Bond_10y", "Dollar"]
-    Vol_sp500 = sp500_norm.std()
-    Vol_Nasdaq = nasdaq_comp_norm.std()
-    Vol_oil = oil_wti_norm.std()
-    Vol_bond_10y = bond_10y_norm.std()
-    Vol_dollar = dollar_idx_norm.std()
-
-    VOLATILITY_ARRAY =[Vol_sp500, Vol_Nasdaq, Vol_oil, Vol_bond_10y, Vol_dollar]
-    temp = pd.DataFrame()
-    temp= pd.concat([temp, sp500, nasdaq_comp, oil_wti, bond_10y, dollar_idx], axis=1)
-    temp.columns = ['sp500_norm', 'nasdaq_comp_norm', 'oil_wti_norm', 'bond_10y_norm', 'dollar_idx_norm']
-    temp.fillna(method='ffill', inplace=True)
-    COEF_MATRIX = temp.corr()
-
-    # Perform Cholesky decomposition on coefficient matrix
-    R = np.linalg.cholesky(COEF_MATRIX)
-    # Compute transpose conjugate (only for validation)
-    RT = R.T.conj()
-    # Reconstruct coefficient matrix from factorization (only for validation)
-    logger2.info("Multi-Asset Baskets With Correlated Price".center(60, '*'))
-    logger2.info(": \n" + str(COEF_MATRIX))
-    # logger2.info(": \n" + str(np.dot(R, RT)))
-
-    T = 250                                   # Number of simulated days
-    asset_price_array = np.full((NUMBER_OF_ASSETS,T), 100.0) # Stock price, first value is simulation input 
-    volatility_array = VOLATILITY_ARRAY       # Volatility (annual, 0.01=1%)
-    r = 0.001                                 # Risk-free rate (annual, 0.01=1%)
-    dt = 1.0 / T
-
-    # Plot simulated price paths
-    retry_cnt = 5
-    fig = plt.figure(figsize=(16,4*retry_cnt))
-
-    for i in range(retry_cnt):
-
-        for t in range(1, T):
-            # Generate array of random standard normal draws
-            random_array = np.random.standard_normal(NUMBER_OF_ASSETS)
-            # Multiply R (from factorization) with random_array to obtain correlated epsilons
-            epsilon_array = np.inner(random_array,R)
-            # Sample price path per stock
-            for n in range(NUMBER_OF_ASSETS):
-                dt = 1 / T 
-                S = asset_price_array[n,t-1]
-                v = volatility_array[n]
-                epsilon = epsilon_array[n]
-                # Generate new stock price
-                if n == 0:
-                    asset_price_array[n,t] = S * exp((r - 0.5 * v**2) * dt + v * sqrt(dt) * epsilon)
-                else:
-                    asset_price_array[n,t] = temp.iloc[t,n]+100*1
-                asset_price_array[n,t] = S * exp((r - 0.5 * v**2) * dt + v * sqrt(dt) * epsilon)
-
-        ax = fig.add_subplot(retry_cnt, 1,  i+1)
-        array_day_plot = [t for t in range(T)]
-        for n in range(NUMBER_OF_ASSETS):
-            ax.plot(array_day_plot, asset_price_array[n],\
-                                label = '{}'.format(ASSET_TICKERS[n]))
-
-        plt.grid()
-        plt.xlabel('Day')
-        plt.ylabel('Asset price')
-        plt.legend(loc='best')
-
-    plt.tight_layout()
-    plt.savefig(reports_dir + '/us_m0001.png')
 
 
+#####################################
+# funtions
+#####################################
 
 '''
-1. stocks
-1.1 Timing Model & GTTA (Global Tactical Asset Allocation) Strategy
+Timing Model & GTTA (Global Tactical Asset Allocation) Strategy
 Asset Class Trend Following¶
 http://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461
 BUY RULE: Buy when monthly price > 10-month SMA.
@@ -199,50 +80,7 @@ def timing_strategy(ticker, short_sma, long_sma):
 
 
 '''
-1.2 Maximum drawdown Strategy
-'''
-def daily_returns(prices):
-    res = (prices/prices.shift(1) - 1.0)[1:]
-    res.columns = ['return']
-    return res
-
-def cumulative_returns(returns):
-    res = (returns + 1.0).cumprod()
-    res.columns = ['cumulative return']
-    return res
-
-def max_drawdown(cum_returns):
-    max_returns = np.fmax.accumulate(cum_returns)
-    res = cum_returns / max_returns - 1
-    res.columns = ['max drawdown']
-    return res
-
-def max_dd_strategy(tickers:list):
-    threshold_value = -0.3
-    plt.figure(figsize=(16,4*len(tickers)))
-    for i, tick in enumerate(tickers):
-        ticker = yf.Ticker(tick)
-        prices = ticker.history(period='12y')['Close'] # 12: life cycle
-        dret = daily_returns(prices)
-        cret = cumulative_returns(dret)
-        ddown = max_drawdown(cret)
-        ddown[ddown.values < -0.3]
-
-        plt.subplot(len(tickers), 1, i + 1)
-        plt.grid()
-        plt.bar(ddown.index, ddown, color='royalblue')
-        plt.title(ticker)
-        plt.axhline(y=threshold_value, color='red', linestyle='--', label='Threshold')
-        plt.xlabel('Date')
-        plt.ylabel('Draw Down %')
-
-    plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/us_m0100.png')
-
-
-
-'''
-1.3 Volatility-Bollinger Bands Strategy
+Volatility-Bollinger Bands Strategy
 Using this method, you can obtain buy and sell signals determined by the selected strategy.
 The resulting signals are represented as a series of numerical values:
   '1' indicating a buy signal,
@@ -306,7 +144,7 @@ def volatility_bollinger_strategy(ticker:str, TIMEFRAMES:list):
 
 
 '''
-1.4 Reversal Strategy
+Reversal Strategy
 aims to identify potential trend reversals in stock prices
 '''
 def get_reversal_signals(df):
@@ -359,7 +197,7 @@ def reversal_strategy(ticker:str, TIMEFRAMES:list):
 
 
 '''
-1.5 Trend Following Strategy
+Trend Following Strategy
 Whether the market is experiencing a bull run or a bearish downturn, 
 the goal is to hop on the trend early and stay on 
 until there is a clear indication that the trend has reversed.
@@ -445,12 +283,8 @@ def trend_following_strategy(ticker:str):
         logger2.info('  ')
 
 
-
-
-
-
 '''
-1.6 ControlChartStrategy
+ControlChartStrategy
 https://wire.insiderfinance.io/trading-the-stock-market-in-an-unconventional-way-using-control-charts-f6e9aca3d8a0
 these seven rules proposed by Mark Allen Durivage
 Rule 1 — One Point Beyond the 3σ Control Limit
@@ -606,8 +440,9 @@ def control_chart_strategy(ticker):
     df = apply_rule_6(df)
     show_result(df, 'rule6')
 
+
 '''
-1.7 Volatility & Bollinger Band with Generic Algorithm Strategy
+Volatility & Bollinger Band with Generic Algorithm Strategy
 '''
 def vb_genericAlgo_strategy(ticker):
     # Constants
@@ -718,9 +553,8 @@ def vb_genericAlgo_strategy(ticker):
         logger2.info("")
 
 
-
 '''
-1.8 Volatility & Bollinger Band with Generic Algorithm Strategy 2
+Volatility & Bollinger Band with Generic Algorithm Strategy 2
 - 기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용
 '''
 def vb_genericAlgo_strategy2(ticker):
@@ -871,10 +705,8 @@ def vb_genericAlgo_strategy2(ticker):
         logger2.info(f'* Win Rate                 : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%')
 
 
-
-
 '''
-1.9 Generic Algorithm SellHoldBuy Strategy
+Generic Algorithm SellHoldBuy Strategy
 - we will employ a genetic algorithm to update the network’s weights and biases.
 - https://medium.com/@diegodegese/accelerating-model-training-and-improving-stock-market-predictions-with-genetic-algorithms-and-541b04be685b
 '''
@@ -1074,7 +906,7 @@ def gaSellHoldBuy_strategy(ticker):
 
 
 '''
-1.10 Generic Algorithm & MACD Indicator Strategy
+Generic Algorithm & MACD Indicator Strategy
 - https://medium.datadriveninvestor.com/my-approach-to-use-the-macd-indicator-in-the-market-part-2-3958aff26d0a
 '''
 def GaMacd_strategy():
@@ -1126,57 +958,3 @@ def GaMacd_strategy():
 
 
 
-
-
-
-
-'''
-Main Fuction
-'''
-
-if __name__ == "__main__":
-
-    '''
-    0. 공통
-    '''
-    # multiAsset_basket()
-
-
-    '''
-    1. Stock
-    '''
-
-    for x in WATCH_TICKERS['US']:
-
-        for asset, tickers in x.items():
-
-            for ticker in tickers:
-
-                if ticker == '':
-                    continue
-
-                # settings.py 에서 get_stock_history with timeframe 파일 만들어 줌.
-                logger2.info('')                
-                logger2.info(f' ##### {ticker}')
-
-                get_stock_history(ticker, TIMEFRAMES)
-                timing_strategy(ticker, 20, 200) # 200일 이평 vs 20일 이평
-
-                volatility_bollinger_strategy(ticker, TIMEFRAMES) # 임계값 찾는 Generic Algorithm 보완했음.
-
-                vb_genericAlgo_strategy(ticker) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm       
-
-                vb_genericAlgo_strategy2(ticker) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm           
-
-                reversal_strategy(ticker, TIMEFRAMES) 
-
-                trend_following_strategy(ticker)  # 단기 매매 아님. 중장기 매매 기법, 1day 데이터만으로 실행
-
-                control_chart_strategy(ticker)
-
-                gaSellHoldBuy_strategy(ticker)
-
-        
-
-    # 2. Bonds
-    # get_yields()

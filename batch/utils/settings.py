@@ -164,7 +164,7 @@ MY_TICKERS = {
           {'commodity':['']}, {'currency':['']}, ],    
     'IN':[{'bond':['']}, {'stock':['','']}, {'commodity':['']}, {'currency':['']}, ],
     'SG':[{'bond':['A35.SI']}, {'stock':['AJBU.SI','C6L.SI','CLR.SI','D05.SI','M44U.SI','ME8U.SI','Y92.SI','Z74.SI']}, 
-          {'commodity':['GLD']}, {'currency':['UUP']}, ],
+          {'commodity':['']}, {'currency':['']}, ],
 }
 
 # 관심종목들
@@ -180,7 +180,7 @@ WATCH_TICKERS = {
           {'commodity':['']}, {'currency':['']}, ],    
     'IN':[{'bond':['']}, {'stock':['','']}, {'commodity':['']}, {'currency':['']}, ],
     'SG':[{'bond':['A35.SI']}, {'stock':['AJBU.SI','C6L.SI','CLR.SI','D05.SI','M44U.SI','ME8U.SI','Y92.SI','Z74.SI']}, 
-          {'commodity':['GLD']}, {'currency':['UUP']}, ],
+          {'commodity':['']}, {'currency':['']}, ],
 }
 
 urls = {
