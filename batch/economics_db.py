@@ -396,6 +396,10 @@ Download 사이트에서 해당 파일의 이름을 IMF_outlook.xls 로 변경�
 '''
 def make_imf_outlook():
 
+
+
+
+
     table_name = 'IMF'
 
     url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
@@ -418,6 +422,10 @@ def make_imf_outlook():
         for chunk in response.iter_content(chunk_size=128):
 
             print(len(chunk))
+        print(" Download End....")
+        current_directory = os.getcwd()
+        file_path = os.path.join(current_directory, 'somefile.txt')
+        print(f'다운로드된 파일 경로: {file_path}')        
 
 
 
