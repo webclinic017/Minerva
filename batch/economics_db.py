@@ -407,11 +407,21 @@ def make_imf_outlook():
     # if webbrowser.open(url):
     #     sleep(10)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요     
 
+    if current_os == 'Darwin':  # mac OS
+        # print("현재 운영체제는 Windows입니다.")
+        download_directory = "/Users/jarvis/Downloads"  # Mac OS
+    elif current_os == 'Linux':
+        # print("현재 운영체제는 Linux입니다.")
+        # download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
+        download_directory = "./batch/reports/data"  # Ubuntu OS        
+    else:
+        info.error("##### 지원하지 않는 운영체제입니다.")
+
     response = requests.get(url, timeout=10, verify=False)
     if response.status_code == 200:
         current_os = platform.system()
         print(current_os)
-        with open('test.xls', 'wb') as file:
+        with open(download_directory+'/IMF.csv', 'wb') as file:
             file.write(response.content)
         sleep(10)            
         print('파일 다운로드 성공')
@@ -440,31 +450,31 @@ def make_imf_outlook():
     # current_os = platform.system()
     # print(current_os)
     # 운영체제에 따른 조건문
-    if current_os == 'Darwin':  # mac OS
-        # print("현재 운영체제는 Windows입니다.")
-        download_directory = "/Users/jarvis/Downloads"  # Mac OS
-    elif current_os == 'Linux':
-        # print("현재 운영체제는 Linux입니다.")
-        # download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
-        download_directory = "./batch/reports/data"  # Ubuntu OS        
-    else:
-        info.error("##### 지원하지 않는 운영체제입니다.")
+    # if current_os == 'Darwin':  # mac OS
+    #     # print("현재 운영체제는 Windows입니다.")
+    #     download_directory = "/Users/jarvis/Downloads"  # Mac OS
+    # elif current_os == 'Linux':
+    #     # print("현재 운영체제는 Linux입니다.")
+    #     # download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
+    #     download_directory = "./batch/reports/data"  # Ubuntu OS        
+    # else:
+    #     info.error("##### 지원하지 않는 운영체제입니다.")
         
 
-    destination_directory = "./batch/reports/data"
-    new_file_name = "IMF.csv"  # 본디 구형 xls 파일로 다운로드 받아야하나, 파일안에 utf8 오류발생해서 강제로 csv 파일로 바꾸어서 읽어드리도록 편법사용
+    # destination_directory = "./batch/reports/data"
+    # new_file_name = "IMF.csv"  # 본디 구형 xls 파일로 다운로드 받아야하나, 파일안에 utf8 오류발생해서 강제로 csv 파일로 바꾸어서 읽어드리도록 편법사용
 
-    # 이동 대상 파일의 경로
-    source_file_path = os.path.join(download_directory, "WEOOct2023all.xls")  # 현재 20240115 기준으로는 옆 파일이 가장 최근값임.
+    # # 이동 대상 파일의 경로
+    # source_file_path = os.path.join(download_directory, "WEOOct2023all.xls")  # 현재 20240115 기준으로는 옆 파일이 가장 최근값임.
 
-    # 이동할 디렉토리가 없으면 생성
-    os.makedirs(destination_directory, exist_ok=True)
+    # # 이동할 디렉토리가 없으면 생성
+    # os.makedirs(destination_directory, exist_ok=True)
 
-    # 파일 이동 및 이름 변경
-    destination_file_path = os.path.join(destination_directory, new_file_name)
-    shutil.move(source_file_path, destination_file_path)
+    # # 파일 이동 및 이름 변경
+    # destination_file_path = os.path.join(destination_directory, new_file_name)
+    # shutil.move(source_file_path, destination_file_path)
 
-    logger2.info(f"File moved successfully to: {destination_file_path}")
+    # logger2.info(f"File moved successfully to: {destination_file_path}")
 
 
 
