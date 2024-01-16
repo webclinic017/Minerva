@@ -38,7 +38,7 @@ term_days = relativedelta(weeks=1)  # 초기 작업시는 12주 로 하면 사�
 from_date = (_to_date - term_days).date()
 to_date = _to_date.date()
 
-
+download_directory = "./batch/reports/data"
 
 '''
 데이터 베이스와 거시 경제 테이블 생성
@@ -396,95 +396,23 @@ Download 사이트에서 해당 파일의 이름을 IMF_outlook.xls 로 변경�
 '''
 def make_imf_outlook():
 
-
-
-
-
     table_name = 'IMF'
 
     url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
 
-    # if webbrowser.open(url):
-    #     sleep(10)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요     
-    current_os = platform.system()
-    print(current_os)    
-    if current_os == 'Darwin':  # mac OS
-        # print("현재 운영체제는 Windows입니다.")
-        download_directory = "/Users/jarvis/Downloads"  # Mac OS
-    elif current_os == 'Linux':
-        # print("현재 운영체제는 Linux입니다.")
-        # download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
-        download_directory = "./batch/reports/data"  # Ubuntu OS        
-    else:
-        info.error("##### 지원하지 않는 운영체제입니다.")
-
     response = requests.get(url, timeout=10, verify=False)
+    
     if response.status_code == 200:
-        current_os = platform.system()
-        print(current_os)
         with open(download_directory+'/IMF.csv', 'wb') as file:
             file.write(response.content)
         sleep(10)            
         print('파일 다운로드 성공')
-
     else:
         print(f"다운로드 실패. 응답 코드: {response.status_code}")
-
-    # with requests.get(url, stream=True) as response:
-    #     # 파일을 조금씩 읽어서 처리
-    #     current_os = platform.system()
-    #     print(current_os)
-    #     for chunk in response.iter_content(chunk_size=128):
-
-    #         print(len(chunk))
-    #     print(" Download End....")
-    #     current_directory = os.getcwd()
-    #     file_path = os.path.join(current_directory, 'somefile.txt')
-    #     print(f'다운로드된 파일 경로: {file_path}')        
-
-
-
-
-
-
-    # 현재 운영체제 확인  
-    # current_os = platform.system()
-    # print(current_os)
-    # 운영체제에 따른 조건문
-    # if current_os == 'Darwin':  # mac OS
-    #     # print("현재 운영체제는 Windows입니다.")
-    #     download_directory = "/Users/jarvis/Downloads"  # Mac OS
-    # elif current_os == 'Linux':
-    #     # print("현재 운영체제는 Linux입니다.")
-    #     # download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
-    #     download_directory = "./batch/reports/data"  # Ubuntu OS        
-    # else:
-    #     info.error("##### 지원하지 않는 운영체제입니다.")
-        
-
-    # destination_directory = "./batch/reports/data"
-    # new_file_name = "IMF.csv"  # 본디 구형 xls 파일로 다운로드 받아야하나, 파일안에 utf8 오류발생해서 강제로 csv 파일로 바꾸어서 읽어드리도록 편법사용
-
-    # # 이동 대상 파일의 경로
-    # source_file_path = os.path.join(download_directory, "WEOOct2023all.xls")  # 현재 20240115 기준으로는 옆 파일이 가장 최근값임.
-
-    # # 이동할 디렉토리가 없으면 생성
-    # os.makedirs(destination_directory, exist_ok=True)
-
-    # # 파일 이동 및 이름 변경
-    # destination_file_path = os.path.join(destination_directory, new_file_name)
-    # shutil.move(source_file_path, destination_file_path)
-
-    # logger2.info(f"File moved successfully to: {destination_file_path}")
-
-
 
     df = pd.read_csv('./batch/reports/data/IMF.csv', sep='\t', skip_blank_lines=True, skipfooter=3, encoding_errors='replace')
     df = df.reset_index(drop=True)
     write_dump_table(table_name, df)
-
-
-
 
 
 
@@ -657,6 +585,7 @@ def make_oecd_outlook():
     write_dump_table(table_name, df)
 
 
+
 '''
 7. WorldBank Data 생성
 https://www.worldbank.org/en/news/press-release/2024/01/09/global-economic-prospects-january-2024-press-release?intcid=ecr_hp_headerA_2024-01-09-GEPPressRelease
@@ -670,34 +599,15 @@ def make_worldbank_outlook():
 
     url = 'https://bit.ly/GEP-Jan-2024-GDP-growth-data'
 
-    if webbrowser.open(url):
-        # 현재 운영체제 확인
-        current_os = platform.system()
-        # 운영체제에 따른 조건문
-        if current_os == 'Darwin':  # mac OS
-            # print("현재 운영체제는 Windows입니다.")
-            download_directory = "/Users/jarvis/Downloads"  # Mac OS
-        elif current_os == 'Linux':
-            # print("현재 운영체제는 Linux입니다.")
-            download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
-        else:
-            info.error("##### 지원하지 않는 운영체제입니다.")
-        
-    sleep(10)
-    destination_directory = "./batch/reports/data"
-    new_file_name = "WorldBank.xlsx"  # 원하는 새로운 파일 이름으로 수정
-
-    # 이동 대상 파일의 경로
-    source_file_path = os.path.join(download_directory, "GEP-Jan-2024-GDP-growth-data.xlsx")  # 원본 파일 이름으로 수정
-
-    # 이동할 디렉토리가 없으면 생성
-    os.makedirs(destination_directory, exist_ok=True)
-
-    # 파일 이동 및 이름 변경s
-    destination_file_path = os.path.join(destination_directory, new_file_name)
-    shutil.move(source_file_path, destination_file_path)
-
-    logger2.info(f"File moved successfully to: {destination_file_path}")
+    response = requests.get(url, timeout=10, verify=False)
+    
+    if response.status_code == 200:
+        with open(download_directory+'/WorldBank.xlsx', 'wb') as file:
+            file.write(response.content)
+        sleep(10)            
+        print('파일 다운로드 성공')
+    else:
+        print(f"다운로드 실패. 응답 코드: {response.status_code}")
 
     df = pd.read_excel('./batch/reports/data/WorldBank.xlsx', skiprows=range(0, 3),)
     df = df.reset_index(drop=True)
