@@ -52,16 +52,20 @@ conn, engine = create_connection(database)
 
 str_alpha = '(\
     Country TEXT NOT NULL,\
+    Market TEXT NOT NULL,\
+    Busi TEXT NOT NULL,\
     Researcher TEXT NOT NULL,\
     Date TEXT NOT NULL,\
-    Trend NUMERIC,\
     Country_Growth NUMERIC,\
     Market_Growth NUMERIC,\
     Busi_Growth NUMERIC,\
-    Status_Now TEXT,\
-    Status_6mo TEXT,\
-    Status_12mo TEXT,\
-    PRIMARY KEY (Country, Researcher, Date))'
+    Trend NUMERIC,\
+    Trend_3mo NUMERIC,\
+    Trend_6mo NUMERIC,\
+    Trend_12mo NUMERIC,\
+    Trend_18mo NUMERIC,\
+    Trend_24mo NUMERIC,\
+    PRIMARY KEY (Country, Market, Busi, Researcher, Date))'
 
 
 str_calendars = '(\
@@ -180,7 +184,7 @@ def create_Stock_Indices(conn, str_indicators):
 def create_Alpha(conn, str_alpha):
     with conn:
         cur = conn.cursor()
-        cur.execute(f'CREATE TABLE if not exists Alpha {str_calendars}')
+        cur.execute(f'CREATE TABLE if not exists Alpha {str_alpha}')
     return conn
 
 
@@ -209,7 +213,7 @@ def write_table(table_name, data):
     elif table_name == 'Stock_Indices':
         data.dropna(subset=['symbol', 'name', 'timestamp'], inplace=True)
     elif table_name == 'Alpha':
-        data.dropna(subset=['Country', 'Researcher', 'Date'], inplace=True)
+        data.dropna(subset=['Country', 'Market', 'Busi', 'Researcher', 'Date'], inplace=True)
     else:
         logger.error(' >>> Exception: Table Name Not found.')
 
@@ -230,7 +234,7 @@ def write_table(table_name, data):
             elif table_name == 'Stock_Indices':
                 _key = f"symbol = '{buf['symbol'][i]}' and name = '{buf['name'][i]}' and timestamp = '{buf['timestamp'][i]}'"
             elif table_name == 'Alpha':
-                _key = f"Country = '{buf['Country'][i]}' and Researcher = '{buf['Indicator'][i]}' and Date = '{buf['Date'][i]}'"
+                _key = f"Country = '{buf['Country'][i]}' and Market = '{buf['Market'][i]}' and Busi = '{buf['Busi'][i]}' and Researcher = '{buf['Researcher'][i]}' and Date = '{buf['Date'][i]}'"
 
             else:
                 logger.error(' >>> Exception: Table Name Not found 2.')            
@@ -617,13 +621,15 @@ def make_worldbank_outlook():
 
 '''
 8. Alpha 테이블 생성
-각종 Researcher 에서 추출한 Trend, Country/Market/Business Growth 를 가지고 현 사이클 단계 확인과 6,12개월 전망
-- Researcher: OECD, IMF, Tech, Senti >> Total
-- Stauts: Buttom -> Bull-1 -> Bull-2 -> Top -> Bear-1 -> Bear-2
+glbal_.py 프로그램 수행하면서 발생되는 국가/시장/사업별로 저장하는 루틴
+각종 Researcher 에서 추출한 Trend, Country/Market/Business Growth 를 가지고 현 사이클 단계 확인과 6,12, 18, 24개월 전망 지표 보여줌.
+- Researcher: OECD, IMF, WorldBank, Tech.., Senti.. >> Total
 '''
 def make_alpha(data):
     table_name = 'Alpha'
-
+    # print(data)
+    df = data
+    df = df.dropna()
     df = df.reset_index(drop=True)
     write_table(table_name, df)
 
@@ -723,13 +729,13 @@ if __name__ == "__main__":
 
     '''
     # 테이블 생성 (최초 생성시만 Active 해서 사용 !!!)
-    create_Alpha(conn, str_Alpha)
+    create_Alpha(conn, str_alpha)
     create_Calendars(conn, str_calendars)
     create_Markets(conn, str_markets)
     create_Indicators(conn, str_indicators)
     create_Stock_Indices(conn, str_stock_indices)
     '''
-    # create_Alpha(conn, str_alpha)
+    create_Alpha(conn, str_alpha)
 
     '''
     # 테이블내 데이터 만들어 넣기
@@ -741,6 +747,10 @@ if __name__ == "__main__":
     make_imf_outlook()
     make_oecd_outlook()
     make_worldbank_outlook()
+    '''
+    # make_alpha() 는 존재하지 않음.  _global.py 프로그램에서 호출해서 수행함.   
+    '''
+
 
 
     '''

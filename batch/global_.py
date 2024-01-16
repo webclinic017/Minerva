@@ -15,6 +15,7 @@ utils_dir = os.getcwd() + '/batch/utils'
 sys.path.append(utils_dir)
 
 from settings import *
+from economics_db import make_alpha
 
 
 '''
@@ -40,9 +41,6 @@ to_date_2 = to_date_2.date()
 database = 'Economics.db'
 db_file = 'database/' + database
 conn, engine = create_connection(db_file)
-
-alpha = pd.DataFrame(columns=['country', 'date', 'researcher', 'trend', 'country_growth',\
-                            'market_growth', 'busi_growth', 'status_now', 'status_6m', 'status_12m'])
 
 
 '''
@@ -1020,66 +1018,113 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    '''
-    1. Economic Area
-    '''
-    eco_oecd()
-    cli()
-    m1()
-    cpi()
+    # '''
+    # 1. Economic Area
+    # '''
+    # eco_oecd()
+    # cli()
+    # m1()
+    # cpi()
 
-    '''
-    2. Market Area
-    '''
-    cds()
+    # '''
+    # 2. Market Area
+    # '''
+    # cds()
 
-    '''
-    3. Business Area
-    '''
-    container_Freight()
+    # '''
+    # 3. Business Area
+    # '''
+    # container_Freight()
 
     '''
     4. Calculate Trend (Class): 
 
     '''
-    _trend = CalcuTrend()
+    obj_trend = CalcuTrend()
     # researcher = 'WorldBank'
-    month_term = 20
+    month_terms = [0, 3, 6, 12, 18, 24]  # 현재와 n 개월 전망치 값
+    df_alpha = pd.DataFrame(columns=['Country', 'Market', 'Busi', 'Researcher', 'Date', 'Country_Growth', 'Market_Growth',\
+                                 'Busi_Growth', 'Trend', 'Trend_3mo', 'Trend_6mo', 'Trend_12mo', 'Trend_18mo', 'Trend_24mo'],
+                                index=['Country', 'Market', 'Busi', 'Researcher', 'Date'])
 
-    for nation, assets in WATCH_TICKERS.items():
+    for nation, assets in WATCH_TICKERS.items():  # 국가별
 
         if nation in ['EU']:  # 몇 가지 정보가 존재하지 않아 제외
             continue
             
-        for asset_grp in assets:
+        for asset_grp in assets:  # 국가별 / 자산별 /
 
-            for asset, tickers in asset_grp.items():
+            for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
 
-                for ticker in tickers:
+                for ticker in tickers:  # 국가별 / 자산별 / ETF별
 
-                    for researcher in RESEARCHERS:
+                    if ticker == '':
+                        continue                    
 
-                        if ticker == '':
-                            continue
+                    for researcher in RESEARCHERS:  # 국가별 / 자산별 / ETF별 / 연구기관별
 
-                        if researcher == 'OECD':
-                            if month_term > 0 and month_term < 49:
-                                pass
+                        _trend_0 = 0
+                        _trend_3 = 0
+                        _trend_6 = 0
+                        _trend_12 = 0
+                        _trend_18 = 0
+                        _trend_24 = 0
+
+                        for month_term in month_terms:  # 국가별 / 자산별 / ETF별 / 연구기관별 / 전망월별 (현재부터 24개월후까지 6개월간)
+
+                            if researcher == 'OECD':
+                                if month_term > 0 and month_term < 49:
+                                    pass
+                                else:
+                                    logger.warning(' >>> OECD month_term is not valid.')
+
+                            if researcher == 'IMF':
+                                if month_term > 0 and month_term < 61:
+                                    pass
+                                else:
+                                    logger.warning(' >>> IMF month_term is not valid.')
+
+                            if researcher == 'WorldBank':
+                                if (month_term > 0 and month_term < 49):
+                                    pass
+                                else:
+                                    logger.warning('World Bank month_term is not valid.')
+
+                            trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, month_term)
+
+                            logger2.info(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {trend} %')
+                            logger2.info(' ')
+
+                            if month_term == 0:
+                                _trend_0 = round(trend, 3)
+                            elif month_term == 3:
+                                _trend_3 = round(trend, 3)                            
+                            elif month_term == 6:
+                                _trend_6 = round(trend, 3)
+                            elif month_term == 12:
+                                _trend_12 = round(trend, 3)
+                            elif month_term == 18:
+                                _trend_18 = round(trend, 3)
                             else:
-                                logger.warning(' >>> OECD month_term is not valid.')
+                                _trend_24 = round(trend, 3)
+                                
+                        buffer = pd.DataFrame()
+                        buffer['Country'] = [nation]
+                        buffer['Market'] = [asset]
+                        buffer['Busi'] = [ticker]
+                        buffer['Researcher'] = [researcher]
+                        buffer['Date'] = [pd.to_datetime(to_date2).date()]
+                        buffer['Country_Growth'] = [round(c_growth, 3)]
+                        buffer['Market_Growth'] = [round(m_growth, 3)]
+                        buffer['Busi_Growth'] = [round(b_growth, 3)]
+                        buffer['Trend'] = [_trend_0]
+                        buffer['Trend_3mo'] = [_trend_3]
+                        buffer['Trend_6mo'] = [_trend_6]
+                        buffer['Trend_12mo'] = [_trend_12]
+                        buffer['Trend_18mo'] = [_trend_18]
+                        buffer['Trend_24mo'] = [_trend_24]
+                        print(buffer)
 
-                        if researcher == 'IMF':
-                            if month_term > 0 and month_term < 61:
-                                pass
-                            else:
-                                logger.warning(' >>> IMF month_term is not valid.')
+                        df_alpha = pd.concat([df_alpha, buffer])
 
-                        if researcher == 'WorldBank':
-                            if (month_term > 0 and month_term < 49):
-                                pass
-                            else:
-                                logger.warning('World Bank month_term is not valid.')
-                        trend, c_growth, m_growth, b_growth = _trend.cal_trend(nation, asset, ticker, researcher, month_term)     
-                        logger2.info(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {trend} %')
-                        logger2.info(' ')
-                    # make_alpha(nation, to_date_2, 'Total', trend, c_growth, m_growth, b_growth)
+    make_alpha(df_alpha)
