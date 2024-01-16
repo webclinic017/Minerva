@@ -406,9 +406,8 @@ def make_imf_outlook():
         with open(download_directory+'/IMF.csv', 'wb') as file:
             file.write(response.content)
         sleep(10)            
-        print('파일 다운로드 성공')
     else:
-        print(f"다운로드 실패. 응답 코드: {response.status_code}")
+        logger.error(f" >>> WorldBank.xlsx 다운로드 실패. 응답 코드: {response.status_code}")
 
     df = pd.read_csv('./batch/reports/data/IMF.csv', sep='\t', skip_blank_lines=True, skipfooter=3, encoding_errors='replace')
     df = df.reset_index(drop=True)
@@ -605,9 +604,8 @@ def make_worldbank_outlook():
         with open(download_directory+'/WorldBank.xlsx', 'wb') as file:
             file.write(response.content)
         sleep(10)            
-        print('파일 다운로드 성공')
     else:
-        print(f"다운로드 실패. 응답 코드: {response.status_code}")
+        logger.error(f" >>> WorldBank.xlsx 다운로드 실패. 응답 코드: {response.status_code}")
 
     df = pd.read_excel('./batch/reports/data/WorldBank.xlsx', skiprows=range(0, 3),)
     df = df.reset_index(drop=True)
@@ -642,7 +640,8 @@ def reorg_tables(conn):
     cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
     tables = cur.fetchall()
     for table in tables:
-        print(table[0])
+        logger2.info(f'Reorg table names: {table[0]}')
+    logger2.info('')
 
 
     # 1. Markets 테이블 재구성
