@@ -407,25 +407,29 @@ def make_imf_outlook():
     # if webbrowser.open(url):
     #     sleep(10)  # 다운로드 파일 사이즈가 10M 라서 시간이 필요     
 
-    # response = requests.get(url, timeout=10, verify=False)
-    # if response.status_code == 200:
-    #     current_os = platform.system()
-    #     print(current_os)
-    #     sleep(10)
-    # else:
-    #     print(f"다운로드 실패. 응답 코드: {response.status_code}")
-
-    with requests.get(url, stream=True) as response:
-        # 파일을 조금씩 읽어서 처리
+    response = requests.get(url, timeout=10, verify=False)
+    if response.status_code == 200:
         current_os = platform.system()
         print(current_os)
-        for chunk in response.iter_content(chunk_size=128):
+        with open('test.xls', 'wb') as file:
+            file.write(response.content)
+        sleep(10)            
+        print('파일 다운로드 성공')
 
-            print(len(chunk))
-        print(" Download End....")
-        current_directory = os.getcwd()
-        file_path = os.path.join(current_directory, 'somefile.txt')
-        print(f'다운로드된 파일 경로: {file_path}')        
+    else:
+        print(f"다운로드 실패. 응답 코드: {response.status_code}")
+
+    # with requests.get(url, stream=True) as response:
+    #     # 파일을 조금씩 읽어서 처리
+    #     current_os = platform.system()
+    #     print(current_os)
+    #     for chunk in response.iter_content(chunk_size=128):
+
+    #         print(len(chunk))
+    #     print(" Download End....")
+    #     current_directory = os.getcwd()
+    #     file_path = os.path.join(current_directory, 'somefile.txt')
+    #     print(f'다운로드된 파일 경로: {file_path}')        
 
 
 
