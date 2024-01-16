@@ -433,7 +433,8 @@ def make_imf_outlook():
         download_directory = "/Users/jarvis/Downloads"  # Mac OS
     elif current_os == 'Linux':
         # print("현재 운영체제는 Linux입니다.")
-        download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
+        # download_directory = "/home/jarvis/Downloads"  # Ubuntu OS
+        download_directory = "./batch/reports/data"  # Ubuntu OS        
     else:
         info.error("##### 지원하지 않는 운영체제입니다.")
         
