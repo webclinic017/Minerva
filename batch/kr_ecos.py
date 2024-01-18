@@ -209,9 +209,9 @@ def kospi200_vs_krw(from_date, to_date):
 '''
 1.2 KOSPI 200 vs FED Rates
 '''
-def kospi200_vs_fred():
+def kospi200_vs_fred(from_date):
     Federal_Rate =  fred.get_series('DFF', observation_start=from_date_MT)
-    logger2.info(f"FED Rates".center(60, '*'))    
+    logger2.info(f" FED Rates ".center(60, '*'))    
     logger2.info(Federal_Rate[-91::30])
 
     fig, ax1 = plt.subplots(figsize=(18,4))
@@ -281,7 +281,7 @@ def kospi200_vs_currency(from_date, to_date):
 
     df_m3_month = df.loc[df['ITEM_CODE1'] == 'X000000']
 
-    logger2.info('한국은행 m2'.center(60, '*'))
+    logger2.info(' 한국은행 m2 '.center(60, '*'))
     logger2.info(df_m2_month[-5:][['TIME','DATA_VALUE']])
 
     # Graph
@@ -348,11 +348,11 @@ def loan(from_date, to_date):
     df_4['DATA_VALUE'] = (df_4['DATA_VALUE']).astype('float')
     df_1['DATA_VALUE_TOT'] = df_1['DATA_VALUE']+df_2['DATA_VALUE']+df_3['DATA_VALUE']+df_4['DATA_VALUE']
 
-    logger2.info('가계대출'.center(60, '*'))
-    logger2.info('은행 가계 가계대출 중 주담대, 주담대 제외'.center(60, '*'))
+    logger2.info(' 가계신용 '.center(60, '*'))
+    logger2.info(' 가계신용 중 주택담보대출 / 예금은행 '.center(60, '*'))
     logger2.info(df_1[-5:])
     logger2.info(df_2[-5:])
-    logger2.info('비은행 가계 가계대출 중 주담대, 주담대 제외'.center(60, '*'))
+    logger2.info(' 가계신용 중 가계대출 (주택담보대출 제외) / 예금은행 '.center(60, '*'))
     logger2.info(df_3[-5:])
     logger2.info(df_4[-5:])
 
@@ -396,7 +396,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     gdp_yoy['Actual/YoY'] = gdp_yoy['Actual']
     gdp_qoq['Actual/QoQ'] = gdp_qoq['Actual']
 
-    logger2.info('GDP (Gross domestic product)'.center(60, '*'))
+    logger2.info(' GDP (Gross domestic product) '.center(60, '*'))
     logger2.info(gdp_yoy[-4:])    
 
     # Industrial Production
@@ -410,7 +410,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     ip_yoy['Actual/YoY'] = ip_yoy['Actual']
     ip_qoq['Actual/MoM'] = ip_qoq['Actual']
 
-    logger2.info('Industrial Production (YoY)'.center(60, '*'))
+    logger2.info(' Industrial Production (YoY) '.center(60, '*'))
     logger2.info(ip_yoy[-4:])
 
     plt.figure(figsize=(18,6))
@@ -505,11 +505,13 @@ def kospi200_vs_realty(from_date, to_date, kr_total_shares):
 '''
 2.4 실업급여수급실적
 '''
-def unemployment():
+def unemployment(from_date, to_date):
     stat_code  = "901Y084"
     cycle_type = "M"
-    start_date = "200601"
-    end_date   = "202208"
+    # start_date = "200601"
+    # end_date   = "202208"
+    start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
+    end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')    
     item_1 = ['167A']
     item_2 = ['P', 'A']
     item_3 = [ ]
@@ -524,7 +526,7 @@ def unemployment():
     df_1.set_index('TIME')
     df_2.set_index('TIME')
 
-    logger2.info('실업급여수급실적'.center(60, '*'))
+    logger2.info(' 실업급여수급실적 (인원) '.center(60, '*'))
     logger2.info(df_1[-3:])
 
     plt.figure(figsize=(18,6))
@@ -545,7 +547,7 @@ GDP 디플레이터
 · 따라서 GDP디플레이터는 생산자물가지수나 소비자물가지수와 함께 국민경제 전체의 물가수준을 나타내는 지표로 사용되기도 한다.
 · 한국은행 매분기별 국민소득통계 공표 시 GDP 디플레이터도 포함하여 공표하고 있다.
 '''
-def deflator():
+def deflator(from_date, to_date):
     stat_code  = "200Y012"
     cycle_type = "Q"
 
@@ -586,7 +588,7 @@ def deflator():
     df_gdp_exp = df.loc[df['ITEM_CODE1'] == '10601']# 국내총생산 지출
     df_deflator = df_consumption[['TIME','DATA_VALUE']]+df_gross_capital[['TIME','DATA_VALUE']]+df_export[['TIME','DATA_VALUE']]+df_gdp_exp[['TIME','DATA_VALUE']]+df_import[['TIME','DATA_VALUE']]*(-1)
 
-    logger2.info('GDP Deflator'.center(60, '*'))
+    logger2.info(' GDP Deflator '.center(60, '*'))
     logger2.info(df_consumption[['TIME','DATA_VALUE']][-4:]+df_gross_capital[['TIME','DATA_VALUE']][-4:]+df_export[['TIME','DATA_VALUE']][-4:]+df_gdp_exp[['TIME','DATA_VALUE']][-4:]+df_import[['TIME','DATA_VALUE']][-4:]*(-1))
 
     # Graph
@@ -630,7 +632,7 @@ def kospi200_vs_export_import_balance(cals):
     kor_tb['Date'] = pd.to_datetime(kor_tb['date']).dt.date     
     kor_tb['Actual/Bil/YoY'] = kor_tb['actual']
 
-    logger2.info('환율/통관수출입/외환'.center(60, '*'))
+    logger2.info(' 환율/통관수출입/외환 '.center(60, '*'))
     logger2.info(kor_tb[-5:])
 
     plt.figure(figsize=(18,6))
@@ -662,9 +664,9 @@ def kospi200_vs_dollar_current():
     cur_account['Date'] = pd.to_datetime(cur_account['date']).dt.date
     cur_account['Actual(Bil)'] = cur_account['actual']
 
-    logger2.info('Korea Dollar Reserve'.center(60, '*'))
+    logger2.info(' Korea Dollar Reserve '.center(60, '*'))
     logger2.info(fx_res[-5:])
-    logger2.info('Korea Current Account'.center(60, '*'))
+    logger2.info(' Korea Current Account '.center(60, '*'))
     logger2.info(cur_account[cur_account['Actual(Bil)'] < 0])
 
     plt.figure(figsize=(18,6))
@@ -703,7 +705,7 @@ def dollar_vs_eximport(from_date, to_date):
     df_reserve_total = df.loc[df['ITEM_CODE1'] == '99']
     df_reserve_foreign_currency = df.loc[df['ITEM_CODE1'] == '04']
 
-    logger2.info('외환 보유액'.center(60, '*'))
+    logger2.info(' 외환 보유액 '.center(60, '*'))
     logger2.info(df_reserve_foreign_currency[['TIME','DATA_VALUE']][-5:])
 
     # Graph
@@ -745,9 +747,9 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
     # cpi_mom['Actual/YoY'] = cpi_mom['actual'].str.rstrip('%').astype('float')
     cpi_mom['Actual/MoM'] = cpi_mom['actual']
 
-    logger2.info('PPI(YoY)'.center(60, '*'))
+    logger2.info(' PPI(YoY) '.center(60, '*'))
     logger2.info(cpi_yoy.sort_values(by='Date',ascending=False)[:5])
-    logger2.info('CPI(YoY)'.center(60, '*'))
+    logger2.info(' CPI(YoY) '.center(60, '*'))
     logger2.info(ppi_yoy.sort_values(by='Date',ascending=False)[:5])
 
     plt.figure(figsize=(18,6))
@@ -809,7 +811,7 @@ def stock_money_flow(from_date, to_date):
     df_money_loans_credit = df.loc[df['ITEM_CODE1'] == 'S23E']# 신용융자잔고
     df_stock_loans_credit = df.loc[df['ITEM_CODE1'] == 'S23F']# 신용대주잔고
 
-    logger2.info('증시주변자금 동향'.center(60, '*'))
+    logger2.info(' 증시주변자금 동향 '.center(60, '*'))
     logger2.info(df_customer_deposits[['TIME','DATA_VALUE']][-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
@@ -865,7 +867,7 @@ def foreigner_investments(from_date, to_date):
     df_pure_long_vol = df.loc[df['ITEM_CODE1'] == 'S22CC']# 순매수/거래량 1
     df_pure_long_vol = df_pure_long_vol.loc[df_pure_long_vol['ITEM_CODE2'] == 'VO']# 순매수/거래량 2
 
-    logger2.info('외국인 투자동향'.center(60, '*'))
+    logger2.info(' 외국인 투자동향 '.center(60, '*'))
     logger2.info(df_pure_long_vol[['TIME','DATA_VALUE']][-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
@@ -904,9 +906,9 @@ def foreigner_investments(from_date, to_date):
 - 소비자동향지수(CSI) : 소비자들의 경기나 생활형편 등에 대한 주관적 판단과 전망, 미래 소비지출 계획 등을 설문조사를 통해 지수화 한 것
 - 뉴스심리지수: 뉴스기사 텍스트 데이터를 이용하여 경제심리의 변화를 월별 경제심리지표 공표 이전에 신속하게 파악하여 경제동향 모니터링 및 정책수립을 위한 기초자료로 활용 
 '''
-def kor_esi_new_index():
+def kor_esi_new_index(from_date, to_date):
 # import datetime
-    start_date = datetime.strptime(from_date_MT, '%d/%m/%Y').strftime('%Y%m')
+    start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
     end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')
 
     # 경기(경제) 심리지수
@@ -964,14 +966,14 @@ if __name__ == "__main__":
     cals = eco_calendars(from_date, to_date_2)  # calendars
     indis = eco_indicators(from_date, to_date_2) # marcovar
     kr_total_shares = kospi200_vs_krw(from_date_MT, to_date)  # Kospi200
-    kospi200_vs_fred()
+    kospi200_vs_fred(from_date_MT)
     kospi200_vs_currency(from_date_MT, to_date)
     loan(from_date_MT, to_date)
     kospi200_vs_gdp_ip(cals, kr_total_shares)
     kospi200_mom_vs_gdp_ip(cals, kr_total_shares)
     kospi200_vs_realty(from_date_MT, to_date, kr_total_shares)
-    unemployment()
-    deflator()
+    unemployment(from_date_MT, to_date)
+    deflator(from_date_MT, to_date)
     kospi200_vs_export_import_balance(cals)
     kospi200_vs_dollar_current()
     dollar_vs_eximport(from_date_MT, to_date)
@@ -979,4 +981,4 @@ if __name__ == "__main__":
     kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
     stock_money_flow(from_date_MT, to_date)
     foreigner_investments(from_date_MT, to_date)
-    kor_esi_new_index()
+    kor_esi_new_index(from_date_MT, to_date)
