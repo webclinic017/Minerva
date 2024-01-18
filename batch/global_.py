@@ -423,8 +423,8 @@ class CalcuTrend():
             # 보정 2: 예측치 대비 실측치로 가감점
             mul_2 = (gdp['actual'][idx] - gdp['estimate'][idx]) / 100
             
-            logger2.debug('mul_1: ' + str(mul_1))
-            logger2.debug('mul_2: ' + str(mul_2))
+            # logger2.debug('mul_1: ' + str(mul_1))
+            # logger2.debug('mul_2: ' + str(mul_2))
             
             result = gdp['actual'][idx] + mul_1 + mul_2
             
@@ -453,8 +453,8 @@ class CalcuTrend():
         # 보정 2: 예측치 대비 실측치로 +- 20% 보정
         mul_2 = (inflation['actual'][idx] - inflation['estimate'][idx]) / 100
     
-        logger2.debug('mul_1: ' + str(mul_1))
-        logger2.debug('mul_2: ' + str(mul_2))    
+        # logger2.debug('mul_1: ' + str(mul_1))
+        # logger2.debug('mul_2: ' + str(mul_2))    
 
         result = inflation['actual'][idx] + mul_1 + mul_2
         
@@ -496,8 +496,8 @@ class CalcuTrend():
             idx = 0
             pass
         
-        logger2.debug('mul_1: ' + str(mul_1))
-        logger2.debug('mul_2: ' + str(mul_2))           
+        # logger2.debug('mul_1: ' + str(mul_1))
+        # logger2.debug('mul_2: ' + str(mul_2))           
         
         result = export['actual'][idx] + mul_1 + mul_2
         
@@ -822,9 +822,9 @@ class CalcuTrend():
          
         result = (m2_growth * 0.6) + (asset_growth * 0.4)
         
-        logger2.info(f'##### {country_sign} Market Growth: {result} %')           
-        logger2.info(f'##### {country_sign} M2 Growth: {m2_growth} %')
-        logger2.info(f'##### {country_sign} Asset Growth: {asset_growth} %')
+        logger2.info(f'##### {country_sign} Market Growth: {round(result, 2)} %')           
+        logger2.info(f'##### {country_sign} M2 Growth: {round(m2_growth,2)} %')
+        logger2.info(f'##### {country_sign} Asset Growth: {round(asset_growth,2)} %')
 
         return result
 
@@ -998,7 +998,7 @@ class CalcuTrend():
 
         val = pd.read_sql_query(buff, conn)                                    
         result = float(val.values)
-        logger2.info(f'##### {country_sign3} GDP Growth: {result} %')         
+        logger2.info(f'##### {country_sign3} GDP Growth: {round(result,2)} %')
                                                         
         return result
         
@@ -1048,9 +1048,9 @@ class CalcuTrend():
                 logger.error('>>> researcher is not found.')
            
     
-        logger2.info(f'##### {country} Country Growth: {c_growth} %')           
-        logger2.info(f'##### {country} Market Growth: {m_growth} %')
-        logger2.info(f'##### {country} Business Growth: {b_growth} %')    
+        logger2.info(f'##### {country} Country Growth: {round(c_growth,2)} %')           
+        logger2.info(f'##### {country} Market Growth: {round(m_growth,2)} %')
+        logger2.info(f'##### {country} Business Growth: {round(b_growth,2)} %')    
 
         trend = c_growth + m_growth*0.3 + b_growth*0.3*0.7
         
@@ -1153,7 +1153,7 @@ if __name__ == "__main__":
 
                             trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, month_term)
 
-                            logger2.info(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {trend} %')
+                            logger2.info(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {round(trend,2)} %')
                             logger2.info(' ')
 
                             if month_term == 0:
