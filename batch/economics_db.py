@@ -339,11 +339,12 @@ def make_calendars(from_date, to_date):
         from_date = (to_date - term_days).date()
         to_date = to_date.date()
 
+    cals = cals.reset_index(drop=True)
+
     logger2.info('')
     logger2.info(f'최근 1주일동안의 Calendars 표'.center(60, '*'))
-    logger2.info(cals.head(20))
-
-    cals = cals.reset_index(drop=True)    
+    buffer = cals[pd.to_datetime(cals['date']) >=  pd.to_datetime(to_date2)]    
+    logger2.info(buffer.sort_values(by='date', ascending=False).to_string())    
     write_table(table_name, cals)
 
 
@@ -735,7 +736,6 @@ if __name__ == "__main__":
     create_Indicators(conn, str_indicators)
     create_Stock_Indices(conn, str_stock_indices)
     '''
-    create_Alpha(conn, str_alpha)
 
     '''
     # 테이블내 데이터 만들어 넣기

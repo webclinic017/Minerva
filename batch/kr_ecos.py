@@ -895,6 +895,64 @@ def foreigner_investments(from_date, to_date):
     plt.savefig(reports_dir + '/kr_e0520.png')
 
 
+'''
+5.3 한국 경기심리지수(economic sentiment index) + 뉴스심리
+기업과 소비자 모두를 포함한 민간의 경제상황에 대한 심리를 종합적으로 파악하기 위하여 BSI 및 CSI 지수를 합성하여 경제심리지수(ESI : Economic Sentiment Index)와 
+뉴스기사 심리지수를 같이 분석함.
+- 기업경기실사지수(BSI) : 기업가의 현재 경기수준에 대한 판단과 향후 전망 등을 설문조사를 통해 지수화 한 것
+- 소비자동향지수(CSI) : 소비자들의 경기나 생활형편 등에 대한 주관적 판단과 전망, 미래 소비지출 계획 등을 설문조사를 통해 지수화 한 것
+- 뉴스심리지수: 뉴스기사 텍스트 데이터를 이용하여 경제심리의 변화를 월별 경제심리지표 공표 이전에 신속하게 파악하여 경제동향 모니터링 및 정책수립을 위한 기초자료로 활용 
+'''
+def kor_esi_new_index():
+# import datetime
+    start_date = datetime.strptime(from_date_MT, '%d/%m/%Y').strftime('%Y%m')
+    end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')
+
+    # 경기(경제) 심리지수
+    stat_code  = "513Y001"
+    cycle_type = "M"
+    item_1 = ['E1000', 'E2000']
+    item_2 = []
+    item_3 = []
+
+    df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
+    df.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
+    df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
+    df['TIME'] = pd.to_datetime(df['TIME'], yearfirst=True)
+    df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+
+    df_esi_origin = df.loc[df['ITEM_CODE1'] == 'E1000']  # 경제심리지수 원계열
+    df_esi_Coincident = df.loc[df['ITEM_CODE1'] == 'E2000']  # 경제심리지수 순환변동치
+
+    buf = df_esi_Coincident[['TIME','DATA_VALUE']][-5:]
+
+    # 뉴스심리지수
+    stat_code  = "521Y001"
+    cycle_type = "M"
+    item_1 = ['A001']
+    item_2 = []
+    item_3 = []
+
+    df2 = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
+    df2.dropna(subset=['TIME','DATA_VALUE'], axis=0, inplace=True)
+    df2['TIME'] = df2['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
+    df2['TIME'] = pd.to_datetime(df2['TIME'], yearfirst=True)
+    df2['DATA_VALUE'] = (df2['DATA_VALUE']).astype('float')
+
+    df2_news = df2.loc[df2['ITEM_CODE1'] == 'A001']  # 뉴스심리지수
+    buf = df2_news[['TIME','DATA_VALUE']][-5:]
+
+    # Graph
+    plt.figure(figsize=(12,6))
+    plt.title(f"경기심리지수 vs 뉴스심리지수", fontdict={'fontsize':20, 'color':'g'})
+    plt.grid()
+    plt.plot(df_esi_origin['TIME'], df_esi_origin['DATA_VALUE'], label='경기심리지수(원계열)', linewidth=0.5, color='gray')
+    plt.plot(df_esi_Coincident['TIME'], df_esi_Coincident['DATA_VALUE'], label='경기심리지수(순환변동치)', linewidth=1, color='green')
+    plt.plot(df2_news['TIME'], df2_news['DATA_VALUE'], label='뉴스심리지수', linewidth=1, color='royalblue', marker='o')
+    plt.legend()
+    plt.savefig(reports_dir + "/kr_e050.png")
+
+
 
 
 '''
@@ -920,3 +978,4 @@ if __name__ == "__main__":
     kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom)
     stock_money_flow(from_date_MT, to_date)
     foreigner_investments(from_date_MT, to_date)
+    kor_esi_new_index()
