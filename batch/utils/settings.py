@@ -190,18 +190,18 @@ WATCH_TICKERS2 = {
     'KR':[{'stock':['^KS200', '008770.KS',]}, {'bond':['148070.KS',]}, {'commodity':['']}, {'currency':['']}, ],    
 }
 
-# urls = {
-#     'CN':'https://macrovar.com/china/',
-#     'EU':'https://macrovar.com/europe/', 
-#     'JP':'https://macrovar.com/japan/', 
-#     'KR':'https://macrovar.com/south-korea/', 
-#     'US':'https://macrovar.com/united-states/', 
-#     'SG':'https://macrovar.com/singapore/', 
-#     'DE':'https://macrovar.com/germany/', 
-#     'BR':'https://macrovar.com/brazil/',
-#     'IN':'https://macrovar.com/india/',
-#     # 'VN':'https://macrovar.com/vietnam/',
-# }
+urls = {
+    'CN':'https://macrovar.com/china/',
+    'EU':'https://macrovar.com/europe/', 
+    'JP':'https://macrovar.com/japan/', 
+    'KR':'https://macrovar.com/south-korea/', 
+    'US':'https://macrovar.com/united-states/', 
+    'SG':'https://macrovar.com/singapore/', 
+    'DE':'https://macrovar.com/germany/', 
+    'BR':'https://macrovar.com/brazil/',
+    'IN':'https://macrovar.com/india/',
+    # 'VN':'https://macrovar.com/vietnam/',
+}
 
 RESEARCHERS = ['OECD', 'IMF', 'WorldBank',]
 

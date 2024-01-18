@@ -740,13 +740,18 @@ if __name__ == "__main__":
     '''
     # 테이블내 데이터 만들어 넣기
     '''
-    make_calendars(from_date, to_date)
-    make_markets(**urls)
-    make_indicators(**urls)
-    make_stock_indices()
-    make_imf_outlook()
-    make_oecd_outlook()
-    make_worldbank_outlook()
+    try:
+
+        make_calendars(from_date, to_date)
+        make_markets(**urls)
+        make_indicators(**urls)
+        make_stock_indices()
+        make_imf_outlook()
+        make_oecd_outlook()
+        make_worldbank_outlook()
+    except Exception as e:
+        logger.error(' >>> Exception: {}'.format(e))
+
     '''
     # make_alpha() 는 존재하지 않음.  _global.py 프로그램에서 호출해서 수행함.   
     '''
@@ -756,7 +761,10 @@ if __name__ == "__main__":
     '''
     # 테이블 저장공간 키구성순을 위한 재구성작업
     '''
-    reorg_tables(conn)
+    try:
+        reorg_tables(conn)
+    except Exception as e:
+        logger.error(' >>> Exception: {}'.format(e))
 
 
 

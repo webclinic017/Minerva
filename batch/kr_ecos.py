@@ -21,6 +21,7 @@ from settings import *
 
 # logging
 logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
+logger2.info('')
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 
@@ -173,7 +174,7 @@ def kospi200_vs_krw(from_date, to_date):
 
     usd_krw = pd.Series(data=list(df['DATA_VALUE']), index=df['TIME'])
 
-    logger2.info(f"KRW".center(60, '*'))
+    logger2.info(f" KRW ".center(60, '*'))
     logger2.info(usd_krw[-26::5])
 
     fig, ax1 = plt.subplots(figsize=(18,4))
@@ -353,7 +354,7 @@ def loan(from_date, to_date):
     logger2.info(df_2[-5:])
     logger2.info('비은행 가계 가계대출 중 주담대, 주담대 제외'.center(60, '*'))
     logger2.info(df_3[-5:])
-    logger2.info(df_4[-5:])    
+    logger2.info(df_4[-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
     # 서브플롯 설정
