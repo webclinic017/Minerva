@@ -423,8 +423,8 @@ class CalcuTrend():
             # 보정 2: 예측치 대비 실측치로 가감점
             mul_2 = (gdp['actual'][idx] - gdp['estimate'][idx]) / 100
             
-            # logger2.debug('mul_1: ' + str(mul_1))
-            # logger2.debug('mul_2: ' + str(mul_2))
+            logger2.debug('mul_1: ' + str(mul_1))
+            logger2.debug('mul_2: ' + str(mul_2))
             
             result = gdp['actual'][idx] + mul_1 + mul_2
             
@@ -453,8 +453,8 @@ class CalcuTrend():
         # 보정 2: 예측치 대비 실측치로 +- 20% 보정
         mul_2 = (inflation['actual'][idx] - inflation['estimate'][idx]) / 100
     
-        # logger2.debug('mul_1: ' + str(mul_1))
-        # logger2.debug('mul_2: ' + str(mul_2))    
+        logger2.debug('mul_1: ' + str(mul_1))
+        logger2.debug('mul_2: ' + str(mul_2))    
 
         result = inflation['actual'][idx] + mul_1 + mul_2
         
@@ -496,8 +496,8 @@ class CalcuTrend():
             idx = 0
             pass
         
-        # logger2.debug('mul_1: ' + str(mul_1))
-        # logger2.debug('mul_2: ' + str(mul_2))           
+        logger2.debug('mul_1: ' + str(mul_1))
+        logger2.debug('mul_2: ' + str(mul_2))           
         
         result = export['actual'][idx] + mul_1 + mul_2
         
