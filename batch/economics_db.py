@@ -342,7 +342,7 @@ def make_calendars(from_date, to_date):
     cals = cals.reset_index(drop=True)
 
     logger2.info('')
-    logger2.info(f'최근 1주일동안의 Calendars 표'.center(60, '*'))
+    logger2.info(f' 최근 1주일동안의 Calendars 중 오늘 발표된 지표 '.center(60, '*'))
     buffer = cals[pd.to_datetime(cals['date']) >=  pd.to_datetime(to_date2)]    
     logger2.info(buffer.sort_values(by='date', ascending=False).to_string())    
     write_table(table_name, cals)
@@ -374,6 +374,7 @@ def make_indicators(**kwargs):
     df = pd.DataFrame()
     for key, value in kwargs.items():
         buf = get_indicators(key, value, table_name)
+        logger2.info('')
         logger2.info(f'macrovar.com 의 indicator 표: {buf.Country[0]} '.center(60, '*'))
         logger2.info(buf)          
         df = pd.concat([df, buf])

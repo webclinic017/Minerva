@@ -105,10 +105,15 @@ def cli():
 
     logger2.info('##### Leading indicators: CLI (Composite leading indicator) #####')
     logger2.info('CLI_OECD_Total: \n' + str(CLI_OECD_Total[-3:]))
+    logger2.info('')
     logger2.info('CLI_OECD_Total_Plus_Six: \n' + str(CLI_OECD_Total_Plus_Six[-3:]))
+    logger2.info('')
     logger2.info('CLI_Usa: \n' + str(CLI_Usa[-3:]))
+    logger2.info('')
     logger2.info('CLI_Korea: \n' + str(CLI_Korea[-3:]))
+    logger2.info('')
     logger2.info('CLI_China: \n' + str(CLI_China[-3:]))
+    logger2.info('')
     logger2.info('CLI_Germany: \n' + str(CLI_Germany[-3:]))
 
     plt.figure(figsize=(15,6))
@@ -229,6 +234,7 @@ def cds():
     cdses.drop(columns=column_to_remove, inplace=True)
     cdses.columns = cdses.columns.droplevel(0)
 
+    logger2.info('')
     logger2.info('##### Sovereign CDS (Credit Default Swap) #####')
     logger2.info('cdses: \n' + str(cdses))
 
@@ -822,9 +828,9 @@ class CalcuTrend():
          
         result = (m2_growth * 0.6) + (asset_growth * 0.4)
         
-        logger2.info(f'##### {country_sign} Market Growth: {round(result, 2)} %')           
-        logger2.info(f'##### {country_sign} M2 Growth: {round(m2_growth,2)} %')
-        logger2.info(f'##### {country_sign} Asset Growth: {round(asset_growth,2)} %')
+        logger2.info(f' {country_sign} Market Growth: {round(result, 2)} %')           
+        logger2.info(f' {country_sign} M2 Growth: {round(m2_growth,2)} %')
+        logger2.info(f' {country_sign} Asset Growth: {round(asset_growth,2)} %')
 
         return result
 
@@ -893,7 +899,7 @@ class CalcuTrend():
             return target_date2
 
         target_date2 = add_month(to_date, month_term)
-        logger2.info(f"##### target date: {target_date2}")
+        logger2.info(f" target date: {target_date2}")
         
         # Gross domestic product, market prices, deflator, growth
         if country_sign3 == "China (People's Republic of)":
@@ -905,7 +911,7 @@ class CalcuTrend():
                                     AND Variable = 'Gross domestic product, market prices, deflator, growth' \
                                     AND Time = '{target_date2.year}'", conn)
         result = float(val.values)
-        logger2.info(f'##### {country_sign3} GDP Growth: {result} %')         
+        logger2.info(f' {country_sign3} GDP Growth: {result} %')         
                                                         
         return result
   
@@ -922,7 +928,7 @@ class CalcuTrend():
             return target_date2
         
         target_date2 = add_month(to_date, month_term)
-        logger2.info(f"##### target date: {target_date2}")
+        logger2.info(f" target date: {target_date2}")
         target_year = target_date2.year
         lei_gdp_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'NGDP_RPCH'", conn)
         lei_inflation_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'PCPIPCH'", conn)
@@ -962,7 +968,7 @@ class CalcuTrend():
             return target_date2
 
         target_date2 = add_month(to_date, month_term)
-        logger2.info(f"##### target date: {target_date2}")
+        logger2.info(f" target date: {target_date2}")
         
         # Gross domestic product, market prices, deflator, growth
         if country_sign3 == "United States":
@@ -998,7 +1004,7 @@ class CalcuTrend():
 
         val = pd.read_sql_query(buff, conn)                                    
         result = float(val.values)
-        logger2.info(f'##### {country_sign3} GDP Growth: {round(result,2)} %')
+        logger2.info(f' {country_sign3} GDP Growth: {round(result,2)} %')
                                                         
         return result
         
@@ -1048,9 +1054,9 @@ class CalcuTrend():
                 logger.error('>>> researcher is not found.')
            
     
-        logger2.info(f'##### {country} Country Growth: {round(c_growth,2)} %')           
-        logger2.info(f'##### {country} Market Growth: {round(m_growth,2)} %')
-        logger2.info(f'##### {country} Business Growth: {round(b_growth,2)} %')    
+        logger2.info(f' {country} Country Growth: {round(c_growth,2)} %')           
+        logger2.info(f' {country} Market Growth: {round(m_growth,2)} %')
+        logger2.info(f' {country} Business Growth: {round(b_growth,2)} %')    
 
         trend = c_growth + m_growth*0.3 + b_growth*0.3*0.7
         
@@ -1154,7 +1160,6 @@ if __name__ == "__main__":
                             trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, month_term)
 
                             logger2.info(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {round(trend,2)} %')
-                            logger2.info(' ')
 
                             if month_term == 0:
                                 _trend_0 = round(trend, 3)

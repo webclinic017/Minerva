@@ -49,7 +49,8 @@ def eco_calendars(from_date, to_date):
 
     try:
         cals = pd.read_sql_query(M_query, conn)
-        logger2.info('Calendar 경제지표'.center(60, '*'))
+        logger2.info('')
+        logger2.info(' Calendar 경제지표 '.center(60, '*'))
         logger2.info(cals[-30:])
     except Exception as e:
         logger.error(' >>> Exception: {}'.format(e))
@@ -320,6 +321,8 @@ def loan(from_date, to_date):
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
     end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')
     item_1 = ['11110A0','11A00A0', '11110B0', '11A00B0']
+    #  '11110A0': 주택담보대출-예금은행, '11A00A0': 주택담보대출-비은행예금취급기관
+    #  '11110B0': 기타대출(가계대출)-예금은행, '11A00B0': 기타대출(가계대출)-비은행예금취급기관
     item_2 = []
     item_3 = []
     df = get_bok(bok_key, stat_code, cycle_type, start_date, end_date, item_1, item_2, item_3).drop(['ITEM_CODE4','ITEM_NAME4'], axis=1)
@@ -348,12 +351,15 @@ def loan(from_date, to_date):
     df_4['DATA_VALUE'] = (df_4['DATA_VALUE']).astype('float')
     df_1['DATA_VALUE_TOT'] = df_1['DATA_VALUE']+df_2['DATA_VALUE']+df_3['DATA_VALUE']+df_4['DATA_VALUE']
 
+    logger2.info('')
     logger2.info(' 가계신용 '.center(60, '*'))
-    logger2.info(' 가계신용 중 주택담보대출 / 예금은행 '.center(60, '*'))
+    logger2.info(' 주택담보대출-예금은행 '.center(60, '*'))
     logger2.info(df_1[-5:])
+    logger2.info(' 주택담보대출-비은행예금취급기관 '.center(60, '*'))    
     logger2.info(df_2[-5:])
-    logger2.info(' 가계신용 중 가계대출 (주택담보대출 제외) / 예금은행 '.center(60, '*'))
+    logger2.info(' 기타대출(가계대출)-예금은행 '.center(60, '*'))
     logger2.info(df_3[-5:])
+    logger2.info(' 기타대출(가계대출)-비은행예금취급기관 '.center(60, '*'))    
     logger2.info(df_4[-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
