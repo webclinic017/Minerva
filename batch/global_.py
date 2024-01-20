@@ -208,7 +208,7 @@ def cpi():
     plt.plot(cpi_korea, label='CPI for South Korea')
     plt.plot(cpi_china, label='CPI for China')
     plt.legend()
-    plt.savefig(reports_dir + '/0130.png')
+    plt.savefig(reports_dir + '/global_0130.png')
 
 
 
