@@ -236,6 +236,7 @@ def kospi200_vs_fred(from_date):
 def kospi200_vs_currency(from_date, to_date):
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
     end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')
+
     # M1
     stat_code  = "101Y017"
     cycle_type = "M"
@@ -248,6 +249,7 @@ def kospi200_vs_currency(from_date, to_date):
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
     df['TIME'] = pd.to_datetime(df['TIME'],).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+    df['Difference'] = df['DATA_VALUE'].diff()    
 
     df_m1_month = df.loc[df['ITEM_CODE1'] == 'BBKA00']
     df_m1_cash = df.loc[df['ITEM_CODE1'] == 'BBKA01']
@@ -264,6 +266,7 @@ def kospi200_vs_currency(from_date, to_date):
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
     df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+    df['Difference'] = df['DATA_VALUE'].diff()
 
     df_m2_month = df.loc[df['ITEM_CODE1'] == 'BBGA00']
 
@@ -279,11 +282,12 @@ def kospi200_vs_currency(from_date, to_date):
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
     df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+    df['Difference'] = df['DATA_VALUE'].diff()
 
     df_m3_month = df.loc[df['ITEM_CODE1'] == 'X000000']
 
-    logger2.info(' 한국은행 m2 '.center(60, '*'))
-    logger2.info(df_m2_month[-5:][['TIME','DATA_VALUE']])
+    logger2.info(' 한국은행 M2 '.center(60, '*'))
+    logger2.info(df_m2_month[-5:][['TIME','DATA_VALUE', 'Difference']])
 
     # Graph
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
@@ -293,18 +297,19 @@ def kospi200_vs_currency(from_date, to_date):
     plt.title(f"M1, M2, M3", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
     plt.plot(df_m1_month['TIME'], df_m1_month['DATA_VALUE'], label='M1 Month End', linewidth=1, color='maroon')
-    plt.plot(df_m1_cash['TIME'], df_m1_cash['DATA_VALUE'], label='M1 Cash', linewidth=1, color='yellow')
-    plt.plot(df_m2_month['TIME'], df_m2_month['DATA_VALUE'], label='M2 Month End', linewidth=1, color='orange')
+    # plt.plot(df_m1_cash['TIME'], df_m1_cash['DATA_VALUE'], label='M1 Cash', linewidth=1, color='yellow')
+    plt.plot(df_m2_month['TIME'], df_m2_month['DATA_VALUE'], label='M2 Month End', linewidth=1, color='red')
     plt.plot(df_m3_month['TIME'], df_m3_month['DATA_VALUE'], label='M3 Month End', linewidth=1, color='green')
     plt.legend()
 
     plt.subplot(2, 1, 2)
-    plt.title(f"M1, M2, M3", fontdict={'fontsize':20, 'color':'g'})
+    plt.title(f"M1, M2, M3별 차이금액", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
-    plt.plot(df_m1_month['TIME'][-37:], df_m1_month['DATA_VALUE'][-37:], label='M1 Month End', linewidth=1, color='maroon')
-    # plt.plot(df_m1_cash['TIME'][-37:], df_m1_cash['DATA_VALUE'][-37:], label='M1 Cash', linewidth=1, color='yellow')
-    plt.plot(df_m2_month['TIME'][-37:], df_m2_month['DATA_VALUE'][-37:], label='M2 Month End', linewidth=1, color='orange')
-    plt.plot(df_m3_month['TIME'][-37:], df_m3_month['DATA_VALUE'][-37:], label='M3 Month End', linewidth=1, color='green')
+    plt.plot(df_m1_month['TIME'], df_m1_month['Difference'], label='M1 Difference', linewidth=1, color='maroon')
+    # plt.plot(df_m1_cash['TIME'][-37:], df_m1_cash['Difference'][-37:], label='M1 Cash', linewidth=1, color='yellow')
+    plt.plot(df_m2_month['TIME'], df_m2_month['Difference'], label='M2 Difference', linewidth=1, color='red')
+    plt.plot(df_m3_month['TIME'], df_m3_month['Difference'], label='M3 Difference', linewidth=1, color='green')
+    plt.axhline(y=0, linestyle='--', color='red', linewidth=1, label='2% Target Rate')
     plt.legend(loc=3)
 
     # 이미지 파일로 저장
@@ -349,37 +354,41 @@ def loan(from_date, to_date):
     df_2['DATA_VALUE'] = (df_2['DATA_VALUE']).astype('float')
     df_3['DATA_VALUE'] = (df_3['DATA_VALUE']).astype('float')
     df_4['DATA_VALUE'] = (df_4['DATA_VALUE']).astype('float')
-    df_1['DATA_VALUE_TOT'] = df_1['DATA_VALUE']+df_2['DATA_VALUE']+df_3['DATA_VALUE']+df_4['DATA_VALUE']
+    df_1['Difference'] = df_1['DATA_VALUE'].diff()
+    df_2['Difference'] = df_2['DATA_VALUE'].diff()
+    df_3['Difference'] = df_3['DATA_VALUE'].diff()
+    df_4['Difference'] = df_4['DATA_VALUE'].diff()
 
     logger2.info('')
     logger2.info(' 가계신용 '.center(60, '*'))
-    logger2.info(' 주택담보대출-예금은행 '.center(60, '*'))
-    logger2.info(df_1[-5:])
-    logger2.info(' 주택담보대출-비은행예금취급기관 '.center(60, '*'))    
-    logger2.info(df_2[-5:])
-    logger2.info(' 기타대출(가계대출)-예금은행 '.center(60, '*'))
-    logger2.info(df_3[-5:])
-    logger2.info(' 기타대출(가계대출)-비은행예금취급기관 '.center(60, '*'))    
-    logger2.info(df_4[-5:])
+    logger2.info('***** 주택담보대출-예금은행 (십억원)')
+    logger2.info(df_1[-5:][['TIME','DATA_VALUE', 'Difference']])
+    logger2.info('***** 주택담보대출-비은행예금취급기관 (십억원)')    
+    logger2.info(df_2[-5:][['TIME','DATA_VALUE', 'Difference']])
+    logger2.info('***** 기타대출(가계대출)-예금은행 (십억원)')
+    logger2.info(df_3[-5:][['TIME','DATA_VALUE', 'Difference']])
+    logger2.info('***** 기타대출(가계대출)-비은행예금취급기관 (십억원)')    
+    logger2.info(df_4[-5:][['TIME','DATA_VALUE', 'Difference']])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
     # 서브플롯 설정
     plt.subplot(2, 1, 1)
     plt.title(f"Household Loan", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
-    plt.plot(df_1['TIME'], normalize(df_1['DATA_VALUE']), label='House Loan-Bank', linewidth=3)
-    plt.plot(df_2['TIME'], normalize(df_2['DATA_VALUE']), label='House Loan-Exclusive Bank', linestyle='--', linewidth=3)
-    plt.plot(df_3['TIME'], normalize(df_3['DATA_VALUE']), label='Other Loan-Bank')
-    plt.plot(df_4['TIME'], normalize(df_4['DATA_VALUE']), label='Other Loan-Exclusive Bank', linestyle='--')
+    plt.plot(df_1['TIME'], (df_1['DATA_VALUE']), label='House Loan-Bank')
+    plt.plot(df_2['TIME'], (df_2['DATA_VALUE']), label='House Loan-Exclusive Bank', linewidth=1.5)
+    plt.plot(df_3['TIME'], (df_3['DATA_VALUE']), label='Other Loan-Bank')
+    plt.plot(df_4['TIME'], (df_4['DATA_VALUE']), label='Other Loan-Exclusive Bank', )
     plt.legend()
 
     plt.subplot(2, 1, 2)
-    plt.title(f"Household Loan", fontdict={'fontsize':20, 'color':'g'})
+    plt.title(f"Household Loan 별 차이금액", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
-    plt.plot(df_1['TIME'][-13:], normalize(df_1['DATA_VALUE'][-13:]), label='House Loan-Bank', linewidth=3)
-    plt.plot(df_2['TIME'][-13:], normalize(df_2['DATA_VALUE'][-13:]), label='House Loan-Exclusive Bank', linestyle='--', linewidth=3)
-    plt.plot(df_3['TIME'][-13:], normalize(df_3['DATA_VALUE'][-13:]), label='Other Loan-Bank')
-    plt.plot(df_4['TIME'][-13:], normalize(df_4['DATA_VALUE'][-13:]), label='Other Loan-Exclusive Bank', linestyle='--')
+    plt.plot(df_1['TIME'], (df_1['Difference']), label='House Loan-Bank')
+    plt.plot(df_2['TIME'], (df_2['Difference']), label='House Loan-Exclusive Bank', linewidth=1.5)
+    plt.plot(df_3['TIME'], (df_3['Difference']), label='Other Loan-Bank')
+    plt.plot(df_4['TIME'], (df_4['Difference']), label='Other Loan-Exclusive Bank', )
+    plt.axhline(y=0, linestyle='--', color='red', linewidth=1, label='2% Target Rate')    
     plt.legend()
     plt.tight_layout()  # 서브플롯 간 간격 조절
     plt.savefig(reports_dir + '/kr_e0140.png')
@@ -403,7 +412,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     gdp_qoq['Actual/QoQ'] = gdp_qoq['Actual']
 
     logger2.info(' GDP (Gross domestic product) '.center(60, '*'))
-    logger2.info(gdp_yoy[-4:])    
+    logger2.info(gdp_yoy[-5:])    
 
     # Industrial Production
     ip = cals.loc[cals['event'].str.contains('Industrial Production')]
@@ -417,7 +426,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
     ip_qoq['Actual/MoM'] = ip_qoq['Actual']
 
     logger2.info(' Industrial Production (YoY) '.center(60, '*'))
-    logger2.info(ip_yoy[-4:])
+    logger2.info(ip_yoy[-5:])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200(YoY) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'g'})
@@ -428,6 +437,7 @@ def kospi200_vs_gdp_ip(cals, kr_total_shares):
             linestyle='--', marker='x', markersize=4)
     plt.plot(ip_yoy['Date'], ip_yoy['Actual/YoY'], label='Industrial Production(YoY)', linewidth=1, \
             linestyle='--')
+    plt.axhline(y=0, linestyle='--', color='red', linewidth=1, label='2% Target Rate')    
     plt.legend()
     plt.savefig(reports_dir + '/kr_e0210.png')
 
@@ -456,7 +466,7 @@ def kospi200_mom_vs_gdp_ip(cals, kr_total_shares):
     ip_qoq['Actual/MoM'] = ip_qoq['actual']
 
     # logger2.info('GDP (Gross domestic product)'.center(60, '*'))
-    # logger2.info(gdp_yoy[-4:])
+    # logger2.info(gdp_yoy[-5:])
 
     plt.figure(figsize=(18,6))
     plt.title(f"KOSPI 200(MoM) vs GDP, Industrial Production", fontdict={'fontsize':20, 'color':'royalblue'})
@@ -468,6 +478,7 @@ def kospi200_mom_vs_gdp_ip(cals, kr_total_shares):
             linestyle='--', marker='x', markersize=4)
     plt.plot(ip_qoq['Date'], ip_qoq['Actual/MoM'], label='Industrial Production(QoQ)', linewidth=1, \
             linestyle='--')
+    plt.axhline(y=0, linestyle='--', color='red', linewidth=1, label='2% Target Rate')    
     plt.legend()
     plt.savefig(reports_dir + '/kr_e0220.png')
 
@@ -526,14 +537,15 @@ def unemployment(from_date, to_date):
     df.dropna(subset=['DATA_VALUE'], axis=0, inplace=True)
     df['TIME'] = pd.to_datetime(df['TIME'], format='%Y%m', errors='coerce')
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('int')
+    df['Difference'] = df['DATA_VALUE'].diff()
 
-    df_1 = df.loc[df['ITEM_CODE2'] == 'P'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE2']]
-    df_2 = df.loc[df['ITEM_CODE2'] == 'A'][['TIME', 'DATA_VALUE', 'UNIT_NAME', 'ITEM_CODE2']]
+    df_1 = df.loc[df['ITEM_CODE2'] == 'P'][['TIME', 'DATA_VALUE', 'Difference']]
+    df_2 = df.loc[df['ITEM_CODE2'] == 'A'][['TIME', 'DATA_VALUE', 'Difference']]
     df_1.set_index('TIME')
     df_2.set_index('TIME')
 
-    logger2.info(' 실업급여수급실적 (인원) '.center(60, '*'))
-    logger2.info(df_1[-3:])
+    logger2.info(' 실업급여수급실적 (인원:명) '.center(60, '*'))
+    logger2.info(df_1[-5:][['TIME','DATA_VALUE', 'Difference']])
 
     plt.figure(figsize=(18,6))
     plt.title(f"Unemployement", fontdict={'fontsize':20, 'color':'g'})
@@ -690,7 +702,7 @@ def kospi200_vs_dollar_current():
 
 
 '''
-3.3 외환보유액 vs 수출입금액
+3.3 외환보유액
 '''
 def dollar_vs_eximport(from_date, to_date):
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
@@ -708,20 +720,35 @@ def dollar_vs_eximport(from_date, to_date):
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
     df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+    df['Difference'] = df['DATA_VALUE'].diff()    
+
     df_reserve_total = df.loc[df['ITEM_CODE1'] == '99']
     df_reserve_foreign_currency = df.loc[df['ITEM_CODE1'] == '04']
 
     logger2.info(' 외환 보유액 '.center(60, '*'))
-    logger2.info(df_reserve_foreign_currency[['TIME','DATA_VALUE']][-5:])
+    logger2.info(df_reserve_foreign_currency[['TIME', 'DATA_VALUE', 'Difference']][-5:])
 
     # Graph
-    plt.figure(figsize=(18,4))
-    plt.title(f"Foreign Currency Reserve vs Import_Export", fontdict={'fontsize':20, 'color':'g'})
+    fig, ax = plt.subplots(figsize=(18, 4 * 2))    
+    # plt.figure(figsize=(18,4))
+    plt.subplot(2, 1, 1)
+    plt.title(f"Foreign Currency Reserve", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
-    plt.plot(df_reserve_total['TIME'], df_reserve_total['DATA_VALUE'], label='reserve_total', linewidth=1, color='maroon', marker='x')
-    plt.plot(df_reserve_foreign_currency['TIME'], df_reserve_foreign_currency['DATA_VALUE'], label='reserve_foreign_currency', linewidth=1, color='green')
+    plt.plot(df_reserve_total['TIME'], df_reserve_total['DATA_VALUE'], label='reserve_total', linewidth=0.5, color='green')
+    plt.plot(df_reserve_foreign_currency['TIME'], df_reserve_foreign_currency['DATA_VALUE'], label='reserve_foreign_currency', linewidth=1, color='royalblue')
     plt.legend()
-    plt.savefig(reports_dir + '/kr_e0330.png')
+
+    plt.subplot(2, 1, 2)
+    plt.title(f"Foreign Currency Reserve 차이금액", fontdict={'fontsize':20, 'color':'g'})
+    plt.grid()
+    plt.plot(df_reserve_total['TIME'], df_reserve_total['Difference'], label='reserve_total', linewidth=0.5, color='green')
+    plt.plot(df_reserve_foreign_currency['TIME'], df_reserve_foreign_currency['Difference'], label='reserve_foreign_currency', linewidth=1, color='royalblue')
+    plt.axhline(y=0, linestyle='--', color='red', linewidth=1, label='2% Target Rate')    
+    plt.legend()
+
+    plt.tight_layout()  # 서브플롯 간 간격 조절
+    plt.savefig(reports_dir + '/kr_e0330.png')    
+
 
 
 '''
@@ -767,7 +794,7 @@ def kospi200_vs_ppi_cpi(cals, kr_total_shares):
             linestyle='--', marker='x', markersize=4)
     plt.plot(ppi_yoy['Date'], ppi_yoy['Actual/YoY'], label='PPI(YoY)', linewidth=1, \
             color='orange', linestyle='--')
-
+    plt.axhline(y=0, linestyle='--', color='red', linewidth=1, label='2% Target Rate')
     plt.legend()
     plt.savefig(reports_dir + '/kr_e0410.png')
 
@@ -786,7 +813,7 @@ def kospi200_vs_ppim_cpim(kr_total_shares, cpi_mom, ppi_mom):
             linestyle='--', marker='x', markersize=4)
     plt.plot(ppi_mom['Date'], ppi_mom['Actual/MoM'], label='PPI(MoM)', linewidth=1, \
             color='orange', linestyle='--')
-
+    plt.axhline(y=0, linestyle='--', color='red', linewidth=1, label='2% Target Rate')
     plt.legend()
     plt.savefig(reports_dir + '/kr_e0420.png')
 
@@ -799,7 +826,6 @@ def stock_money_flow(from_date, to_date):
     start_date = datetime.strptime(from_date, '%d/%m/%Y').strftime('%Y%m')
     end_date   = datetime.strptime(to_date, '%d/%m/%Y').strftime('%Y%m')
 
-    # 증시주변자금동향
     stat_code  = "901Y056"
     cycle_type = "M"
     item_1 = ['S23A', 'S23B', 'S23E', 'S23F']
@@ -811,6 +837,7 @@ def stock_money_flow(from_date, to_date):
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
     df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+    df['Difference'] = df['DATA_VALUE'].diff()
 
     df_customer_deposits = df.loc[df['ITEM_CODE1'] == 'S23A']# 고객예탁금
     df_deposits_future_option = df.loc[df['ITEM_CODE1'] == 'S23B']# 선물옵션예탁금
@@ -818,28 +845,28 @@ def stock_money_flow(from_date, to_date):
     df_stock_loans_credit = df.loc[df['ITEM_CODE1'] == 'S23F']# 신용대주잔고
 
     logger2.info(' 증시주변자금 동향 '.center(60, '*'))
-    logger2.info(df_customer_deposits[['TIME','DATA_VALUE']][-5:])
+    logger2.info(df_customer_deposits[['TIME','DATA_VALUE','Difference']][-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
     # 서브플롯 설정
     plt.subplot(2, 1, 1)
     plt.title(f"Trends of Money in Securities Market", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
-    plt.plot(df_customer_deposits['TIME'], normalize(df_customer_deposits['DATA_VALUE']), label='df_customer_deposits', linewidth=2, color='maroon', \
+    plt.plot(df_customer_deposits['TIME'], (df_customer_deposits['DATA_VALUE']), label='df_customer_deposits', linewidth=2, color='maroon', \
             marker='x', markersize=5)
-    plt.plot(df_deposits_future_option['TIME'], normalize(df_deposits_future_option['DATA_VALUE']), label='df_deposits_future_option', linewidth=1)
-    plt.plot(df_money_loans_credit['TIME'], normalize(df_money_loans_credit['DATA_VALUE']), label='df_money_loans_credit', linewidth=2)
-    plt.plot(df_stock_loans_credit['TIME'], normalize(df_stock_loans_credit['DATA_VALUE']), label='df_stock_loans_credit', linewidth=1)
+    plt.plot(df_deposits_future_option['TIME'], (df_deposits_future_option['DATA_VALUE']), label='df_deposits_future_option', linewidth=1)
+    plt.plot(df_money_loans_credit['TIME'], (df_money_loans_credit['DATA_VALUE']), label='df_money_loans_credit', linewidth=2)
+    plt.plot(df_stock_loans_credit['TIME'], (df_stock_loans_credit['DATA_VALUE']), label='df_stock_loans_credit', linewidth=1)
     plt.legend()
 
     plt.subplot(2, 1, 2)
     plt.title(f"Trends of Money in Securities Market", fontdict={'fontsize':20, 'color':'g'})
     plt.grid()
-    plt.plot(df_customer_deposits['TIME'][-13:], normalize(df_customer_deposits['DATA_VALUE'][-13:]), label='df_customer_deposits', linewidth=2, color='maroon', \
+    plt.plot(df_customer_deposits['TIME'], (df_customer_deposits['Difference']), label='df_customer_deposits', linewidth=2, color='maroon', \
             marker='x', markersize=5)
-    plt.plot(df_deposits_future_option['TIME'][-13:], normalize(df_deposits_future_option['DATA_VALUE'][-13:]), label='df_deposits_future_option', linewidth=1)
-    plt.plot(df_money_loans_credit['TIME'][-13:], normalize(df_money_loans_credit['DATA_VALUE'][-13:]), label='df_money_loans_credit', linewidth=2)
-    plt.plot(df_stock_loans_credit['TIME'][-13:], normalize(df_stock_loans_credit['DATA_VALUE'][-13:]), label='df_stock_loans_credit', linewidth=1)
+    plt.plot(df_deposits_future_option['TIME'], (df_deposits_future_option['Difference']), label='df_deposits_future_option', linewidth=1)
+    plt.plot(df_money_loans_credit['TIME'], (df_money_loans_credit['Difference']), label='df_money_loans_credit', linewidth=2)
+    plt.plot(df_stock_loans_credit['TIME'], (df_stock_loans_credit['Difference']), label='df_stock_loans_credit', linewidth=1)
     plt.legend()
 
     # 이미지 파일로 저장
@@ -865,6 +892,7 @@ def foreigner_investments(from_date, to_date):
     df['TIME'] = df['TIME'].apply(lambda x: datetime.strptime(x, '%Y%m').strftime('%Y-%m-01'))
     df['TIME'] = pd.to_datetime(df['TIME']).dt.date
     df['DATA_VALUE'] = (df['DATA_VALUE']).astype('float')
+    df['Difference'] = df['DATA_VALUE'].diff()    
 
     df_long_vol = df.loc[df['ITEM_CODE1'] == 'S22AC']#매도/거래량 1
     df_long_vol = df_long_vol.loc[df_long_vol['ITEM_CODE2'] == 'VO']# 매도/거래량 2
@@ -874,7 +902,7 @@ def foreigner_investments(from_date, to_date):
     df_pure_long_vol = df_pure_long_vol.loc[df_pure_long_vol['ITEM_CODE2'] == 'VO']# 순매수/거래량 2
 
     logger2.info(' 외국인 투자동향 '.center(60, '*'))
-    logger2.info(df_pure_long_vol[['TIME','DATA_VALUE']][-5:])
+    logger2.info(df_pure_long_vol[['TIME','DATA_VALUE','Difference']][-5:])
 
     fig, ax = plt.subplots(figsize=(18, 4 * 2))
     # 서브플롯 설정
