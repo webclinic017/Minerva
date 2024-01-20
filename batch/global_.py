@@ -529,9 +529,9 @@ class CalcuTrend():
         else:
             export = self.get_export(conn, country_sign)
 
-        logger2.info(f'##### gdp: {str(gdp)} %')           
-        logger2.info(f'##### inflation: {str(inflation)} %')
-        logger2.info(f'##### export: {str(export)} %')            
+        logger2.info(f' {country} gdp: {round(gdp,2)} %')
+        logger2.info(f' {country}  inflation: {round(inflation,2)} %')
+        logger2.info(f' {country}  export: {round(export,2)} %')
         
         realGDP_rate = gdp - inflation*0.3 
         if country_sign in ['KR', 'JP', 'CN']: # 수출 주도형 국가: 한국, 일본, 중국

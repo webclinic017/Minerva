@@ -22,6 +22,7 @@ from email.mime.text import MIMEText
 
 # logging
 logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
+logger2.info('')
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # 3개월단위로 순차적으로 읽어오는 경우의 시작/종료 일자 셋팅
