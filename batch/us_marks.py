@@ -36,6 +36,7 @@ from math import sqrt, exp
 
 # logging
 logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
+logger2.info('')
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 # gtta = {'VNQ':20, 'GLD':10, 'DBC':10, 'IEF':5, 'LQD':5, 'BNDX':5, 'TLT':5, \
@@ -49,94 +50,6 @@ def find_30days_ago():
 
 _day30_ago = find_30days_ago()
 day30_ago = _day30_ago.date().strftime('%Y-%m-%d')
-
-
-'''
-01. Simulate Multi-Asset Baskets With Correlated Price Paths
-- https://medium.com/codex/simulate-multi-asset-baskets-with-correlated-price-paths-using-python-472cbec4e379
-'''
-def multiAsset_basket():
-    sp500 = fred.get_series('SP500', observation_start=from_date_MT)    
-    nasdaq_comp = fred.get_series('NASDAQCOM', observation_start=from_date_MT)
-    oil_wti = fred.get_series('DCOILWTICO', observation_start=from_date_MT)
-    bond_10y = fred.get_series('DGS10', observation_start=from_date_MT)
-    dollar_idx = fred.get_series('DTWEXBGS', observation_start=from_date_MT)
-
-    sp500_norm = (sp500-sp500.min()) / (sp500.max()-sp500.min())
-    nasdaq_comp_norm = (nasdaq_comp-nasdaq_comp.min()) / (nasdaq_comp.max()-nasdaq_comp.min())
-    oil_wti_norm = (oil_wti-oil_wti.min()) / (oil_wti.max()-oil_wti.min())
-    bond_10y_norm = (bond_10y-bond_10y.min()) / (bond_10y.max()-bond_10y.min())
-    dollar_idx_norm = (dollar_idx-dollar_idx.min()) / (dollar_idx.max()-dollar_idx.min())
-
-    # Manually input number of stocks
-    NUMBER_OF_ASSETS = 5
-    ASSET_TICKERS = ["sp500", "Nasdaq", "Oil", "Bond_10y", "Dollar"]
-    Vol_sp500 = sp500_norm.std()
-    Vol_Nasdaq = nasdaq_comp_norm.std()
-    Vol_oil = oil_wti_norm.std()
-    Vol_bond_10y = bond_10y_norm.std()
-    Vol_dollar = dollar_idx_norm.std()
-
-    VOLATILITY_ARRAY =[Vol_sp500, Vol_Nasdaq, Vol_oil, Vol_bond_10y, Vol_dollar]
-    temp = pd.DataFrame()
-    temp= pd.concat([temp, sp500, nasdaq_comp, oil_wti, bond_10y, dollar_idx], axis=1)
-    temp.columns = ['sp500_norm', 'nasdaq_comp_norm', 'oil_wti_norm', 'bond_10y_norm', 'dollar_idx_norm']
-    temp.fillna(method='ffill', inplace=True)
-    COEF_MATRIX = temp.corr()
-
-    # Perform Cholesky decomposition on coefficient matrix
-    R = np.linalg.cholesky(COEF_MATRIX)
-    # Compute transpose conjugate (only for validation)
-    RT = R.T.conj()
-    # Reconstruct coefficient matrix from factorization (only for validation)
-    logger2.info("Multi-Asset Baskets With Correlated Price".center(60, '*'))
-    logger2.info(": \n" + str(COEF_MATRIX))
-    # logger2.info(": \n" + str(np.dot(R, RT)))
-
-    T = 250                                   # Number of simulated days
-    asset_price_array = np.full((NUMBER_OF_ASSETS,T), 100.0) # Stock price, first value is simulation input 
-    volatility_array = VOLATILITY_ARRAY       # Volatility (annual, 0.01=1%)
-    r = 0.001                                 # Risk-free rate (annual, 0.01=1%)
-    dt = 1.0 / T
-
-    # Plot simulated price paths
-    retry_cnt = 5
-    fig = plt.figure(figsize=(16,4*retry_cnt))
-
-    for i in range(retry_cnt):
-
-        for t in range(1, T):
-            # Generate array of random standard normal draws
-            random_array = np.random.standard_normal(NUMBER_OF_ASSETS)
-            # Multiply R (from factorization) with random_array to obtain correlated epsilons
-            epsilon_array = np.inner(random_array,R)
-            # Sample price path per stock
-            for n in range(NUMBER_OF_ASSETS):
-                dt = 1 / T 
-                S = asset_price_array[n,t-1]
-                v = volatility_array[n]
-                epsilon = epsilon_array[n]
-                # Generate new stock price
-                if n == 0:
-                    asset_price_array[n,t] = S * exp((r - 0.5 * v**2) * dt + v * sqrt(dt) * epsilon)
-                else:
-                    asset_price_array[n,t] = temp.iloc[t,n]+100*1
-                asset_price_array[n,t] = S * exp((r - 0.5 * v**2) * dt + v * sqrt(dt) * epsilon)
-
-        ax = fig.add_subplot(retry_cnt, 1,  i+1)
-        array_day_plot = [t for t in range(T)]
-        for n in range(NUMBER_OF_ASSETS):
-            ax.plot(array_day_plot, asset_price_array[n],\
-                                label = '{}'.format(ASSET_TICKERS[n]))
-
-        plt.grid()
-        plt.xlabel('Day')
-        plt.ylabel('Asset price')
-        plt.legend(loc='best')
-
-    plt.tight_layout()
-    plt.savefig(reports_dir + '/us_m0001.png')
-
 
 
 '''
@@ -196,49 +109,6 @@ def timing_strategy(ticker, short_sma, long_sma):
         buf = result[result['Ticker'] == t].tail(3)
         df = pd.concat([df, buf])
     logger2.debug(df) # 검증시 사용
-
-
-'''
-1.2 Maximum drawdown Strategy
-'''
-def daily_returns(prices):
-    res = (prices/prices.shift(1) - 1.0)[1:]
-    res.columns = ['return']
-    return res
-
-def cumulative_returns(returns):
-    res = (returns + 1.0).cumprod()
-    res.columns = ['cumulative return']
-    return res
-
-def max_drawdown(cum_returns):
-    max_returns = np.fmax.accumulate(cum_returns)
-    res = cum_returns / max_returns - 1
-    res.columns = ['max drawdown']
-    return res
-
-def max_dd_strategy(tickers:list):
-    threshold_value = -0.3
-    plt.figure(figsize=(16,4*len(tickers)))
-    for i, tick in enumerate(tickers):
-        ticker = yf.Ticker(tick)
-        prices = ticker.history(period='12y')['Close'] # 12: life cycle
-        dret = daily_returns(prices)
-        cret = cumulative_returns(dret)
-        ddown = max_drawdown(cret)
-        ddown[ddown.values < -0.3]
-
-        plt.subplot(len(tickers), 1, i + 1)
-        plt.grid()
-        plt.bar(ddown.index, ddown, color='royalblue')
-        plt.title(ticker)
-        plt.axhline(y=threshold_value, color='red', linestyle='--', label='Threshold')
-        plt.xlabel('Date')
-        plt.ylabel('Draw Down %')
-
-    plt.tight_layout()  # 서브플롯 간 간격 조절
-    plt.savefig(reports_dir + '/us_m0100.png')
-
 
 
 '''
@@ -1111,12 +981,22 @@ def GaMacd_strategy():
 
     # Define fitness function to be used by the PyGAD instance
     def fitness_func(self, solution, sol_idx):
-        # Get Reward from train data
-        reward, wins, losses, pnl = get_result(train, train_dates,
-                                    solution[           :TREND_LEN*1],
-                                    solution[TREND_LEN*1:TREND_LEN*2],
-                                    solution[TREND_LEN*2:TREND_LEN*3],
-                                    solution[TREND_LEN*3:TREND_LEN*4])
+        
+        try:
+            # Get Reward from train data
+            reward, wins, losses, pnl = get_result(train, train_dates,
+                                        solution[           :TREND_LEN*1],
+                                        solution[TREND_LEN*1:TREND_LEN*2],
+                                        solution[TREND_LEN*2:TREND_LEN*3],
+                                        solution[TREND_LEN*3:TREND_LEN*4])
+        except ZeroDivisionError:
+            # ZeroDivisionError가 발생한 경우 처리할 내용
+            logger.error("Error: Division by zero!")
+            logger.error(f'\n{reward:10.2f}, {pnl:10.2f}, {wins:6.0f}, {losses:6.0f}, {solution[TREND_LEN*1:TREND_LEN*2]}, {solution[TREND_LEN*3:TREND_LEN*4]}', end='')
+        else:
+            # 예외가 발생하지 않은 경우 실행할 내용
+            pass
+
         if DEBUG:
             logger.debug(f'\n{reward:10.2f}, {pnl:10.2f}, {wins:6.0f}, {losses:6.0f}, {solution[TREND_LEN*1:TREND_LEN*2]}, {solution[TREND_LEN*3:TREND_LEN*4]}', end='')
 
@@ -1139,7 +1019,6 @@ if __name__ == "__main__":
     '''
     0. 공통
     '''
-    # multiAsset_basket()
 
 
     '''
