@@ -156,11 +156,15 @@ def show_vb_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} - {timeframe} Timeframe '.center(60, '*'))
-    logger2.info(f'* Profit/Loss: {profit:.2f}')
-    logger2.info(f"* Wins: {wins} - Losses: {losses}")
     try:
-        logger2.info(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")
+        win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
+        if win_rate >= 80:
+            logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} - {timeframe} Timeframe '.center(60, '*'))
+            logger2.info(f'* Profit/Loss: {profit:.2f}')
+            logger2.info(f"* Wins: {wins} - Losses: {losses}")        
+            logger2.info(f"* Win Rate: {win_rate:6.2f}%")
+        else:
+            pass
     except Exception as e:
         logger.error(' >>> Exception: {}'.format(e))
 
@@ -209,11 +213,16 @@ def show_reversal_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    logger2.info(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
-    logger2.info(f'* Profit/Loss: {profit:.2f}')
-    logger2.info(f"* Wins: {wins} - Losses: {losses}")
+
     try:
-        logger2.info(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")  # if wins + losses == 0
+        win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
+        if win_rate >= 80:
+            logger2.info(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
+            logger2.info(f'* Profit/Loss: {profit:.2f}')
+            logger2.info(f"* Wins: {wins} - Losses: {losses}")        
+            logger2.info(f"* Win Rate: {win_rate:6.2f}%")  # if wins + losses == 0
+        else:
+            pass
     except Exception as e:
         logger.error(' >>> Exception: {}'.format(e))
 
@@ -312,7 +321,6 @@ def trend_following_strategy(ticker:str):
 
         logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} - {timeframe} Timeframe '.center(76, '*'))
         logger2.info(f"Cash after Trade: {round(cash, 2):8}")
-        logger2.info('  ')
 
 
 
@@ -377,11 +385,21 @@ def control_chart_strategy(ticker):
         pnl = ops['pnl'].sum()
         wins = len(ops[ops['pnl'] > 0])
         losses = len(ops[ops['pnl'] < 0])
-        # Show Result
-        logger2.info(f' Result of {ticker} for ({signal_field}) '.center(60, '*'))
-        logger2.info(f"* Profit / Loss  : {pnl:.2f}")
-        logger2.info(f"* Wins / Losses  : {wins} / {losses}")
-        logger2.info(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
+
+        # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
+        try:
+            win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
+            if win_rate >= 80:
+                # Show Result
+                logger2.info(f' Result of {ticker} for ({signal_field}) '.center(60, '*'))
+                logger2.info(f"* Profit / Loss  : {pnl:.2f}")
+                logger2.info(f"* Wins / Losses  : {wins} / {losses}")
+                logger2.info(f"* Win Rate       : {win_rate:.2f}%")
+            else:
+                pass
+        except Exception as e:
+            logger.error(' >>> Exception: {}'.format(e))
+
     # Rules definition
     def apply_rule_1(df, window = DEFAULT_WINDOW):
         # One point beyond the 3 stdev control limit
@@ -564,29 +582,39 @@ def vb_genericAlgo_strategy(ticker):
         # Show details of the best solution.
         solution, solution_fitness, _ = ga_instance.best_solution()
 
-        logger2.info(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
-        logger2.info(f"Min Volatility   : {solution[0]:6.4f}")
-        logger2.info(f"Max Perc to Buy  : {solution[1]:6.4f}")
-        logger2.info(f"Min Perc to Sell : {solution[2]:6.4f}")
-
-        # Get Reward from train data
-        profit, wins, losses = get_result(train, solution[0], solution[1], solution[2])
-        logger2.info(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
-        logger2.info(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
-        logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
-        logger2.info(f"* Wins / Losses  : {wins} / {losses}")
-        logger2.info(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
-
         # Get Reward from test data
         profit, wins, losses = get_result(test, solution[0], solution[1], solution[2])
-        # Show the final result
-        logger2.info(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
-        logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
-        logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
-        logger2.info(f"* Wins / Losses  : {wins} / {losses}")
-        logger2.info(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
-        logger2.info("")
 
+        # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
+        try:
+            win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
+            if win_rate >= 80:
+                # 최적 변수값 찾기
+                logger2.info(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
+                logger2.info(f"Min Volatility   : {solution[0]:6.4f}")
+                logger2.info(f"Max Perc to Buy  : {solution[1]:6.4f}")
+                logger2.info(f"Min Perc to Sell : {solution[2]:6.4f}")
+
+                # Show the final result
+                logger2.info(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
+                logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
+                logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
+                logger2.info(f"* Wins / Losses  : {wins} / {losses}")
+                logger2.info(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
+                logger2.info("")
+
+                # Get Reward from train data
+                profit, wins, losses = get_result(train, solution[0], solution[1], solution[2])
+                logger2.info(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
+                logger2.info(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
+                logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
+                logger2.info(f"* Wins / Losses  : {wins} / {losses}")
+                logger2.info(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")                
+
+            else:
+                pass
+        except Exception as e:
+            logger.error(' >>> Exception: {}'.format(e))
 
 
 '''
