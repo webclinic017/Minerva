@@ -246,7 +246,7 @@ if __name__ == "__main__":
     # 1. Stocks
     per_pbr()
     short_selling()
-    ticket_short_selling(own_tickers)
+    ticket_short_selling(own_tickers) 
 
     # 2. Bonds
     get_yields()

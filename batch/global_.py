@@ -191,6 +191,7 @@ def cpi():
     cpi_korea = fred.get_series(series_id='KORCPIALLMINMEI', observation_start=from_date_MT).pct_change(periods=12)*100
     cpi_china = fred.get_series(series_id='CHNCPIALLMINMEI', observation_start=from_date_MT).pct_change(periods=12)*100
 
+    logger2.info('')
     logger2.info('##### CPI (Consumer Price Indices) #####')
     logger2.info('cpi_us: \n' + str(cpi_us[-3:]))
     logger2.info('cpi_japan: \n' + str(cpi_japan[-3:]))

@@ -5,6 +5,10 @@ __author__ = "jarvisNim in GitHub"
 __version__ = "0.0.5"
 
 
+from .base import (
+    get_stock_history,
+)
+
 from .tech import (
     analyse_techs,
 )

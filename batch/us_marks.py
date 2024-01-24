@@ -940,10 +940,11 @@ def gaSellHoldBuy_strategy(ticker):
     # Show details of the best solution.
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
 
-    logger2.info(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
-    logger2.info(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
-    logger2.info(f"Fitness value of the best solution = {solution_fitness}")
-    logger2.info(f"Index of the best solution : {solution_idx}")
+    # 아래쪽으로 이동 20240122
+    # logger2.info(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
+    # logger2.info(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
+    # logger2.info(f"Fitness value of the best solution = {solution_fitness}")
+    # logger2.info(f"Index of the best solution : {solution_idx}")
 
     # Create a test environmant
     env = SellHoldBuyEnv(observation_size=OBS_SIZE, features=test[['close_percentage','volatility']].values, closes=test['close'].values)
@@ -965,10 +966,26 @@ def gaSellHoldBuy_strategy(ticker):
         observation, reward, done, info = env.step(action)
         total_reward += reward
 
-    # Show the final result
-    logger2.info(f"* Profit/Loss: {info['current_profit']:6.3f}")
-    logger2.info(f"* Wins: {info['wins']} - Losses: {info['losses']}")
-    logger2.info(f"* Win Rate: {100 * (info['wins']/(info['wins'] + info['losses'])):6.2f}%")
+
+    try:
+        win_rate = (info['wins']/(info['wins'] + info['losses']) if info['wins'] + losses > 0 else 0) * 100
+        if win_rate >= 80:
+            logger2.info(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
+            logger2.info(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
+            logger2.info(f"Fitness value of the best solution = {solution_fitness}")
+            logger2.info(f"Index of the best solution : {solution_idx}")
+            # Show the final result
+            logger2.info(f"* Profit/Loss: {info['current_profit']:6.3f}")
+            logger2.info(f"* Wins: {info['wins']} - Losses: {info['losses']}")
+            logger2.info(f"* Win Rate: {win_rate:6.2f}%")
+        else:
+            pass
+    except Exception as e:
+        logger.error(' >>> Exception: {}'.format(e))
+
+
+
+
 
 
 '''
@@ -1067,6 +1084,7 @@ if __name__ == "__main__":
                 logger2.info(f' ##### {ticker}')
 
                 get_stock_history(ticker, TIMEFRAMES)
+                
                 timing_strategy(ticker, 20, 200) # 200일 이평 vs 20일 이평
 
                 volatility_bollinger_strategy(ticker, TIMEFRAMES) # 임계값 찾는 Generic Algorithm 보완했음.

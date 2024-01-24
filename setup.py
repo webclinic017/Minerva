@@ -5,11 +5,11 @@ python -m twine upload dist/*
     (To use this API token:
     Set your username to __token__
     Set your password to the token value, including the pypi- prefix
-    pypi-AgEIcHlwaS5vcmcCJDQxNDM5YmUxLTk4ZGEtNDNmNC1iMTdkLWMxNzRjN2NhNmYxOAACEVsxLFsicHltaW5lcnZhIl1dAAIsWzIsWyI4MWRjZDdlNC00NWEzLTQ1NGItOTU2ZC01YmNiN2UxZGNlOTciXV0AAAYg_3XxgSZkOkERpnQVjLm-_TSsF7baPE8PtgmPTuKvh8k
+    pypi-AgEIcHlwaS5vcmcCJGY2NjVhOTQ2LWJjZTctNGRkMy1hYzI3LTcwZjJlODBmNTQ4NwACEVsxLFsicHltaW5lcnZhIl1dAAIsWzIsWyI4MWRjZDdlNC00NWEzLTQ1NGItOTU2ZC01YmNiN2UxZGNlOTciXV0AAAYgbrRK4qthhieu0rShrwxup6nF3BrDTjyyP-WHmoUBOCc
     )
 python -m pip install pyminerva
 # https://pypi.org/project/pyminerva/0.0.X/
-pip install pyminerva --upgrade 
+pip install pyminerva --upgrade
 
 # test PyPi
 python setup.py sdist bdist_wheel
@@ -35,7 +35,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='pyminerva',
-    version='0.0.19',    # version.directory.file
+    version='0.0.27',    # version.directory.file
     description='To get an insight from Financial Data Anlaysis',
     url='',
     author='Jeongmin Kang',

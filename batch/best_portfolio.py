@@ -18,7 +18,6 @@ from settings import *
 0. 공통영역 설정
 '''
 import yfinance as yf
-import pandas_ta as ta
 import pygad
 import pygad.kerasga
 import gym

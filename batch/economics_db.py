@@ -34,7 +34,7 @@ logger2.info('')
 
 # 검색기간 설정
 _to_date = pd.to_datetime(to_date, format="%d/%m/%Y")
-term_days = relativedelta(weeks=1)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적! 평소에는 1주기간 데이터만으로도 가능
+term_days = relativedelta(days=5)  # 초기 작업시는 12주 로 하면 사이트 부하오류 발생 안해서 최적! 평소에는 1주기간 데이터만으로도 가능
 from_date = (_to_date - term_days).date()
 to_date = _to_date.date()
 
@@ -342,8 +342,9 @@ def make_calendars(from_date, to_date):
     cals = cals.reset_index(drop=True)
 
     logger2.info('')
-    logger2.info(f' 최근 1주일동안의 Calendars 중 오늘 발표된 지표 '.center(60, '*'))
-    buffer = cals[pd.to_datetime(cals['date']) >=  pd.to_datetime(to_date2)]    
+    logger2.info(f' 최근 5일동안의 Calendars 중 estimate 까지 발표된 지표 '.center(60, '*'))
+    buffer = cals[pd.to_datetime(cals['date']) >=  pd.to_datetime(to_date)]
+    buffer = buffer.dropna(subset=['estimate'])  # 컨센서스가 지난 대비 긍정 또는 부정으로 판단하는지 볼수있는 estimate 도 포함.
     logger2.info(buffer.sort_values(by='date', ascending=False).to_string())    
     write_table(table_name, cals)
 
