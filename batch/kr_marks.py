@@ -18,6 +18,9 @@ from settings import *
 '''
 0. 공통영역 설정
 '''
+import pyminerva as mi
+import pandas_ta as ta
+
 from pykrx import stock
 from pykrx import bond
 
@@ -25,6 +28,8 @@ from pykrx import bond
 logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
 logger2.info('')
 logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
+
+TIMEFRAMES = ['1min', '1hour', '1day']
 
 '''
 1001 코스피
@@ -44,24 +49,14 @@ logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 2002 코스닥 대형주
 2203 코스닥 150
 '''
-tickers = ['1001', '1028', '1150', '1151', '1152', '1153', '1154', '1155', '1156', '1157', '1158', \
+sector_tickers = ['1001', '1028', '1150', '1151', '1152', '1153', '1154', '1155', '1156', '1157', '1158', \
            '1159', '1160', '2001', '2203']
 core_tickers = ['1028', '2001'] # 코스피200, 코스닥
 rep_tickers = ['KOSPI', 'KOSDAQ']  # 코스피, 코스닥
 own_tickers = ['008770']  # 호텔신라, 
 
-def change_date_type(date):
-    dt = datetime.strptime(date, "%d/%m/%Y").strftime('%Y%m%d')
-    return dt
-
-def find_yesterday():
-    yesterday = datetime.now() - timedelta(days=1)
-    return yesterday
-
-today = change_date_type(to_date)
-
-_yest = find_yesterday()
-yesterday = _yest.date().strftime('%Y%m%d')
+# today = to_date3
+yesterday = (datetime.now() - timedelta(days=1)).date().strftime('%Y%m%d')
 
 '''
 1. Stocks
@@ -78,10 +73,10 @@ def per_pbr():
     logger2.info(' KOSDAQ Fundamentals '.center(60, '*'))
     logger2.info(tabulate(df, headers='keys', tablefmt='rst', showindex=True))
 
-    from_day = change_date_type(from_date_MT)
+    from_day = from_date_MT3
     plt.figure(figsize=(16, 4*len(core_tickers)))
     for i, ticker in enumerate(core_tickers):
-        buf = stock.get_index_fundamental(from_day, today, ticker)
+        buf = stock.get_index_fundamental(from_day, to_date3, ticker)
         buf.dropna()
         plt.subplot(len(core_tickers), 1, i + 1)
         plt.grid()
@@ -100,7 +95,7 @@ def per_pbr():
 
     plt.figure(figsize=(16, 4*len(core_tickers)))
     for i, ticker in enumerate(core_tickers):
-        buf = stock.get_index_fundamental(from_day, today, ticker)
+        buf = stock.get_index_fundamental(from_day, to_date3, ticker)
         plt.subplot(len(core_tickers), 1, i + 1)
         plt.grid()
         plt.plot(buf.index, buf['PBR'], color='royalblue')
@@ -122,7 +117,7 @@ def per_pbr():
 1.2 마켓별 공매도
 '''
 def short_selling():
-    from_day = change_date_type(from_date_ST)
+    from_day = from_date_ST3
     # 공매도 건수
     plt.figure(figsize=(16, 4*len(rep_tickers)))
     for i, ticker in enumerate(rep_tickers):
@@ -175,7 +170,7 @@ def short_selling():
 1.3 종목별 공매도 잔공
 '''
 def ticket_short_selling(own_tickers:list):
-    from_day = change_date_type(from_date_ST)
+    from_day = from_date_ST3
     # 종목별 공매도 잔고
     plt.figure(figsize=(16, 5*len(own_tickers)))
     for i, ticker in enumerate(own_tickers):
@@ -212,8 +207,8 @@ def get_yields():
     plt.legend()
 
     # 국고채 10 vs 국고채 3년
-    y10 = bond.get_otc_treasury_yields(from_date_ST, today, "국고채10년")
-    y3 = bond.get_otc_treasury_yields(from_date_ST, today, "국고채3년")
+    y10 = bond.get_otc_treasury_yields(from_date_ST, to_date3, "국고채10년")
+    y3 = bond.get_otc_treasury_yields(from_date_ST, to_date3, "국고채3년")
 
     plt.subplot(2, 1, 2)
     plt.title(f"국고채 10년 vs 국고채 3년", fontdict={'fontsize':20, 'color':'g'})
@@ -237,11 +232,51 @@ def get_yields():
 '''
 
 
+
+
+
+
 '''
 Main Fuction
 '''
 
 if __name__ == "__main__":
+
+    for x in WATCH_TICKERS['KR']:
+
+        for asset, tickers in x.items():
+
+            for ticker in tickers:
+
+                if ticker == '':
+                    continue
+
+                # settings.py 에서 get_stock_history_by_fmp with timeframe 파일 만들어 줌.
+                logger2.info('')                
+                logger2.info(f' ##### {ticker}')
+
+                df = mi.get_stock_history_by_fmp(ticker, TIMEFRAMES)
+                if df.empty:  # fmp 에서 읽지 못하면 다음에는 yfinance 에서 읽도록 보완함. 
+                    print(f'{ticker} df by fmp is empty')
+                    df = mi.get_stock_history_by_yfinance(ticker, TIMEFRAMES)
+                
+                mi.timing_strategy(ticker, 20, 200) # 200일 이평 vs 20일 이평
+
+                mi.volatility_bollinger_strategy(ticker, TIMEFRAMES) # 임계값 찾는 Generic Algorithm 보완했음.
+
+                mi.vb_genericAlgo_strategy(ticker, TIMEFRAMES) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm       
+
+                mi.vb_genericAlgo_strategy2(ticker, TIMEFRAMES) # Bolinger Band Strategy + 임계값 찾는 Generic Algorithm           
+
+                mi.reversal_strategy(ticker, TIMEFRAMES) 
+
+                mi.trend_following_strategy(ticker, TIMEFRAMES)  # 단기 매매 아님. 중장기 매매 기법, 1day 데이터만으로 실행
+
+                mi.control_chart_strategy(ticker)
+
+                mi.gaSellHoldBuy_strategy(ticker)
+
+                print('=== End ===')
 
     # 1. Stocks
     per_pbr()
@@ -250,4 +285,3 @@ if __name__ == "__main__":
 
     # 2. Bonds
     get_yields()
-

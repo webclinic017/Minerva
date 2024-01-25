@@ -186,7 +186,7 @@ WATCH_TICKERS = {
 
 # 테스트용
 WATCH_TICKERS2 = {
-    'US':[{'stock':['SPY','QQQ',]}, {'bond':['TLT',]}, {'commodity':['GLD']}, {'currency':['UUP']}, ],
+    'US':[{'stock':['SPY',]}, {'bond':['TLT',]}, {'commodity':['']}, {'currency':['']}, ],
     'KR':[{'stock':['^KS200', '008770.KS',]}, {'bond':['148070.KS',]}, {'commodity':['']}, {'currency':['']}, ],    
 }
 
@@ -599,7 +599,7 @@ def get_calendar(from_date, to_date=to_date2):
 
 
 # settings.py에 있는 financial modeling 에서 stock hitory 가져와 csv 파일로 저장하기까지. 
-def get_stock_history(ticker:str, periods:list):  # period: 1min, 5min, 15min, 30min, 1hour, 4hour, 1day
+def get_stock_history_by_fmp(ticker:str, periods:list):  # period: 1min, 5min, 15min, 30min, 1hour, 4hour, 1day
     for period in periods:
         url = f'https://financialmodelingprep.com/api/v3/historical-chart/{period}/{ticker}?from={from_date_MT2}&to={to_date2}&apikey={fmp_key}'
         try:

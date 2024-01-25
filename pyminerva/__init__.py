@@ -6,7 +6,8 @@ __version__ = "0.0.5"
 
 
 from .base import (
-    get_stock_history,
+    get_stock_history_by_fmp,
+    get_stock_history_by_yfinance,
 )
 
 from .tech import (
@@ -26,5 +27,6 @@ from .strategy import (
     control_chart_strategy,
     vb_genericAlgo_strategy,
     vb_genericAlgo_strategy2,
+    gaSellHoldBuy_strategy,
 )
 

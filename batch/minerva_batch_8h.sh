@@ -11,6 +11,7 @@ python ./batch/sentiment.py
 python ./batch/kr_ecos.py
 python ./batch/kr_marks.py
 python ./batch/jp_ecos.py
+python ./batch/jp_marks.py
 python ./batch/in_ecos.py
 python ./batch/global_.py
 python ./batch/cn_ecos.py

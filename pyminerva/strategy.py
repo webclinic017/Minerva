@@ -1,6 +1,12 @@
 # Copyright 2023-2025 Jeongmin Kang, jarvisNim @ GitHub
 # See LICENSE for details.
 
+
+'''
+https://github.com/crapher/medium 참조
+'''
+
+import os, sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,6 +16,7 @@ import pygad
 import pygad.kerasga
 import gym
 
+from datetime import date, datetime, timedelta
 from fredapi import Fred
 from gym import spaces
 from tqdm import tqdm
@@ -22,10 +29,16 @@ from .utils import constant as cst
 from .utils.strategy_funcs import (
     find_30days_ago,
 )
+from . import base
 
 '''
 공통 영역
 '''
+
+# logging
+base.logger.warning(sys.argv[0] + ' :: ' + str(datetime.today()))
+base.logger2.info('')
+base.logger2.info(sys.argv[0] + ' :: ' + str(datetime.today()))
 
 #####################################
 # funtions
@@ -49,11 +62,14 @@ def sma_strategy(tick:str, short_sma=20, long_sma=200):
     #Calculate 10 and 20 days moving averages
     sma20 = buf.ta.sma(short_sma, append=True)
     sma200 = buf.ta.sma(long_sma, append=True)
-    buf.ta.rsi(close="Close", length=14, append=True)       
+    buf.ta.rsi(close="Close", length=14, append=True)
     #Create a column with buy and sell signals
     buf['Ticker'] = ticker
     buf['Signal'] = 0.0
-    buf['Signal'] = sma20 - sma200
+    try:  # 530107.KS 히스토리가 1 레코드 밖에 없음.
+        buf['Signal'] = sma20 - sma200
+    except:
+        pass
     buf['Pivot'] = np.where((buf['Signal'].shift(1)*buf['Signal']) < 0, 1, 0)  # 1로 되는 일자부터 매수 또는 매도후 현금
     data = pd.concat([data, buf])
         
@@ -70,24 +86,26 @@ def timing_strategy(ticker, short_sma, long_sma):
     latest_records = buf.loc[latest_indices]
     # Change rate 비율만큼 Buy/Sell 실행할것, 초기 설정은 임계값 상승돌파하면 75% 추가매수, 하락돌파하면 75% 매도
     # pivot_tickers = latest_records[latest_records['Date']  >= day5_ago]  # for test: '2023-05-16'
-    day30_ago = find_30days_ago()
+    day30_ago = find_30days_ago()  # 30일 이전까지 피벗날짜 없으면 실행하기 늦었다고 판단했음.
     pivot_tickers = latest_records[latest_records['Date']  >= day30_ago]  # for test: '2023-05-16'
 
+    base.logger2.info(f' {ticker} Result for timing_strategy '.center(60, '*'))
+
     if pivot_tickers.empty:
-        print(' ##### 30일 이내 피봇 전환일자 없음.')
-        return None
-    pivot_tickers['Change_rate'] = np.where((pivot_tickers['Signal']) > 0, 1.75, 0.25)
-    change_date = pivot_tickers['Date'].values
-    change_rate = float(pivot_tickers['Change_rate'].values) * 100
-    print(f'##### {long_sma}일 이동평균과 {short_sma}일 이동평균: Timing Strategy 에 따라 {change_date} 일부터 비중 {change_rate} % 로 조정할 것 !!! #####')
-    print(pivot_tickers)
-    # 검증용 백데이터 제공
-    tick = pivot_tickers['Ticker']
-    df = pd.DataFrame()
-    for t in tick:
-        buf = result[result['Ticker'] == t].tail(3)
-        df = pd.concat([df, buf])
-    print(df) # 검증시 사용
+        base.logger2.info(' ##### 30일 이내 피봇 전환일자 없음.')
+    else:
+        pivot_tickers['Change_rate'] = np.where((pivot_tickers['Signal']) > 0, 1.75, 0.25)
+        change_date = pivot_tickers['Date'].values
+        change_rate = float(pivot_tickers['Change_rate'].values) * 100
+        base.logger2.info(f'##### {long_sma}일 이동평균과 {short_sma}일 이동평균: Timing Strategy 에 따라 {change_date} 일부터 비중 {change_rate} % 로 조정할 것 !!! #####')
+        base.logger2.info(pivot_tickers)
+        # 검증용 백데이터 제공
+        tick = pivot_tickers['Ticker']
+        df = pd.DataFrame()
+        for t in tick:
+            buf = result[result['Ticker'] == t].tail(3)
+            df = pd.concat([df, buf])
+        base.logger2.info(df) # 검증시 사용
 
 
 '''
@@ -135,19 +153,25 @@ def show_vb_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    print(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} - {timeframe} Timeframe '.center(60, '*'))
-    print(f'* Profit/Loss: {profit:.2f}')
-    print(f"* Wins: {wins} - Losses: {losses}")
     try:
-        print(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")
+        win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
+        if win_rate >= 80:
+            base.logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} - {timeframe} Timeframe '.center(60, '*'))
+            base.logger2.info(f'* Profit/Loss: {profit:.2f}')
+            base.logger2.info(f"* Wins: {wins} - Losses: {losses}")        
+            base.logger2.info(f"* Win Rate: {win_rate:6.2f}%")
+        else:
+            pass
     except Exception as e:
-        raise ValueError("ERR#0000: wins 또는 losses 값 오류.\n {}".format(e))
-    
+        base.logger.error(' >>> Exception1: {}'.format(e))  
+
 
 def volatility_bollinger_strategy(ticker:str, TIMEFRAMES:list):
     # Iterate over each timeframe, apply the strategy and show the result
     for timeframe in TIMEFRAMES:
-        df = pd.read_csv(data_dir + f'/{ticker}_hist_{timeframe}.csv')
+        df = pd.read_csv(base.data_dir + f'/{ticker}_hist_{timeframe}.csv')
+        if df.empty:
+            continue
         # Add the signals to each row
         df['signal'] = get_vb_signals(df)
         df2 = df[df['ticker'] == ticker]
@@ -189,18 +213,22 @@ def show_reversal_stategy_result(timeframe, df):
             wins = wins + (1 if (close_price - open_price) > 0 else 0)
             losses = losses + (1 if (close_price - open_price) < 0 else 0)
 
-    print(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
-    print(f'* Profit/Loss: {profit:.2f}')
-    print(f"* Wins: {wins} - Losses: {losses}")
     try:
-        print(f"* Win Rate: {100 * (wins/(wins + losses)):6.2f}%")  # if wins + losses == 0
+        win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
+        if win_rate >= 80:
+            base.logger2.info(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
+            base.logger2.info(f'* Profit/Loss: {profit:.2f}')
+            base.logger2.info(f"* Wins: {wins} - Losses: {losses}")        
+            base.logger2.info(f"* Win Rate: {win_rate:6.2f}%")  # if wins + losses == 0
+        else:
+            pass
     except Exception as e:
-        raise ValueError("ERR#0000: wins 또는 losses 값 오류.\n {}".format(e))
+        base.logger.error(' >>> Exception2: {}'.format(e))
 
 def reversal_strategy(ticker:str, TIMEFRAMES:list):
     # Iterate over each timeframe, apply the strategy and show the result
-    for timeframe in TIMEFRAMES:
-        df = pd.read_csv(data_dir + f'/{ticker}_hist_{timeframe}.csv')
+    for timeframe in TIMEFRAMES:    
+        df = pd.read_csv(base.data_dir + f'/{ticker}_hist_{timeframe}.csv')
         # Add the signals to each row
         df['signal'] = get_reversal_signals(df)
         df2 = df[df['ticker'] == ticker]
@@ -214,7 +242,7 @@ Whether the market is experiencing a bull run or a bearish downturn,
 the goal is to hop on the trend early and stay on 
 until there is a clear indication that the trend has reversed.
 '''
-def trend_following_strategy(ticker:str):
+def trend_following_strategy(ticker:str, TIMEFRAMES:list):
     # Constants
     CASH = 10000                 # Cash in account
     STOP_LOSS_PERC = -2.0        # Maximum allowed loss
@@ -222,8 +250,8 @@ def trend_following_strategy(ticker:str):
     TRAILING_STOP_TRIGGER = 2.0  # Percentage to start using the trailing_stop to "protect" earnings
     GREEN_BARS_TO_OPEN = 4       # Green bars required to open a new position
 
-    for timeframe in TIMEFRAMES:
-        file_name = data_dir + f'/{ticker}_hist_{timeframe}.csv'
+    for timeframe in TIMEFRAMES:   
+        file_name = base.data_dir + f'/{ticker}_hist_{timeframe}.csv'        
         df = pd.read_csv(file_name)   
 
         df['date'] = pd.to_datetime(df['date'])
@@ -280,7 +308,7 @@ def trend_following_strategy(ticker:str):
 
             if timeframe == '1day':
                 if (operation_last != operation_last_old) and (date >= pd.Timestamp('2023-01-01')):
-                    print(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
+                    base.logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
                 operation_last_old = operation_last
             
             last_bar = row
@@ -290,9 +318,8 @@ def trend_following_strategy(ticker:str):
             shares = 0
             open_price = 0
 
-        print(f'********** Trend Following Strategy: RESULT of {ticker} - {timeframe} Timeframe '.center(76, '*'))
-        print(f"Cash after Trade: {round(cash, 2):8}")
-        print('  ')
+        base.logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} - {timeframe} Timeframe '.center(76, '*'))
+        base.logger2.info(f"Cash after Trade: {round(cash, 2):8}")
 
 
 '''
@@ -308,8 +335,8 @@ Rule 6–14 Points in a Row Alternating Up and Down
 Rule 7 — Any noticeable/predictable pattern, cycle, or trend
 '''
 def control_chart_strategy(ticker):
-    # Constants
-    ticker_file = data_dir + f'/{ticker}.csv'
+    # Constants  
+    ticker_file = base.data_dir + f'/{ticker}.csv'
     default_window = 10
     CASH = 10_000
     DEFAULT_WINDOW = 10
@@ -325,7 +352,7 @@ def control_chart_strategy(ticker):
             ticker = yf.Ticker(ticker)
             df = ticker.history(period='36mo')
             if len(df) <= 0:
-                print(f'ticker not found: {ticker}')
+                base.logger.error(f'ticker not found: {ticker}')
                 return None
             
             df = df.reset_index()
@@ -353,11 +380,21 @@ def control_chart_strategy(ticker):
         pnl = ops['pnl'].sum()
         wins = len(ops[ops['pnl'] > 0])
         losses = len(ops[ops['pnl'] < 0])
-        # Show Result
-        print(f' Result of {ticker} for ({signal_field}) '.center(60, '*'))
-        print(f"* Profit / Loss  : {pnl:.2f}")
-        print(f"* Wins / Losses  : {wins} / {losses}")
-        print(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
+
+        # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
+        try:
+            win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
+            if win_rate >= 80:
+                # Show Result
+                base.logger2.info(f' Result of {ticker} for ({signal_field}) '.center(60, '*'))
+                base.logger2.info(f"* Profit / Loss  : {pnl:.2f}")
+                base.logger2.info(f"* Wins / Losses  : {wins} / {losses}")
+                base.logger2.info(f"* Win Rate       : {win_rate:.2f}%")
+            else:
+                pass
+        except Exception as e:
+            base.logger.error(' >>> Exception3: {}'.format(e))
+
     # Rules definition
     def apply_rule_1(df, window = DEFAULT_WINDOW):
         # One point beyond the 3 stdev control limit
@@ -426,13 +463,13 @@ def control_chart_strategy(ticker):
 
     df = get_data(ticker, ticker_file)
 
-    print('         ')
-    print('Rule 1 — One Point Beyond the 3σ Control Limit')
-    print('Rule 2 — Eight or More Points on One Side of the Centerline Without Crossing')
-    print('Rule 3 — Four out of five points in zone B or beyond')
-    print('Rule 4 — Six Points or More in a Row Steadily Increasing or Decreasing')
-    print('Rule 5 — Two out of three points in zone A')
-    print('Rule 6 – 14 Points in a Row Alternating Up and Down')
+    base.logger2.info('         ')
+    base.logger2.info('Rule 1 — One Point Beyond the 3σ Control Limit')
+    base.logger2.info('Rule 2 — Eight or More Points on One Side of the Centerline Without Crossing')
+    base.logger2.info('Rule 3 — Four out of five points in zone B or beyond')
+    base.logger2.info('Rule 4 — Six Points or More in a Row Steadily Increasing or Decreasing')
+    base.logger2.info('Rule 5 — Two out of three points in zone A')
+    base.logger2.info('Rule 6 – 14 Points in a Row Alternating Up and Down')
     
     df = apply_rule_1(df)
     show_result(df, 'rule1')
@@ -456,7 +493,7 @@ def control_chart_strategy(ticker):
 '''
 Volatility & Bollinger Band with Generic Algorithm Strategy
 '''
-def vb_genericAlgo_strategy(ticker):
+def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
     # Constants
     POPULATIONS = 20
     GENERATIONS = 50
@@ -468,7 +505,8 @@ def vb_genericAlgo_strategy(ticker):
 
     # Loading data, and split in train and test datasets
     def get_data(timeframe):
-        df = pd.read_csv(data_dir + f'/{ticker}_hist_{timeframe}.csv')
+
+        df = pd.read_csv(base.data_dir + f'/{ticker}_hist_{timeframe}.csv')
         df.ta.bbands(close=df['close'], length=20, append=True)
         df = df.dropna()
         df['high_limit'] = df['BBU_20_2.0'] + (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
@@ -476,10 +514,15 @@ def vb_genericAlgo_strategy(ticker):
         df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
         df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
 
-        train, test = train_test_split(df, test_size=0.25, random_state=1104)
-        # train = df[df['date'] < '2023-01-01']
-        # test = df[df['date'] >= '2023-01-01']
-        return train, test
+        if (timeframe == '1min') or (timeframe == '1hour'):
+            train, test = train_test_split(df, test_size=0.25, random_state=1104)
+        else:
+            _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
+            train = df[df['date'] < _date]
+            test = df[df['date'] >= _date]
+
+        return train, test            
+
     
     # Define fitness function to be used by the PyGAD instance
     def fitness_func(self, solution, sol_idx):
@@ -518,7 +561,7 @@ def vb_genericAlgo_strategy(ticker):
         # Get Train and Test data for timeframe
         train, test = get_data(timeframe)
         # Process timeframe
-        print("".center(60, "*"))
+        base.logger2.info("".center(60, "*"))
 
         with tqdm(total=GENERATIONS) as pbar:
             # Create Genetic Algorithm
@@ -541,38 +584,49 @@ def vb_genericAlgo_strategy(ticker):
         # Show details of the best solution.
         solution, solution_fitness, _ = ga_instance.best_solution()
 
-        print(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
-        print(f"Min Volatility   : {solution[0]:6.4f}")
-        print(f"Max Perc to Buy  : {solution[1]:6.4f}")
-        print(f"Min Perc to Sell : {solution[2]:6.4f}")
-
-        # Get Reward from train data
-        profit, wins, losses = get_result(train, solution[0], solution[1], solution[2])
-        print(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
-        print(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
-        print(f"* Profit / Loss (Strategy) : {profit:.2f}")
-        print(f"* Wins / Losses  : {wins} / {losses}")
-        print(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
-
         # Get Reward from test data
         profit, wins, losses = get_result(test, solution[0], solution[1], solution[2])
-        # Show the final result
-        print(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
-        print(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
-        print(f"* Profit / Loss (Strategy) : {profit:.2f}")
-        print(f"* Wins / Losses  : {wins} / {losses}")
-        print(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
-        print("")
+
+        # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
+        try:
+            win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
+            if win_rate >= 80:
+                # 최적 변수값 찾기
+                base.logger2.info(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
+                base.logger2.info(f"Min Volatility   : {solution[0]:6.4f}")
+                base.logger2.info(f"Max Perc to Buy  : {solution[1]:6.4f}")
+                base.logger2.info(f"Min Perc to Sell : {solution[2]:6.4f}")
+
+                # Show the final result
+                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
+                base.logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
+                base.logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
+                base.logger2.info(f"* Wins / Losses  : {wins} / {losses}")
+                base.logger2.info(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
+                base.logger2.info("")
+
+                # Get Reward from train data
+                profit, wins, losses = get_result(train, solution[0], solution[1], solution[2])
+                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
+                base.logger2.info(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
+                base.logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
+                base.logger2.info(f"* Wins / Losses  : {wins} / {losses}")
+                base.logger2.info(f"* Win Rate       : {win_rate:.2f}%")
+
+            else:
+                pass
+        except Exception as e:
+            base.logger.error(' >>> Exception4: {}'.format(e))
 
 
 '''
 Volatility & Bollinger Band with Generic Algorithm Strategy 2
 - 기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용
 '''
-def vb_genericAlgo_strategy2(ticker):
+def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
     # Constants
     CASH = 10_000
-    POPULATIONS = 30
+    POPULATIONS = 20
     GENERATIONS = 50
 
     # Configuration
@@ -581,10 +635,20 @@ def vb_genericAlgo_strategy2(ticker):
 
     # Loading data, and split in train and test datasets
     def get_data(timeframe):
-        df = pd.read_csv(data_dir + f'/{ticker}_hist_{timeframe}.csv')
-        df['date'] = pd.to_datetime(df['date'])
-        df = df.dropna()
-        train, test = train_test_split(df, test_size=0.25, random_state=1104)
+      
+        df = pd.read_csv(base.data_dir + f'/{ticker}_hist_{timeframe}.csv')
+        if df.empty:
+            print('Empty')
+            return None
+        else:
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.dropna()
+            if (timeframe == '1min') or (timeframe == '1hour'):
+                train, test = train_test_split(df, test_size=0.25, random_state=1104)
+            else: #1day
+                _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
+                train = df[df['date'] < _date]
+                test = df[df['date'] >= _date]
 
         return train, test
 
@@ -619,11 +683,14 @@ def vb_genericAlgo_strategy2(ticker):
             df.ta.bbands(close=df['close'], length=sell_length, std=sell_std, append=True)
         df = df.dropna()
 
-        # Buy Signal
-        df['signal'] = np.where(df['close'] < df[f'BBL_{buy_suffix}'], 1, 0)
+        try:
+            # Buy Signal
+            df['signal'] = np.where(df['close'] < df[f'BBL_{buy_suffix}'], 1, 0)
 
-        # Sell Signal
-        df['signal'] = np.where(df['close'] > df[f'BBU_{sell_suffix}'], -1, df['signal'])
+            # Sell Signal
+            df['signal'] = np.where(df['close'] > df[f'BBU_{sell_suffix}'], -1, df['signal'])
+        except:
+            df['signal'] = 0
 
         # Remove all rows without operations, rows with the same consecutive operation, first row selling, and last row buying
         result = df[df['signal'] != 0]
@@ -658,7 +725,7 @@ def vb_genericAlgo_strategy2(ticker):
         train, test = get_data(timeframe)
 
         # Process data
-        print("".center(60, "*"))
+        base.logger2.info("".center(60, "*"))
 
         with tqdm(total=GENERATIONS) as pbar:
 
@@ -685,36 +752,47 @@ def vb_genericAlgo_strategy2(ticker):
             # Run the Genetic Algorithm
             ga_instance.run()
 
-        # Show details of the best solution.
-        solution, solution_fitness, _ = ga_instance.best_solution()
-        print(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
-        print('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
-        print(f'Buy Length    : {solution[0]:.0f}')
-        print(f'Buy Std       : {solution[1]:.2f}')
-        print(f'Sell Length   : {solution[2]:.0f}')
-        print(f'Sell Std      : {solution[3]:.2f}')
+            # Show details of the best solution.
+            solution, solution_fitness, _ = ga_instance.best_solution()   
+            # Get result from test data
+            reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)               
 
-        # Get result from train data
-        reward, wins, losses, pnl = get_result(train, solution[0], solution[1], solution[2], solution[3])
+        # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
+        try:
+            win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
+            if win_rate >= 80:
 
-        # Show the train result
-        print(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
-        print(f'* Reward                   : {reward:.2f}')
-        print(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
-        print(f'* Profit / Loss (Strategy) : {pnl:.2f}')
-        print(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
-        print(f'* Win Rate                 : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%')
+                base.logger2.info(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
+                base.logger2.info('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
+                base.logger2.info(f'Buy Length    : {solution[0]:.0f}')
+                base.logger2.info(f'Buy Std       : {solution[1]:.2f}')
+                base.logger2.info(f'Sell Length   : {solution[2]:.0f}')
+                base.logger2.info(f'Sell Std      : {solution[3]:.2f}')
 
-        # Get result from test data
-        reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)
+                # Show the test result
+                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
+                base.logger2.info(f'* Reward                   : {reward:.2f}')
+                base.logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
+                base.logger2.info(f'* Profit / Loss (Strategy) : {pnl:.2f}')
+                base.logger2.info(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
+                base.logger2.info(f'* Win Rate                 : {win_rate:.2f}%')                
 
-        # Show the test result
-        print(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
-        print(f'* Reward                   : {reward:.2f}')
-        print(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
-        print(f'* Profit / Loss (Strategy) : {pnl:.2f}')
-        print(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
-        print(f'* Win Rate                 : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%')
+                # Get result from train data
+                reward, wins, losses, pnl = get_result(train, solution[0], solution[1], solution[2], solution[3])
+
+                # Show the train result
+                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
+                base.logger2.info(f'* Reward                   : {reward:.2f}')
+                base.logger2.info(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
+                base.logger2.info(f'* Profit / Loss (Strategy) : {pnl:.2f}')
+                base.logger2.info(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
+                base.logger2.info(f'* Win Rate                 : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%')
+
+            else:
+                pass
+        except Exception as e:
+            base.logger.error(' >>> Exception4: {}'.format(e))
+
 
 
 '''
@@ -803,8 +881,9 @@ def gaSellHoldBuy_strategy(ticker):
             # Return the calculated observation
             return obs
     
-    # Loading data, and split in train and test datasets
-    df = pd.read_csv(data_dir + f'/{ticker}_hist_1day.csv')
+    # Loading data, and split in train and test datasets   
+    df = pd.read_csv(base.data_dir + f'/{ticker}_hist_1day.csv')
+
     df.ta.bbands(close=df['close'], length=20, append=True)
     df = df.dropna()
     pd.options.mode.chained_assignment = None
@@ -812,8 +891,11 @@ def gaSellHoldBuy_strategy(ticker):
     df['low_limit'] = df['BBL_20_2.0'] - (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
     df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
     df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
-    train = df[df['date'] < '2023-01-01']
-    test = df[df['date'] >= '2023-01-01']
+
+    _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
+    train = df[df['date'] < _date]
+    test = df[df['date'] >= _date]
+
 
     # Define fitness function to be used by the PyGAD instance
     def fitness_func(self, solution, sol_idx):
@@ -886,11 +968,6 @@ def gaSellHoldBuy_strategy(ticker):
     # Show details of the best solution.
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
 
-    print(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
-    print(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
-    print(f"Fitness value of the best solution = {solution_fitness}")
-    print(f"Index of the best solution : {solution_idx}")
-
     # Create a test environmant
     env = SellHoldBuyEnv(observation_size=OBS_SIZE, features=test[['close_percentage','volatility']].values, closes=test['close'].values)
 
@@ -911,10 +988,21 @@ def gaSellHoldBuy_strategy(ticker):
         observation, reward, done, info = env.step(action)
         total_reward += reward
 
-    # Show the final result
-    print(f"* Profit/Loss: {info['current_profit']:6.3f}")
-    print(f"* Wins: {info['wins']} - Losses: {info['losses']}")
-    print(f"* Win Rate: {100 * (info['wins']/(info['wins'] + info['losses'])):6.2f}%")
+    try:
+        win_rate = (info['wins']/(info['wins'] + info['losses']) if info['wins'] + info['losses'] > 0 else 0) * 100
+        if win_rate >= 80:
+            base.logger2.info(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
+            base.logger2.info(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
+            base.logger2.info(f"Fitness value of the best solution = {solution_fitness}")
+            base.logger2.info(f"Index of the best solution : {solution_idx}")
+            # Show the final result
+            base.logger2.info(f"* Profit/Loss: {info['current_profit']:6.3f}")
+            base.logger2.info(f"* Wins: {info['wins']} - Losses: {info['losses']}")
+            base.logger2.info(f"* Win Rate: {win_rate:6.2f}%")
+        else:
+            pass
+    except Exception as e:
+        base.logger.error(' >>> Exception5: {}'.format(e))
 
 
 '''
