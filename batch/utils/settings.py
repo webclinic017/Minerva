@@ -155,16 +155,16 @@ ASSETS = ['stock', 'bond', 'commodity', 'cash']
 
 # MY_TICKERS = {
 #     'US':[{'bond':['TLT','EDV','HYG','LQD','TMF','IEF','SHV','SHY']}, {'stock':['SPY','QQQ','BAC','ENB','O','SCHD','SOXL','VNQ']}, {'commodity':['GLD']}, {'currency':['UUP']}, ],
-#     'KR':[{'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']}, {'stock':['530107.KS','252670.KS']}, {'commodity':['']}, {'currency':['']}, ],    
-#     'EU':[{'bond':['']}, {'stock':['']}, {'commodity':['']}, {'currency':['']}, ],
+#     'KR':[{'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']}, {'stock':['530107.KS','252670.KS']}, {'commodity':[]}, {'currency':[]}, ],    
+#     'EU':[{'bond':[]}, {'stock':[]}, {'commodity':[]}, {'currency':[]}, ],
 #     'JP':[{'bond':['1482.T','1487.T','2620.T','2621.T']}, {'stock':['1325.T','1545.T','1547.T','1571.T','1573.T','1678.T','2034.T','2563.T']}, 
-#           {'commodity':['']}, {'currency':['']}, ],
-#     'CN':[{'bond':['']}, {'stock':['510330.SS','002304.SZ','002594.SZ']}, {'commodity':['']}, {'currency':['']}, ],
+#           {'commodity':[]}, {'currency':[]}, ],
+#     'CN':[{'bond':[]}, {'stock':['510330.SS','002304.SZ','002594.SZ']}, {'commodity':[]}, {'currency':[]}, ],
 #     'DE':[{'bond':['DBXG.DE','IBB1.DE','IS04.DE','IUSU.DE','VGEB.DE','VUTY.AS']}, {'stock':['BAS.DE','BNP.PA','CS.PA','GLE.PA']}, 
-#           {'commodity':['']}, {'currency':['']}, ],    
-#     'IN':[{'bond':['']}, {'stock':['','']}, {'commodity':['']}, {'currency':['']}, ],
+#           {'commodity':[]}, {'currency':[]}, ],    
+#     'IN':[{'bond':[]}, {'stock':['','']}, {'commodity':[]}, {'currency':[]}, ],
 #     'SG':[{'bond':['A35.SI']}, {'stock':['AJBU.SI','C6L.SI','CLR.SI','D05.SI','M44U.SI','ME8U.SI','Y92.SI','Z74.SI']}, 
-#           {'commodity':['']}, {'currency':['']}, ],
+#           {'commodity':[]}, {'currency':[]}, ],
 # }
 
 # 관심종목들
@@ -172,22 +172,24 @@ WATCH_TICKERS = {
     'US':[{'stock':['SPY','QQQ','BAC','ENB','O','SCHD','SOXL','VNQ']}, {'bond':['TLT','EDV','HYG','LQD','TMF','IEF','SHV','SHY']},  
           {'commodity':['GLD']}, {'currency':['UUP']}, ],
     'KR':[{'stock':['^KS200', '008770.KS','530107.KS','252670.KS']}, {'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']},
-          {'commodity':['']}, {'currency':['']}, ],    
-    'EU':[{'stock':['^STOXX50E']}, {'bond':['']}, {'commodity':['']}, {'currency':['']}, ],
+          {'commodity':[]}, {'currency':[]}, ],    
+    'EU':[{'stock':['^STOXX50E']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
     'JP':[{'stock':['^N225', '1325.T','1545.T','1547.T','1571.T','1573.T','1678.T','2034.T','2563.T']}, {'bond':['1482.T','1487.T','2620.T','2621.T']},  
-          {'commodity':['']}, {'currency':['']}, ],
-    'CN':[{'stock':['510330.SS','002304.SZ', '^HSI', '002594.SZ']}, {'bond':['']}, {'commodity':['']}, {'currency':['']}, ],
+          {'commodity':[]}, {'currency':[]}, ],
+    'CN':[{'stock':['510330.SS','002304.SZ', '^HSI', '002594.SZ']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
     'DE':[{'stock':['BAS.DE','BNP.PA','CS.PA','GLE.PA']}, {'bond':['DBXG.DE','IBB1.DE','IS04.DE','IUSU.DE','VGEB.DE','VUTY.AS']},  
-          {'commodity':['']}, {'currency':['']}, ],    
-    'IN':[{'stock':['^BSESN','']}, {'bond':['']}, {'commodity':['']}, {'currency':['']}, ],
+          {'commodity':[]}, {'currency':[]}, ],    
+    'IN':[{'stock':['^BSESN','']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
     'SG':[{'stock':['^STI', 'AJBU.SI','C6L.SI','CLR.SI','D05.SI','M44U.SI','ME8U.SI','Y92.SI','Z74.SI']}, {'bond':['A35.SI']}, 
-          {'commodity':['']}, {'currency':['']}, ],
+          {'commodity':[]}, {'currency':[]}, ],
 }
 
 # 테스트용
 WATCH_TICKERS2 = {
-    'US':[{'stock':['SPY',]}, {'bond':['TLT',]}, {'commodity':['']}, {'currency':['']}, ],
-    'KR':[{'stock':['530107.KS', '008770.KS',]}, {'bond':['148070.KS',]}, {'commodity':['']}, {'currency':['']}, ],    
+    'US':[{'stock':['SPY',]}, {'bond':['TLT',]}, {'commodity':[]}, {'currency':[]}, ],
+    'KR':[{'stock':['530107.KS', '008770.KS',]}, {'bond':['148070.KS',]}, {'commodity':[]}, {'currency':[]}, ],  
+    'DE':[{'stock':[]}, {'bond':['VUTY.AS',]},
+          {'commodity':[]}, {'currency':[]}, ],
 }
 
 urls = {

@@ -669,8 +669,12 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
     # Define fitness function to be used by the PyGAD instance
     def fitness_func(self, solution, sol_idx):
 
-        # Get Reward from train data
-        reward, _, _, _ = get_result(train, solution[0], solution[1], solution[2], solution[3])
+        try:
+            # Get Reward from train data
+            reward, _, _, _ = get_result(train, solution[0], solution[1], solution[2], solution[3])
+        except:
+            reward = 0
+            pass
 
         # Return the solution reward
         return reward
@@ -702,7 +706,8 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
             # Sell Signal
             df['signal'] = np.where(df['close'] > df[f'BBU_{sell_suffix}'], -1, df['signal'])
         except:  # 530107.KS 히스토리가 1 레코드 밖에 없음.
-            df['signal'] = 0
+            # base.logger.error(f'vb_genericAlgo_strategy2: {ticker} can not make Borlenger Band.')  # 너무 많이 반복되어서리.... ㅜㅜ
+            return None
 
         # Remove all rows without operations, rows with the same consecutive operation, first row selling, and last row buying
         result = df[df['signal'] != 0]
@@ -764,13 +769,14 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
             # Run the Genetic Algorithm
             ga_instance.run()
 
+        # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
+        try:
+
             # Show details of the best solution.
             solution, solution_fitness, _ = ga_instance.best_solution()   
             # Get result from test data
-            reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)               
+            reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)    
 
-        # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
-        try:
             win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
             if win_rate >= 80:
 
