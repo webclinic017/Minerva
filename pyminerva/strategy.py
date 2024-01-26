@@ -66,10 +66,11 @@ def sma_strategy(tick:str, short_sma=20, long_sma=200):
     #Create a column with buy and sell signals
     buf['Ticker'] = ticker
     buf['Signal'] = 0.0
-    try:  # 530107.KS 히스토리가 1 레코드 밖에 없음.
+    try: 
         buf['Signal'] = sma20 - sma200
-    except:
-        pass
+    except TypeError:  # 530107.KS 히스토리가 1 레코드 밖에 없음.
+        base.logger.error(f'Type Error: {tick}')
+        raise Exception(f'Type Error: {tick}')
     buf['Pivot'] = np.where((buf['Signal'].shift(1)*buf['Signal']) < 0, 1, 0)  # 1로 되는 일자부터 매수 또는 매도후 현금
     data = pd.concat([data, buf])
         
@@ -78,7 +79,10 @@ def sma_strategy(tick:str, short_sma=20, long_sma=200):
 
 def timing_strategy(ticker, short_sma, long_sma):
 
-    result = sma_strategy(ticker, short_sma, long_sma)
+    try:
+        result = sma_strategy(ticker, short_sma, long_sma)
+    except:  # 530107.KS 히스토리가 1 레코드 밖에 없음.
+        return
     buf = result[result['Pivot'] == 1].reset_index()
     # 날짜를 기준으로 최대 날짜의 인덱스를 찾기
     latest_indices = buf.groupby('Ticker')['Date'].idxmax()
@@ -173,7 +177,11 @@ def volatility_bollinger_strategy(ticker:str, TIMEFRAMES:list):
         if df.empty:
             continue
         # Add the signals to each row
-        df['signal'] = get_vb_signals(df)
+        try:
+            df['signal'] = get_vb_signals(df)
+        except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+            base.logger.error(f"Key Error: {ticker} / {timeframe}")
+            df['signal'] = 0
         df2 = df[df['ticker'] == ticker]
         # Get the result of the strategy
         show_vb_stategy_result(timeframe, df2)
@@ -349,6 +357,7 @@ def control_chart_strategy(ticker):
         try:
             df = pd.read_csv(ticker_file)
         except:
+            base.logger.error(f"Read csv Error: {ticker_file}")
             ticker = yf.Ticker(ticker)
             df = ticker.history(period='36mo')
             if len(df) <= 0:
@@ -558,10 +567,14 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
     
 
     for timeframe in TIMEFRAMES:
-        # Get Train and Test data for timeframe
-        train, test = get_data(timeframe)
-        # Process timeframe
-        base.logger2.info("".center(60, "*"))
+        try:
+            # Get Train and Test data for timeframe
+            train, test = get_data(timeframe)
+            # Process timeframe
+            base.logger2.info("".center(60, "*"))
+        except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+            base.logger.error(f"Key Error: {ticker} / {timeframe}")
+            continue
 
         with tqdm(total=GENERATIONS) as pbar:
             # Create Genetic Algorithm
@@ -686,10 +699,9 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
         try:
             # Buy Signal
             df['signal'] = np.where(df['close'] < df[f'BBL_{buy_suffix}'], 1, 0)
-
             # Sell Signal
             df['signal'] = np.where(df['close'] > df[f'BBU_{sell_suffix}'], -1, df['signal'])
-        except:
+        except:  # 530107.KS 히스토리가 1 레코드 밖에 없음.
             df['signal'] = 0
 
         # Remove all rows without operations, rows with the same consecutive operation, first row selling, and last row buying
@@ -887,10 +899,14 @@ def gaSellHoldBuy_strategy(ticker):
     df.ta.bbands(close=df['close'], length=20, append=True)
     df = df.dropna()
     pd.options.mode.chained_assignment = None
-    df['high_limit'] = df['BBU_20_2.0'] + (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
-    df['low_limit'] = df['BBL_20_2.0'] - (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
-    df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
-    df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
+    try:
+        df['high_limit'] = df['BBU_20_2.0'] + (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
+        df['low_limit'] = df['BBL_20_2.0'] - (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
+        df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
+        df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
+    except KeyError: # 530107.KS 히스토리가 1 레코드 밖에 없음.
+        base.logger.error(f"Key Error: {ticker}")
+        return None
 
     _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
     train = df[df['date'] < _date]
@@ -912,7 +928,11 @@ def gaSellHoldBuy_strategy(ticker):
 
         done = False    
         while not done:
-            state = np.reshape(observation, [1, observation_space_size])
+            try:
+                state = np.reshape(observation, [1, observation_space_size])
+            except:  # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+                base.logger.error(f"reshape error: {ticker}")
+                done = True
             #q_values = model.predict(state, verbose=0)
             q_values = predict(state, model_weights_matrix)
             action = np.argmax(q_values[0])
@@ -981,7 +1001,11 @@ def gaSellHoldBuy_strategy(ticker):
 
     done = False    
     while not done:
-        state = np.reshape(observation, [1, observation_space_size])
+        try:
+            state = np.reshape(observation, [1, observation_space_size])
+        except:  # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+            base.logger.error(f"reshape error: {ticker}")
+            return
         #q_values = model.predict(state, verbose=0)
         q_values = predict(state, best_weights_matrix)
         action = np.argmax(q_values[0])

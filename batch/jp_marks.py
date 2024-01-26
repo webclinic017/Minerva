@@ -56,8 +56,12 @@ if __name__ == "__main__":
 
                 df = mi.get_stock_history_by_fmp(ticker, TIMEFRAMES)
                 if df.empty:  # fmp 에서 읽지 못하면 다음에는 yfinance 에서 읽도록 보완함. 
-                    print(f'{ticker} df by fmp is empty')
+                    logger2.error(f'{ticker} df by fmp is empty')
+
                     df = mi.get_stock_history_by_yfinance(ticker, TIMEFRAMES)
+                    
+                    logger2.info("dataframe from yfinance")
+                    logger2.info(df.tail())
                 
                 mi.timing_strategy(ticker, 20, 200) # 200일 이평 vs 20일 이평
 

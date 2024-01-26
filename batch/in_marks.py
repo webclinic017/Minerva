@@ -1,5 +1,5 @@
 '''
-Prgram 명: 중국, 홍콩 시장부문의 투자 전략
+Prgram 명: 인도 시장부문의 투자 전략
 Author: jeongmin Kang
 Mail: jarvisNim@gmail.com
 마켓은 주식/채권/원자재/현금등의 금융자산의 오픈된 시장을 의미하며, 
@@ -41,7 +41,7 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    for x in WATCH_TICKERS['CN']:
+    for x in WATCH_TICKERS['IN']:
 
         for asset, tickers in x.items():
 

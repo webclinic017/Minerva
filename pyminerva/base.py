@@ -25,9 +25,9 @@ global to_date, to_date2, to_date3
 to_date = now.strftime('%d/%m/%Y')
 to_date2 = now.strftime('%Y-%m-%d')
 to_date3 = now.strftime('%Y%m%d')
-print('to_date: ', to_date)
-print('to_date2: ', to_date2)
-print('to_date3: ', to_date3)
+# print('to_date: ', to_date)
+# print('to_date2: ', to_date2)
+# print('to_date3: ', to_date3)
 
 global from_date_LT, from_date_MT, from_date_ST, from_date_LT2, from_date_MT2, from_date_ST2, from_date_LT3, from_date_MT3, from_date_ST3
 # Used to analyze during 3 months for short term
@@ -48,7 +48,7 @@ from_date_LT = _date.strftime('%d/%m/%Y')
 from_date_LT2 = _date.strftime('%Y-%m-%d')
 from_date_LT3 = _date.strftime('%Y%m%d')
 
-print('Short: ' + from_date_ST + '   Middle: ' + from_date_MT + '    Long: ' + from_date_LT)
+# print('Short: ' + from_date_ST + '   Middle: ' + from_date_MT + '    Long: ' + from_date_LT)
 
 
 # create a logger with the name from the config file. 
