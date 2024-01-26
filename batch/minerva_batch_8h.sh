@@ -7,18 +7,21 @@ cp ./database/Economics.db ./database/Economics.db.backup
 
 python ./batch/economics_db.py
 
-python ./batch/sentiment.py
 python ./batch/kr_ecos.py
 python ./batch/kr_marks.py
-python ./batch/jp_ecos.py
-python ./batch/jp_marks.py
-python ./batch/in_ecos.py
-python ./batch/global_.py
-python ./batch/cn_ecos.py
-python ./batch/de_ecos.py
 python ./batch/us_ecos.py
 python ./batch/us_marks.py
+python ./batch/jp_ecos.py
+python ./batch/jp_marks.py
+python ./batch/cn_ecos.py
+python ./batch/cn_marks.py
+python ./batch/de_ecos.py
+python ./batch/de_marks.py
+python ./batch/in_ecos.py
+python ./batch/in_marks.py
+python ./batch/global_.py
 python ./batch/global_derivatives.py
+python ./batch/sentiment.py
 
 python ./batch/email_.py
 
