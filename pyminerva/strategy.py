@@ -357,7 +357,7 @@ def control_chart_strategy(ticker):
         try:
             df = pd.read_csv(ticker_file)
         except:
-            base.logger.error(f"Read csv Error: {ticker_file}")
+            base.logger.info(f"Read csv file Not found -> yfinance making... : {ticker_file}")
             ticker = yf.Ticker(ticker)
             df = ticker.history(period='36mo')
             if len(df) <= 0:
