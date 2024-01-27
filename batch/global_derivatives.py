@@ -445,14 +445,17 @@ def option_chain_today(Symbols):
                     buf = pd.concat([buf, temp], axis=0)
         print('====== End ======')        
 
-        if symbol == '^SPX':
-            buf['Option'] = buf['contractSymbol'].apply(get_option_sp500)
-            buf['Exp_date'] = buf['contractSymbol'].apply(get_expdate_sp500)
-        elif symbol == '^NDX':
-            buf['Option'] = buf['contractSymbol'].apply(get_option_nasdaq100)
-            buf['Exp_date'] = buf['contractSymbol'].apply(get_expdate_nasdaq100)
-        else:
-            logger.error(f'Symbol not found: {symbol}')
+        try:
+            if symbol == '^SPX':
+                buf['Option'] = buf['contractSymbol'].apply(get_option_sp500)
+                buf['Exp_date'] = buf['contractSymbol'].apply(get_expdate_sp500)
+            elif symbol == '^NDX':
+                buf['Option'] = buf['contractSymbol'].apply(get_option_nasdaq100)
+                buf['Exp_date'] = buf['contractSymbol'].apply(get_expdate_nasdaq100)
+            else:
+                logger.error(f'Symbol not found: {symbol}')
+        except Exception as e:
+            logger.error(' >>> global_derivates.py Exception: {}'.format(e))
 
         buf_pivot = pd.pivot_table(buf, index=['Option','Exp_date'], values=['volume'], aggfunc=np.sum, fill_value=0)
         # logger2.info(buf_pivot)

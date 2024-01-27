@@ -651,7 +651,7 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
       
         df = pd.read_csv(base.data_dir + f'/{ticker}_hist_{timeframe}.csv')
         if df.empty:
-            print('Empty')
+            base.logger.error(f'Read csv file {ticker} / {timeframe} is Empty')
             return None
         else:
             df['date'] = pd.to_datetime(df['date'])
@@ -663,7 +663,7 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
                 train = df[df['date'] < _date]
                 test = df[df['date'] >= _date]
 
-        return train, test
+        return train, test, df
 
 
     # Define fitness function to be used by the PyGAD instance
@@ -738,8 +738,7 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
 
     for timeframe in TIMEFRAMES:
         # Get Train and Test data for timeframe
-        # Get Train and Test data
-        train, test = get_data(timeframe)
+        train, test, df = get_data(timeframe)
 
         # Process data
         base.logger2.info("".center(60, "*"))
@@ -775,10 +774,10 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
             # Show details of the best solution.
             solution, solution_fitness, _ = ga_instance.best_solution()   
             # Get result from test data
-            reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)    
+            reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)
 
             win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-            if win_rate >= 80:
+            if win_rate >= 80 and reward > 10000:
 
                 base.logger2.info(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
                 base.logger2.info('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
@@ -793,7 +792,57 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
                 base.logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
                 base.logger2.info(f'* Profit / Loss (Strategy) : {pnl:.2f}')
                 base.logger2.info(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
-                base.logger2.info(f'* Win Rate                 : {win_rate:.2f}%')                
+                base.logger2.info(f'* Win Rate                 : {win_rate:.2f}%')
+
+             # graph @@@ 값 검증 추가 필요
+                graph = df.copy().reset_index(drop=True)
+                # print(int(solution[2]))
+                # print(int(solution[0]))
+                graph['Upper_MA'] = graph['close'].rolling(window=int(solution[2])).mean()
+                # print(round(solution[3],2))
+                # print(round(solution[1],2))
+                # graph['Upper'] = graph['Upper_MA'] + 2 * round(solution[3],2)
+                graph['Upper'] = graph['Upper_MA'] + 2 * round(graph['close'].rolling(window=int(solution[2])).std(),2)
+
+                graph['Lower_MA'] = graph['close'].rolling(window=int(solution[0])).mean()
+
+                # graph['Lower'] = graph['Lower_MA'] - 2 * round(solution[1],2)
+                graph['Lower'] = graph['Lower_MA'] - 2 * round(graph['close'].rolling(window=int(solution[0])).std(),2)
+                # print(graph['close'].rolling(window=int(solution[2])).std())
+                # print(graph['close'].rolling(window=int(solution[0])).std())                
+
+                # 주가가 밴드 상하단 사이의 몇 % 위치인지 확인
+                graph['Position'] = (graph['close'] - graph['Lower']) / (graph['Upper'] - graph['Lower']) * 100
+
+                '''
+                sells, buys, buf, buf2 .... 좀 더 주의깊게 재검증이 필요함. 일단 기능상 충족으로 넘어감. 20240128
+                '''
+                sells = graph[graph['Position'] > 95]   # Selling Point
+                buys = graph[graph['Position'] > 5]   # Buying Point
+
+                # graph 에서 sells를 뺀 나머지 구하기
+                buf = pd.merge(graph, sells, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
+                # graph 에서 buys를 뺀 나머지 구하기
+                buf2 = pd.merge(graph, buys, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1) 
+                # print(buf)
+
+                plt.figure(figsize=(18, 6))
+                plt.plot(graph['date'][-60:], graph['close'][-60:], label='주가', color='black')
+                # plt.plot(graph['date'], graph['Upper_MA'], label=f'{solution[2]:.2f}일 이동평균', linestyle='--', color='blue')
+                # plt.plot(graph['date'], graph['Lower_MA'], label=f'{solution[0]:.2f}일 이동평균', linestyle='--', color='blue')                
+                plt.plot(graph['date'][-60:], graph['Upper'][-60:], label='상단 볼린저 밴드', linestyle='--', color='red')
+                plt.plot(graph['date'][-60:], graph['Lower'][-60:], label='하단 볼린저 밴드', linestyle='--', color='green')
+                
+                plt.scatter(buf['date'][-1:], buf['close'][-1:], color='red', label='Selling Point') # 특정 일자에 추가적인 점 플로팅
+                plt.scatter(buf2['date'][-1:], buf2['close'][-1:], color='green', label='Buying Point') # 특정 일자에 추가적인 점 플로팅                
+                # 그래프에 제목과 레이블 추가
+                plt.title(f'Volatility & BB with GA Strategy2: Reward ({reward:.0f}), Wins/Losses ({wins:.0f}/{losses:.0f}), Win Rate ({win_rate:.2f}%)')
+                plt.xlabel('날짜')
+                plt.ylabel('가격')
+                plt.grid()
+                plt.legend()
+
+                plt.savefig(base.reports_dir + f'/strg_v_bb_ga2_{ticker}_{timeframe}.png')
 
                 # Get result from train data
                 reward, wins, losses, pnl = get_result(train, solution[0], solution[1], solution[2], solution[3])
@@ -936,19 +985,23 @@ def gaSellHoldBuy_strategy(ticker):
         while not done:
             try:
                 state = np.reshape(observation, [1, observation_space_size])
+                #q_values = model.predict(state, verbose=0)
+                q_values = predict(state, model_weights_matrix)
+                action = np.argmax(q_values[0])
+                observation, reward, done, info = env.step(action)
+                total_reward += reward                
             except:  # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
-                base.logger.error(f"reshape error: {ticker}")
-                done = True
-            #q_values = model.predict(state, verbose=0)
-            q_values = predict(state, model_weights_matrix)
-            action = np.argmax(q_values[0])
-            observation, reward, done, info = env.step(action)
-            total_reward += reward
+                # base.logger.error(f"reshape error: {ticker}") # too much... ㅜㅜ
+                total_reward = 0
+                break
         
-        # Print the reward and profit: @@@
-        # print(f"Solution {sol_idx:3d} - Total Reward: {total_reward:10.2f} - Profit: {info['current_profit']:10.3f}")
-        # if sol_idx == (POPULATIONS-1):
-        #     print(f"".center(60, "*"))
+        # try:
+        #     # Print the reward and profit
+        #     print(f"Solution {sol_idx:3d} - Total Reward: {total_reward:10.2f} - Profit: {info['current_profit']:10.3f}")
+        #     if sol_idx == (POPULATIONS-1):
+        #         print(f"".center(60, "*"))
+        # except:
+        #     pass
             
         # Return the solution reward
         return total_reward
