@@ -349,7 +349,7 @@ def max_drawdown(cum_returns):
     res.columns = ['max drawdown']
     return res
 
-def max_drawdown_strategy(country:str, tickers:list):
+def max_drawdown_strategy(country:str, tickers:list, assets:list):
     threshold_value = -0.3
     plt.figure(figsize=(16,4*len(tickers)))
     for i, tick in enumerate(tickers):
@@ -364,7 +364,15 @@ def max_drawdown_strategy(country:str, tickers:list):
 
         plt.subplot(len(tickers), 1, i + 1)
         plt.grid()
-        plt.bar(ddown.index, ddown, color='royalblue')
+        if assets[i] == 'stock':
+            color = 'royalblue'
+        elif assets[i] == 'bond':
+            color = 'green'
+        elif assets[i] == 'commodity':
+            color = 'gray'
+        else:
+            color = 'orange'
+        plt.bar(ddown.index, ddown, color=color)
         plt.title(ticker)
         plt.axhline(y=threshold_value, color='red', linestyle='--', label='Threshold')
         plt.xlabel('Date')
@@ -1092,13 +1100,18 @@ if __name__ == "__main__":
     '''
     
     for nation, assets in WATCH_TICKERS.items():  # 국가별
-        buf = []        
+        buf = []  # ticker 들 모두 나열
+        buf2 = []  # ticker 들 모두 나열한 것들의 asset 명 나열
         for asset_grp in assets:  # 국가별 / 자산별 /
             for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
                 buf.append(tickers)
+                for tick in tickers:
+                    buf2.append(asset)
+
         tot_tickers = [item for subs in buf for item in subs]
+        
         logger2.info(tot_tickers)
-        max_drawdown_strategy(nation, tot_tickers) # max draw down strategy : 바닥에서 분할 매수구간 찾기
+        max_drawdown_strategy(nation, tot_tickers, buf2) # max draw down strategy : 바닥에서 분할 매수구간 찾기
 
     # 3.2 해상운임지수
     container_Freight()
