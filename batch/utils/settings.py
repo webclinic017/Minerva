@@ -188,7 +188,7 @@ WATCH_TICKERS = {
 WATCH_TICKERS2 = {
     'US':[{'stock':['SPY',]}, {'bond':['TLT',]}, {'commodity':[]}, {'currency':[]}, ],
     # 'KR':[{'stock':['530107.KS', '008770.KS',]}, {'bond':['148070.KS',]}, {'commodity':[]}, {'currency':[]}, ],  
-    'KR':[{'stock':['530107.KS',]}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],      
+    'KR':[{'stock':['302190.KS', '^KS200',]}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],      
     'DE':[{'stock':[]}, {'bond':['VUTY.AS',]},
           {'commodity':[]}, {'currency':[]}, ],
 }

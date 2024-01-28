@@ -223,7 +223,7 @@ def show_reversal_stategy_result(timeframe, df):
 
     try:
         win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
-        if win_rate >= 80:
+        if win_rate >= 80 and profit > 10000:
             base.logger2.info(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
             base.logger2.info(f'* Profit/Loss: {profit:.2f}')
             base.logger2.info(f"* Wins: {wins} - Losses: {losses}")        
@@ -315,7 +315,8 @@ def trend_following_strategy(ticker:str, TIMEFRAMES:list):
                             sl_price = sl_price_tmp
 
             if timeframe == '1day':
-                if (operation_last != operation_last_old) and (date >= pd.Timestamp('2023-01-01')):
+                start_date = (datetime.now() - timedelta(days=90)).date().strftime('%Y-%m-%d')  # 3개월전 트랜젝션부터 보여주기
+                if (operation_last != operation_last_old) and (date >= pd.to_datetime(start_date)):
                     base.logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
                 operation_last_old = operation_last
             
@@ -326,8 +327,9 @@ def trend_following_strategy(ticker:str, TIMEFRAMES:list):
             shares = 0
             open_price = 0
 
-        base.logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} - {timeframe} Timeframe '.center(76, '*'))
-        base.logger2.info(f"Cash after Trade: {round(cash, 2):8}")
+        if cash > 15000:
+            base.logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} - {timeframe} Timeframe '.center(76, '*'))
+            base.logger2.info(f"Cash after Trade: {round(cash, 2):8}")
 
 
 '''
@@ -516,27 +518,35 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
     def get_data(timeframe):
 
         df = pd.read_csv(base.data_dir + f'/{ticker}_hist_{timeframe}.csv')
-        df.ta.bbands(close=df['close'], length=20, append=True)
-        df = df.dropna()
-        df['high_limit'] = df['BBU_20_2.0'] + (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
-        df['low_limit'] = df['BBL_20_2.0'] - (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
-        df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
-        df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
+        if df.empty:
+            base.logger.error(f'Read csv file {ticker} / {timeframe} is Empty')
+            return None
+        else:            
+            df.ta.bbands(close=df['close'], length=20, append=True)
+            df = df.dropna()
+            df['high_limit'] = df['BBU_20_2.0'] + (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
+            df['low_limit'] = df['BBL_20_2.0'] - (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
+            df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
+            df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
 
-        if (timeframe == '1min') or (timeframe == '1hour'):
-            train, test = train_test_split(df, test_size=0.25, random_state=1104)
-        else:
-            _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
-            train = df[df['date'] < _date]
-            test = df[df['date'] >= _date]
+            if (timeframe == '1min') or (timeframe == '1hour'):
+                train, test = train_test_split(df, test_size=0.25, random_state=1104)
+            else:
+                _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
+                train = df[df['date'] < _date]
+                test = df[df['date'] >= _date]
 
-        return train, test            
+        return train, test, df
 
     
     # Define fitness function to be used by the PyGAD instance
     def fitness_func(self, solution, sol_idx):
-        # total reward 가 최대값을 갖을 수 있는 solution[0],[1],[2] 의 변수들을 찾아서 최적화(=> pygad.GA()를 통해서)
-        total_reward, _, _ = get_result(train, solution[0], solution[1], solution[2])
+        try:
+            # total reward 가 최대값을 갖을 수 있는 solution[0],[1],[2] 의 변수들을 찾아서 최적화(=> pygad.GA()를 통해서)
+            total_reward, _, _ = get_result(train, solution[0], solution[1], solution[2])
+        except:
+            reward = 0
+            pass
         # Return the solution reward
         return total_reward
 
@@ -544,6 +554,7 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
     def get_result(df, min_volatility, max_buy_pct, min_sell_pct):
         # Generate a copy to avoid changing the original data
         df = df.copy().reset_index(drop=True)
+
         # Buy Signal
         df['signal'] = np.where((df['volatility'] > min_volatility) & (df['close_percentage'] < max_buy_pct), 1, 0)
         # Sell Signal
@@ -569,7 +580,7 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
     for timeframe in TIMEFRAMES:
         try:
             # Get Train and Test data for timeframe
-            train, test = get_data(timeframe)
+            train, test, df = get_data(timeframe)
             # Process timeframe
             base.logger2.info("".center(60, "*"))
         except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
@@ -594,16 +605,17 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
             # Run the Genetic Algorithm
             ga_instance.run()
 
-        # Show details of the best solution.
-        solution, solution_fitness, _ = ga_instance.best_solution()
-
-        # Get Reward from test data
-        profit, wins, losses = get_result(test, solution[0], solution[1], solution[2])
 
         # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
         try:
+            # Show details of the best solution.
+            solution, solution_fitness, _ = ga_instance.best_solution()
+
+            # Get Reward from test data
+            profit, wins, losses = get_result(test, solution[0], solution[1], solution[2])
+
             win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-            if win_rate >= 80:
+            if win_rate >= 80 and profit > 10000:
                 # 최적 변수값 찾기
                 base.logger2.info(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
                 base.logger2.info(f"Min Volatility   : {solution[0]:6.4f}")
@@ -611,16 +623,48 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
                 base.logger2.info(f"Min Perc to Sell : {solution[2]:6.4f}")
 
                 # Show the final result
-                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
+                base.logger2.info(f'***** {ticker} Result for timeframe {timeframe} (TEST) ')
                 base.logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
                 base.logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
                 base.logger2.info(f"* Wins / Losses  : {wins} / {losses}")
                 base.logger2.info(f"* Win Rate       : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%")
                 base.logger2.info("")
 
+                # graph @@@ 값 검증 추가 필요: 20240128
+                graph = df.copy().reset_index(drop=True)
+                graph = graph.sort_values(by='date')
+                graph['date'] = pd.to_datetime(graph['date'])
+
+                '''
+                sells, buys, buf, buf2 .... 좀 더 주의깊게 재검증이 필요함. 일단 기능상 충족으로 넘어감. 20240128
+                '''
+                sells = graph[graph['close_percentage'] > 95]   # Selling Point
+                buys = graph[graph['close_percentage'] < 5]   # Buying Point
+
+                # graph 에서 sells를 뺀 나머지 구하기
+                buf = pd.merge(graph, sells, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
+                # graph 에서 buys를 뺀 나머지 구하기
+                buf2 = pd.merge(graph, buys, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1) 
+                # print(buf)
+
+                plt.figure(figsize=(18, 6))
+                plt.plot(graph['date'][-60:], graph['close'][-60:], label='주가', color='black')
+                plt.plot(graph['date'][-60:], graph['high_limit'][-60:], label='상단 볼린저 밴드', linestyle='--', color='red')
+                plt.plot(graph['date'][-60:], graph['low_limit'][-60:], label='하단 볼린저 밴드', linestyle='--', color='green')
+                plt.scatter(buf['date'][-1:], buf['close'][-1:], color='red', label='Selling Point') # 특정 일자에 추가적인 점 플로팅
+                plt.scatter(buf2['date'][-1:], buf2['close'][-1:], color='green', label='Buying Point') # 특정 일자에 추가적인 점 플로팅                
+                # 그래프에 제목과 레이블 추가
+                plt.title(f'Volatility({solution[0]:6.2f}) & BB with GA Strategy: Reward ({profit:.0f}), Wins/Losses ({wins:.0f}/{losses:.0f}), Win Rate ({win_rate:.2f}%)')
+                plt.xlabel('날짜')
+                plt.ylabel('가격')
+                plt.grid()
+                plt.legend()
+
+                plt.savefig(base.reports_dir + f'/strg_v_bb_ga_{ticker}_{timeframe}.png')
+
                 # Get Reward from train data
                 profit, wins, losses = get_result(train, solution[0], solution[1], solution[2])
-                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
+                base.logger2.info(f'***** {ticker} Result for timeframe {timeframe} (TRAIN) ')
                 base.logger2.info(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
                 base.logger2.info(f"* Profit / Loss (Strategy) : {profit:.2f}")
                 base.logger2.info(f"* Wins / Losses  : {wins} / {losses}")
@@ -683,8 +727,8 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
     def get_result(df, buy_length, buy_std, sell_length, sell_std, is_test=False):
 
         # Round to 2 digit to avoid the Bollinger bands function to generate weird field names
-        buy_std = round(buy_std, 3)
-        sell_std = round(sell_std, 3)
+        buy_std = round(buy_std, 2)
+        sell_std = round(sell_std, 2)
 
         # Generate suffixes for Bollinger bands fields
         buy_suffix = f'{int(buy_length)}_{buy_std}'
@@ -692,11 +736,12 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
 
         # Generate a copy to avoid changing the original data
         df = df.copy().reset_index(drop=True)
+        df = df.sort_values(by='date')
 
         # Calculate Bollinger bands based on parameters
-        if not f'BBU_{buy_suffix}' in df.columns:
+        if not f'BBL_{buy_suffix}' in df.columns:  #@@@
             df.ta.bbands(close=df['close'], length=buy_length, std=buy_std, append=True)
-        if not f'BBU_{sell_suffix}' in df.columns:
+        if not f'BBU_{sell_suffix}' in df.columns:  #@@@
             df.ta.bbands(close=df['close'], length=sell_length, std=sell_std, append=True)
         df = df.dropna()
 
@@ -706,8 +751,8 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
             # Sell Signal
             df['signal'] = np.where(df['close'] > df[f'BBU_{sell_suffix}'], -1, df['signal'])
         except:  # 530107.KS 히스토리가 1 레코드 밖에 없음.
+            df['signal'] = 0
             # base.logger.error(f'vb_genericAlgo_strategy2: {ticker} can not make Borlenger Band.')  # 너무 많이 반복되어서리.... ㅜㅜ
-            return None
 
         # Remove all rows without operations, rows with the same consecutive operation, first row selling, and last row buying
         result = df[df['signal'] != 0]
@@ -769,96 +814,99 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
             ga_instance.run()
 
         # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
-        try:
+        # try:
 
-            # Show details of the best solution.
-            solution, solution_fitness, _ = ga_instance.best_solution()   
-            # Get result from test data
-            reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)
+        # Show details of the best solution.
+        solution, solution_fitness, _ = ga_instance.best_solution()
+        
+        # Get result from test data
+        # print(solution)
+        reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)
 
-            win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-            if win_rate >= 80 and reward > 10000:
+        win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
+        if win_rate >= 80 and reward > 10000:
 
-                base.logger2.info(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
-                base.logger2.info('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
-                base.logger2.info(f'Buy Length    : {solution[0]:.0f}')
-                base.logger2.info(f'Buy Std       : {solution[1]:.2f}')
-                base.logger2.info(f'Sell Length   : {solution[2]:.0f}')
-                base.logger2.info(f'Sell Std      : {solution[3]:.2f}')
+            base.logger2.info(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
+            base.logger2.info('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
+            base.logger2.info(f'Buy Length    : {solution[0]:.0f}')
+            base.logger2.info(f'Buy Std       : {solution[1]:.2f}')
+            base.logger2.info(f'Sell Length   : {solution[2]:.0f}')
+            base.logger2.info(f'Sell Std      : {solution[3]:.2f}')
 
-                # Show the test result
-                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TEST) '.center(60, '*'))
-                base.logger2.info(f'* Reward                   : {reward:.2f}')
-                base.logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
-                base.logger2.info(f'* Profit / Loss (Strategy) : {pnl:.2f}')
-                base.logger2.info(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
-                base.logger2.info(f'* Win Rate                 : {win_rate:.2f}%')
+            # Show the test result
+            base.logger2.info(f'***** {ticker} Result for timeframe {timeframe} (TEST) ')
+            base.logger2.info(f'* Reward                   : {reward:.2f}')
+            base.logger2.info(f'* Profit / Loss (B&H)      : {(test["close"].iloc[-1] - test["close"].iloc[0]) * (CASH // test["close"].iloc[0]):.2f}')
+            base.logger2.info(f'* Profit / Loss (Strategy) : {pnl:.2f}')
+            base.logger2.info(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
+            base.logger2.info(f'* Win Rate                 : {win_rate:.2f}%')
 
-             # graph @@@ 값 검증 추가 필요
-                graph = df.copy().reset_index(drop=True)
-                # print(int(solution[2]))
-                # print(int(solution[0]))
-                graph['Upper_MA'] = graph['close'].rolling(window=int(solution[2])).mean()
-                # print(round(solution[3],2))
-                # print(round(solution[1],2))
-                # graph['Upper'] = graph['Upper_MA'] + 2 * round(solution[3],2)
-                graph['Upper'] = graph['Upper_MA'] + 2 * round(graph['close'].rolling(window=int(solution[2])).std(),2)
+            # graph @@@ 값 검증 추가 필요: 20240128
+            graph = df.copy().reset_index(drop=True)
+            graph = graph.sort_values(by='date')
+            # print(int(solution[2]))
+            # print(int(solution[0]))
+            graph['Upper_MA'] = graph['close'].rolling(window=int(solution[2])).mean()
+            # print(round(solution[3],2))
+            # print(round(solution[1],2))
+            # graph['Upper'] = graph['Upper_MA'] + 2 * round(solution[3],2)
+            graph['Upper'] = graph['Upper_MA'] + 2 * round(graph['close'].rolling(window=int(solution[2])).std(),2)
 
-                graph['Lower_MA'] = graph['close'].rolling(window=int(solution[0])).mean()
+            graph['Lower_MA'] = graph['close'].rolling(window=int(solution[0])).mean()
 
-                # graph['Lower'] = graph['Lower_MA'] - 2 * round(solution[1],2)
-                graph['Lower'] = graph['Lower_MA'] - 2 * round(graph['close'].rolling(window=int(solution[0])).std(),2)
-                # print(graph['close'].rolling(window=int(solution[2])).std())
-                # print(graph['close'].rolling(window=int(solution[0])).std())                
+            # graph['Lower'] = graph['Lower_MA'] - 2 * round(solution[1],2)
+            graph['Lower'] = graph['Lower_MA'] - 2 * round(graph['close'].rolling(window=int(solution[0])).std(),2)
+            # print(graph['close'].rolling(window=int(solution[2])).std())
+            # print(graph['close'].rolling(window=int(solution[0])).std())                
 
-                # 주가가 밴드 상하단 사이의 몇 % 위치인지 확인
-                graph['Position'] = (graph['close'] - graph['Lower']) / (graph['Upper'] - graph['Lower']) * 100
+            # 주가가 밴드 상하단 사이의 몇 % 위치인지 확인
+            graph['Position'] = (graph['close'] - graph['Lower']) / (graph['Upper'] - graph['Lower']) * 100
 
-                '''
-                sells, buys, buf, buf2 .... 좀 더 주의깊게 재검증이 필요함. 일단 기능상 충족으로 넘어감. 20240128
-                '''
-                sells = graph[graph['Position'] > 95]   # Selling Point
-                buys = graph[graph['Position'] > 5]   # Buying Point
+            '''
+            sells, buys, buf, buf2 .... 좀 더 주의깊게 재검증이 필요함. 일단 기능상 충족으로 넘어감. 20240128
+            '''
+            sells = graph[graph['Position'] > 95]   # Selling Point
+            buys = graph[graph['Position'] > 5]   # Buying Point
 
-                # graph 에서 sells를 뺀 나머지 구하기
-                buf = pd.merge(graph, sells, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
-                # graph 에서 buys를 뺀 나머지 구하기
-                buf2 = pd.merge(graph, buys, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1) 
-                # print(buf)
+            # graph 에서 sells를 뺀 나머지 구하기
+            buf = pd.merge(graph, sells, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
+            # graph 에서 buys를 뺀 나머지 구하기
+            buf2 = pd.merge(graph, buys, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1) 
+            # print(buf)
 
-                plt.figure(figsize=(18, 6))
-                plt.plot(graph['date'][-60:], graph['close'][-60:], label='주가', color='black')
-                # plt.plot(graph['date'], graph['Upper_MA'], label=f'{solution[2]:.2f}일 이동평균', linestyle='--', color='blue')
-                # plt.plot(graph['date'], graph['Lower_MA'], label=f'{solution[0]:.2f}일 이동평균', linestyle='--', color='blue')                
-                plt.plot(graph['date'][-60:], graph['Upper'][-60:], label='상단 볼린저 밴드', linestyle='--', color='red')
-                plt.plot(graph['date'][-60:], graph['Lower'][-60:], label='하단 볼린저 밴드', linestyle='--', color='green')
-                
-                plt.scatter(buf['date'][-1:], buf['close'][-1:], color='red', label='Selling Point') # 특정 일자에 추가적인 점 플로팅
-                plt.scatter(buf2['date'][-1:], buf2['close'][-1:], color='green', label='Buying Point') # 특정 일자에 추가적인 점 플로팅                
-                # 그래프에 제목과 레이블 추가
-                plt.title(f'Volatility & BB with GA Strategy2: Reward ({reward:.0f}), Wins/Losses ({wins:.0f}/{losses:.0f}), Win Rate ({win_rate:.2f}%)')
-                plt.xlabel('날짜')
-                plt.ylabel('가격')
-                plt.grid()
-                plt.legend()
+            plt.figure(figsize=(18, 6))
+            plt.plot(graph['date'][-60:], graph['close'][-60:], label='주가', color='black')
+            # plt.plot(graph['date'], graph['Upper_MA'], label=f'{solution[2]:.2f}일 이동평균', linestyle='--', color='blue')
+            # plt.plot(graph['date'], graph['Lower_MA'], label=f'{solution[0]:.2f}일 이동평균', linestyle='--', color='blue')                
+            plt.plot(graph['date'][-60:], graph['Upper'][-60:], label='상단 볼린저 밴드', linestyle='--', color='red')
+            plt.plot(graph['date'][-60:], graph['Lower'][-60:], label='하단 볼린저 밴드', linestyle='--', color='green')
+            
+            plt.scatter(buf['date'][-1:], buf['close'][-1:], color='red', label='Selling Point') # 특정 일자에 추가적인 점 플로팅
+            plt.scatter(buf2['date'][-1:], buf2['close'][-1:], color='green', label='Buying Point') # 특정 일자에 추가적인 점 플로팅                
+            # 그래프에 제목과 레이블 추가
+            plt.title(f'Volatility & BB with GA Strategy2: Reward ({reward:.0f}), Wins/Losses ({wins:.0f}/{losses:.0f}), Win Rate ({win_rate:.2f}%)')
+            plt.xlabel('날짜')
+            plt.ylabel('가격')
+            plt.grid()
+            plt.legend()
 
-                plt.savefig(base.reports_dir + f'/strg_v_bb_ga2_{ticker}_{timeframe}.png')
+            plt.savefig(base.reports_dir + f'/strg_v_bb_ga2_{ticker}_{timeframe}.png')
 
-                # Get result from train data
-                reward, wins, losses, pnl = get_result(train, solution[0], solution[1], solution[2], solution[3])
+            # Get result from train data
+            reward, wins, losses, pnl = get_result(train, solution[0], solution[1], solution[2], solution[3])
 
-                # Show the train result
-                base.logger2.info(f' {ticker} Result for timeframe {timeframe} (TRAIN) '.center(60, '*'))
-                base.logger2.info(f'* Reward                   : {reward:.2f}')
-                base.logger2.info(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
-                base.logger2.info(f'* Profit / Loss (Strategy) : {pnl:.2f}')
-                base.logger2.info(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
-                base.logger2.info(f'* Win Rate                 : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%')
+            # Show the train result
+            base.logger2.info(f'***** {ticker} Result for timeframe {timeframe} (TRAIN) ')
+            base.logger2.info(f'* Reward                   : {reward:.2f}')
+            base.logger2.info(f'* Profit / Loss (B&H)      : {(train["close"].iloc[-1] - train["close"].iloc[0]) * (CASH // train["close"].iloc[0]):.2f}')
+            base.logger2.info(f'* Profit / Loss (Strategy) : {pnl:.2f}')
+            base.logger2.info(f'* Wins / Losses            : {wins:.2f} / {losses:.2f}')
+            base.logger2.info(f'* Win Rate                 : {(100 * (wins/(wins + losses)) if wins + losses > 0 else 0):.2f}%')
 
-            else:
-                pass
-        except Exception as e:
-            base.logger.error(' >>> Exception4: {}'.format(e))
+        else:
+            pass
+        # except Exception as e:
+        #     base.logger.error(' >>> Exception5: {}'.format(e))
 
 
 
@@ -1085,7 +1133,7 @@ def gaSellHoldBuy_strategy(ticker):
         else:
             pass
     except Exception as e:
-        base.logger.error(' >>> Exception5: {}'.format(e))
+        base.logger.error(' >>> Exception6: {}'.format(e))
 
 
 '''
