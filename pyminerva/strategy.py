@@ -263,7 +263,7 @@ https://wire.insiderfinance.io/navigating-financial-markets-with-the-trend-follo
 '''
 def trend_following_strategy(ticker:str, TIMEFRAMES:list):
     # Constants
-    CASH = 1000000               # Cash in account, 달러, 엔화, 위안화, 유로, 원화 다 고려해서 100만으로...
+    CASH = 1_000_000               # Cash in account, 달러, 엔화, 위안화, 유로, 원화 다 고려해서 100만으로...
     STOP_LOSS_PERC = -2.0        # Maximum allowed loss
     TRAILING_STOP = -1.0         # Value percentage for trailing_stop to lock in profits 
     TRAILING_STOP_TRIGGER = 2.0  # Percentage to start using the trailing_stop to "protect" earnings
@@ -372,7 +372,7 @@ def control_chart_strategy(ticker):
     # Constants  
     ticker_file = base.data_dir + f'/{ticker}.csv'
     default_window = 10
-    CASH = 10_000
+    CASH = 1_000_000
     DEFAULT_WINDOW = 10
     # Configuration
     np.set_printoptions(suppress=True)
@@ -539,7 +539,7 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
     # Constants
     POPULATIONS = 20
     GENERATIONS = 50
-    CASH = 10_000
+    CASH = 1_000_000
 
     # Configuration
     np.set_printoptions(suppress=True)
@@ -717,7 +717,7 @@ Volatility & Bollinger Band with Generic Algorithm Strategy 2
 '''
 def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
     # Constants
-    CASH = 10_000
+    CASH = 1_000_000
     POPULATIONS = 20
     GENERATIONS = 50
 
@@ -1179,7 +1179,7 @@ Generic Algorithm & MACD Indicator Strategy
 # def GaMacd_strategy():
 #     # Constants
 #     DEBUG = 0
-#     CASH = 10_000
+#     CASH = 1_000_000
 #     POPULATIONS = 30
 #     GENERATIONS = 50
 #     FILE_TRAIN = '../data/spy.train.csv.gz'
