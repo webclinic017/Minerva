@@ -538,9 +538,9 @@ class CalcuTrend():
         else:
             export = self.get_export(conn, country_sign)
 
-        logger2.info(f' {country} gdp: {round(gdp,2)} %')
-        logger2.info(f' {country}  inflation: {round(inflation,2)} %')
-        logger2.info(f' {country}  export: {round(export,2)} %')
+        logger2.info(f' {country_sign} gdp: {round(gdp,2)} %')
+        logger2.info(f' {country_sign}  inflation: {round(inflation,2)} %')
+        logger2.info(f' {country_sign}  export: {round(export,2)} %')
         
         realGDP_rate = gdp - inflation*0.3 
         if country_sign in ['KR', 'JP', 'CN']: # 수출 주도형 국가: 한국, 일본, 중국
@@ -561,12 +561,12 @@ class CalcuTrend():
         - CN: SHANHAE/SIMCHUN, x, x, x, x
         - IN: NIFTY, x, x, x, x
     '''
-    def cal_market_growth(self, conn, country_sign:str, market_name:str, month_term:int):
+    def cal_market_growth(self, conn, country_sign1:str, market_name:str, month_term:int):
     
         try:
             # 2.1 M2
             m2 = pd.read_sql_query(f"SELECT * FROM Indicators WHERE Indicator like '%M2%' AND \
-            Country = '{country_sign}' ORDER BY date DESC LIMIT 1", conn)
+            Country = '{country_sign1}' ORDER BY date DESC LIMIT 1", conn)
             m2_growth = m2['YOY'][0]
             if m2['Trend'][0] == 'UP':
                 m2_growth = m2_growth * 1.1
@@ -580,7 +580,7 @@ class CalcuTrend():
             logger.error(' >>> Exception: {}'.format(e))  
             
         #2.2 Assets
-        if country_sign == 'US':
+        if country_sign1 == 'US':
             if market_name == 'stock':
                 ticker = '^SPX'
                 ticker = yf.Ticker(ticker)
@@ -610,9 +610,9 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')        
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset')        
             
-        elif country_sign == 'KR':
+        elif country_sign1 == 'KR':
             if market_name == 'stock':
                 ticker = '^KS11'
                 ticker = yf.Ticker(ticker)
@@ -642,9 +642,9 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')        
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset')        
 
-        elif country_sign == 'JP':
+        elif country_sign1 == 'JP':
             if market_name == 'stock':
                 ticker = '^N225'
                 ticker = yf.Ticker(ticker)
@@ -668,21 +668,31 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')        
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset')        
 
-        elif country_sign == 'CN':
+        elif country_sign1 == 'CN':
             if market_name == 'stock':
                 ticker = '000001.SS'
                 ticker = yf.Ticker(ticker)
                 shanghai = ticker.history(period='3mo')['Close']                
                 shanghai = shanghai.dropna()
-                growth_1 = (shanghai[-1] - shanghai[0]) / shanghai[0]
+                if not shanghai.empty:  # shanghai가 비어 있지 않은 경우에만 계산 수행
+                    growth_1 = (shanghai.iloc[-1] - shanghai.iloc[0]) / shanghai.iloc[0]
+                    # logger2.info(f"shanghai Growth rate:, {growth_1:.2f}")
+                else:
+                    logger2.info("global_.py Error: No data available for the given period.")
+                # growth_1 = (shanghai[-1] - shanghai[0]) / shanghai[0]
                 
                 ticker = '399001.SZ'
                 ticker = yf.Ticker(ticker)
                 Shenzhen = ticker.history(period='3mo')['Close']
                 Shenzhen = Shenzhen.dropna()
-                growth_2 = (Shenzhen[-1] - Shenzhen[0]) / Shenzhen[0]
+                if not Shenzhen.empty:
+                    growth_1 = (Shenzhen.iloc[-1] - Shenzhen.iloc[0]) / Shenzhen.iloc[0]
+                    # logger2.info(f"Shenzhen Growth rate: {growth_1:.2f}")
+                else:
+                    logger2.info("global_.py Error: No data available for the given period.")                    
+                # growth_2 = (Shenzhen[-1] - Shenzhen[0]) / Shenzhen[0]
 
                 asset_growth = (growth_1 + growth_2) / 2 * 100
                 
@@ -700,9 +710,9 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')       
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset')       
 
-        elif country_sign == 'DE':
+        elif country_sign1 == 'DE':
             if market_name == 'stock':
                 ticker = '^GDAXI'
                 ticker = yf.Ticker(ticker)
@@ -726,9 +736,9 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset') 
 
-        elif country_sign == 'EU':
+        elif country_sign1 == 'EU':
             if market_name == 'stock':
                 ticker = '^STOXX50E'
                 ticker = yf.Ticker(ticker)
@@ -752,9 +762,9 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset') 
 
-        elif country_sign == 'SG':
+        elif country_sign1 == 'SG':
             if market_name == 'stock':
                 ticker = '^STI'
                 ticker = yf.Ticker(ticker)
@@ -778,9 +788,9 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset') 
 
-        elif country_sign == 'BR':
+        elif country_sign1 == 'BR':
             if market_name == 'stock':
                 ticker = '^FTSE'
                 ticker = yf.Ticker(ticker)
@@ -804,9 +814,9 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset') 
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset') 
 
-        elif country_sign == 'IN':
+        elif country_sign1 == 'IN':
             if market_name == 'stock':
                 ticker = '^NSEI'
                 ticker = yf.Ticker(ticker)
@@ -830,16 +840,16 @@ class CalcuTrend():
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
-                logger.error(f' >>> Error: {country_sign}  {market_name} Not found Asset')                 
+                logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset')                 
 
         else:
-            logger.error(f' >>> Error: {country_sign}: Country sign is not found.')
+            logger.error(f' >>> Error: {country_sign1}: Country sign is not found.')
          
         result = (m2_growth * 0.6) + (asset_growth * 0.4)
         
-        logger2.info(f' {country_sign} Market Growth: {round(result, 2)} %')           
-        logger2.info(f' {country_sign} M2 Growth: {round(m2_growth,2)} %')
-        logger2.info(f' {country_sign} Asset Growth: {round(asset_growth,2)} %')
+        logger2.info(f' {country_sign1} Market Growth: {round(result, 2)} %')           
+        logger2.info(f' {country_sign1} M2 Growth: {round(m2_growth,2)} %')
+        logger2.info(f' {country_sign1} Asset Growth: {round(asset_growth,2)} %')
 
         return result
 
@@ -1007,7 +1017,14 @@ class CalcuTrend():
             elif target_date2.year == 2025:
                 buff = f"SELECT _2025f FROM WorldBank WHERE Category_3 = 'Euro area'"
             else:
-                logger.error(' >>> World Bank Target Date is not valid4.')          
+                logger.error(' >>> World Bank Target Date is not valid4.')
+        elif country_sign3 == "India":
+            if target_date2.year == 2024:
+                buff = f"SELECT _2024f FROM WorldBank WHERE Category_4 = 'India 2'"
+            elif target_date2.year == 2025:
+                buff = f"SELECT _2025f FROM WorldBank WHERE Category_4 = 'India 2'"
+            else:
+                logger.error(' >>> World Bank Target Date is not valid4.')                    
         else:
             logger.error(' >>> country_sign3 is not found at World Bank.')
 
@@ -1025,29 +1042,30 @@ class CalcuTrend():
     def cal_trend(self, country:str, market:str, business:str, researcher:str, month_term:int):  # country = 'US'. 'KR'...
 
         ticker = business
-        country_sign2 = COUNTRIES[country][0]['alpha3']
-        country_sign3 = COUNTRIES[country][1]['name']
+        contury_sign1 = country  # country: KR, US, JP...
+        country_sign2 = COUNTRIES[contury_sign1][0]['alpha3']  # KOR, USA, JPN....
+        country_sign3 = COUNTRIES[contury_sign1][1]['name']  # Republic of Korea, United States, Japan..
 
         logger2.info(' ')    
-        logger2.info(f'##### {country} / {market} / {business}')               
+        logger2.info(f'##### {contury_sign1} / {market} / {business}')               
 
         if month_term == 0:
-            c_growth = self.cal_country_growth(self.conn, country, month_term)
-            m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+            c_growth = self.cal_country_growth(self.conn, contury_sign1, month_term)
+            m_growth = self.cal_market_growth(self.conn, contury_sign1, market, month_term)
             b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
         else:
             if researcher == 'OECD':
                 # country_sign2 = COUNTRIES[country][0]['alpha3']
-                if country in ['SG']:
+                if contury_sign1 in ['SG']:
                     c_growth = 2.2  # 23년 성장률 값으로 대체, OECD outlook 대상 아님.
                 else:
                     c_growth = self.get_country_growth_fore_byOECD(self.conn, country_sign3, month_term)
-                m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+                m_growth = self.cal_market_growth(self.conn, contury_sign1, market, month_term)
                 b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
             elif researcher == 'IMF': # IMF 전망치만 적용
-                # country_sign2 = COUNTRIES[country][0]['alpha3']
+                # country_sign2 = COUNTRIES[contury_sign1][0]['alpha3']
                 c_growth = self.get_country_growth_fore_byIMF(self.conn, country_sign2, month_term)
-                m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+                m_growth = self.cal_market_growth(self.conn, contury_sign1, market, month_term)
                 b_growth = self.cal_busi_growth(self.conn, ticker, month_term)
             elif researcher == 'WorldBank':
                 if country_sign3  in ['United States', 'Japan', "China (People's Republic of)", 'India']:
@@ -1057,15 +1075,15 @@ class CalcuTrend():
                 else:
                     c_growth = 1 # 결국 이전값 대비 변화율이 필요하므로 괜찮음.
 
-                m_growth = self.cal_market_growth(self.conn, country, market, month_term)
+                m_growth = self.cal_market_growth(self.conn, contury_sign1, market, month_term)
                 b_growth = self.cal_busi_growth(self.conn, ticker, month_term)                
             else:
                 logger.error('>>> researcher is not found.')
            
     
-        logger2.info(f' {country} Country Growth: {round(c_growth,2)} %')           
-        logger2.info(f' {country} Market Growth: {round(m_growth,2)} %')
-        logger2.info(f' {country} Business Growth: {round(b_growth,2)} %')    
+        logger2.info(f' {contury_sign1} Country Growth: {round(c_growth,2)} %')           
+        logger2.info(f' {contury_sign1} Market Growth: {round(m_growth,2)} %')
+        logger2.info(f' {contury_sign1} Business Growth: {round(b_growth,2)} %')    
 
         trend = c_growth + m_growth*0.3 + b_growth*0.3*0.7
         
@@ -1080,41 +1098,41 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    '''
-    1. Economic Area
-    '''
-    eco_oecd()
-    cli()
-    m1()
-    cpi()
+    # '''
+    # 1. Economic Area
+    # '''
+    # eco_oecd()
+    # cli()
+    # m1()
+    # cpi()
 
-    '''
-    2. Market Area
-    '''
-    cds()
+    # '''
+    # 2. Market Area
+    # '''
+    # cds()
 
-    '''
-    3. Business Area
-    3.1 Maximum drawdown
-    3.2 해상운임지수
-    '''
-    
-    for nation, assets in WATCH_TICKERS.items():  # 국가별
-        buf = []  # ticker 들 모두 나열
-        buf2 = []  # ticker 들 모두 나열한 것들의 asset 명 나열
-        for asset_grp in assets:  # 국가별 / 자산별 /
-            for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
-                buf.append(tickers)
-                for tick in tickers:
-                    buf2.append(asset)
-
-        tot_tickers = [item for subs in buf for item in subs]
-        
-        logger2.info(tot_tickers)
-        max_drawdown_strategy(nation, tot_tickers, buf2) # max draw down strategy : 바닥에서 분할 매수구간 찾기
-
+    # '''
+    # 3. Business Area
+    # 3.1 Maximum drawdown
     # 3.2 해상운임지수
-    container_Freight()
+    # '''
+    
+    # for nation, assets in WATCH_TICKERS.items():  # 국가별
+    #     buf = []  # ticker 들 모두 나열
+    #     buf2 = []  # ticker 들 모두 나열한 것들의 asset 명 나열
+    #     for asset_grp in assets:  # 국가별 / 자산별 /
+    #         for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
+    #             buf.append(tickers)
+    #             for tick in tickers:
+    #                 buf2.append(asset)
+
+    #     tot_tickers = [item for subs in buf for item in subs]
+        
+    #     logger2.info(tot_tickers)
+    #     max_drawdown_strategy(nation, tot_tickers, buf2) # max draw down strategy : 바닥에서 분할 매수구간 찾기
+
+    # # 3.2 해상운임지수
+    # container_Freight()
 
 
     '''

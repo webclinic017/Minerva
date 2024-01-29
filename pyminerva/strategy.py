@@ -259,6 +259,7 @@ Trend Following Strategy
 Whether the market is experiencing a bull run or a bearish downturn, 
 the goal is to hop on the trend early and stay on 
 until there is a clear indication that the trend has reversed.
+https://wire.insiderfinance.io/navigating-financial-markets-with-the-trend-following-strategy-ec02474169ba
 '''
 def trend_following_strategy(ticker:str, TIMEFRAMES:list):
     # Constants
