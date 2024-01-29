@@ -688,7 +688,7 @@ class CalcuTrend():
                 Shenzhen = ticker.history(period='3mo')['Close']
                 Shenzhen = Shenzhen.dropna()
                 if not Shenzhen.empty:
-                    growth_1 = (Shenzhen.iloc[-1] - Shenzhen.iloc[0]) / Shenzhen.iloc[0]
+                    growth_2 = (Shenzhen.iloc[-1] - Shenzhen.iloc[0]) / Shenzhen.iloc[0]
                     # logger2.info(f"Shenzhen Growth rate: {growth_1:.2f}")
                 else:
                     logger2.info("global_.py Error: No data available for the given period.")                    
