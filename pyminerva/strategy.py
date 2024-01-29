@@ -96,7 +96,7 @@ def timing_strategy(ticker, short_sma, long_sma):
     base.logger2.info(f' {ticker} Result for timing_strategy '.center(60, '*'))
 
     if pivot_tickers.empty:
-        base.logger2.info(' ##### 30일 이내 피봇 전환일자 없음.')
+        base.logger2.info('***** 30일 이내 피봇 전환일자 없음.')
     else:
         pivot_tickers['Change_rate'] = np.where((pivot_tickers['Signal']) > 0, 1.75, 0.25)
         change_date = pivot_tickers['Date'].values
@@ -159,7 +159,7 @@ def show_vb_stategy_result(timeframe, df):
 
     try:
         win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-        if win_rate >= 80:
+        if win_rate >= 80 and profit > 1000000:
             base.logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} - {timeframe} Timeframe '.center(60, '*'))
             base.logger2.info(f'* Profit/Loss: {profit:.2f}')
             base.logger2.info(f"* Wins: {wins} - Losses: {losses}")        
@@ -179,8 +179,10 @@ def volatility_bollinger_strategy(ticker:str, TIMEFRAMES:list):
         # Add the signals to each row
         try:
             df['signal'] = get_vb_signals(df)
+            base.logger2.info(f" volatility_bollinger_strategy: {ticker} / {timeframe} ".center(60, "*"))            
         except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
-            base.logger.error(f"Key Error: {ticker} / {timeframe}")
+            base.logger.error(f"volatility_bollinger_strategy Key Error ({ticker} / {timeframe}): {e}")
+            base.logger2.error(f"volatility_bollinger_strategy Key Error ({ticker} / {timeframe}): {e}")
             df['signal'] = 0
         df2 = df[df['ticker'] == ticker]
         # Get the result of the strategy
@@ -223,7 +225,7 @@ def show_reversal_stategy_result(timeframe, df):
 
     try:
         win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
-        if win_rate >= 80 and profit > 10000:
+        if win_rate >= 80 and profit > 1000000:
             base.logger2.info(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
             base.logger2.info(f'* Profit/Loss: {profit:.2f}')
             base.logger2.info(f"* Wins: {wins} - Losses: {losses}")        
@@ -237,9 +239,17 @@ def reversal_strategy(ticker:str, TIMEFRAMES:list):
     # Iterate over each timeframe, apply the strategy and show the result
     for timeframe in TIMEFRAMES:    
         df = pd.read_csv(base.data_dir + f'/{ticker}_hist_{timeframe}.csv')
+
         # Add the signals to each row
-        df['signal'] = get_reversal_signals(df)
-        df2 = df[df['ticker'] == ticker]
+        try:
+            df['signal'] = get_reversal_signals(df)
+            df2 = df[df['ticker'] == ticker]
+            base.logger2.info(f" reversal_strategy: {ticker} / {timeframe}".center(60, "*"))            
+        except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+            base.logger.error(f"reversal_strategy Key Error ({ticker} / {timeframe}): {e}")
+            base.logger2.error(f"reversal_strategy Key Error ({ticker} / {timeframe}): {e}")
+            df['signal'] = 0
+      
         # Get the result of the strategy
         show_reversal_stategy_result(timeframe, df2)
 
@@ -252,57 +262,61 @@ until there is a clear indication that the trend has reversed.
 '''
 def trend_following_strategy(ticker:str, TIMEFRAMES:list):
     # Constants
-    CASH = 10000                 # Cash in account
+    CASH = 1000000               # Cash in account, 달러, 엔화, 위안화, 유로, 원화 다 고려해서 100만으로...
     STOP_LOSS_PERC = -2.0        # Maximum allowed loss
-    TRAILING_STOP = -1.0         # Value percentage for trailing_stop
+    TRAILING_STOP = -1.0         # Value percentage for trailing_stop to lock in profits 
     TRAILING_STOP_TRIGGER = 2.0  # Percentage to start using the trailing_stop to "protect" earnings
     GREEN_BARS_TO_OPEN = 4       # Green bars required to open a new position
 
     for timeframe in TIMEFRAMES:   
         file_name = base.data_dir + f'/{ticker}_hist_{timeframe}.csv'        
-        df = pd.read_csv(file_name)   
+        df = pd.read_csv(file_name)
+        df = df.copy().reset_index(drop=True)
+        df = df[::-1]  # 시작일자부터 BUY/SELL 를 정해서 계산해 올라와야 맞을듯. 
 
         df['date'] = pd.to_datetime(df['date'])
         # Calculate consecutive bars in the same direction
         df['bar_count'] = ((df['open'] < df['close']) != (df['open'].shift() < df['close'].shift())).cumsum()
         df['bar_count'] = df.groupby(['bar_count'])['bar_count'].cumcount() + 1
         df['bar_count'] = df['bar_count'] * np.where(df['open'].values < df['close'].values,1,-1)
+        base.logger2.info(f" Trend Following Strategy: {ticker} / {timeframe} ".center(60, "*"))        
 
         # Variables Initialization
         cash = CASH
         shares = 0
         last_bar = None
-        operation_last = 'SELL'
+        operation_last = 'WAIT'
         ts_trigger = 0
         sl_price = 0
         operation_last_old = None
-
-        reversed_df = df[::-1] # 시작일자부터 BUY/SELL 를 정해서 계산해 올라와야 맞을듯. 
+        buf = []  
 
         # Generate operations
-        for index, row in reversed_df.iterrows():
+        for index, row in df.iterrows():
             date = row['date']
             # If there is no operation
-            if operation_last == 'SELL':
+            if operation_last == 'WAIT':
                 if row['close'] == 0:
                     continue
                 if last_bar is None:
                     last_bar = row
                     continue
-                if row['bar_count'] >= GREEN_BARS_TO_OPEN:
+
+                if row['bar_count'] >= GREEN_BARS_TO_OPEN:  # Identifying Trends
                     operation_last = 'BUY'
                     open_price = row['close']
-                    ts_trigger = open_price * (1 + (TRAILING_STOP_TRIGGER / 100))
-                    sl_price = open_price * (1 + (STOP_LOSS_PERC / 100))
+                    ts_trigger = open_price * (1 + (TRAILING_STOP_TRIGGER / 100))  # Trailing Stops and Exit Points
+                    sl_price = open_price * (1 + (STOP_LOSS_PERC / 100))  # Setting Stop-Loss
                     shares = int(cash // open_price)
                     cash -= shares * open_price
                 else:
                     last_bar = None
-                    continue        
+                    continue     
+
             # If the last operation was a purchase
             elif operation_last == 'BUY':
                 if row['close'] < sl_price:
-                    operation_last = 'SELL'
+                    operation_last = 'WAIT'
                     cash += shares * row['close']
                     shares = 0
                     open_price = 0
@@ -314,11 +328,18 @@ def trend_following_strategy(ticker:str, TIMEFRAMES:list):
                         if sl_price_tmp > sl_price:
                             sl_price = sl_price_tmp
 
-            if timeframe == '1day':
-                start_date = (datetime.now() - timedelta(days=90)).date().strftime('%Y-%m-%d')  # 3개월전 트랜젝션부터 보여주기
-                if (operation_last != operation_last_old) and (date >= pd.to_datetime(start_date)):
-                    base.logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
-                operation_last_old = operation_last
+            if (operation_last != operation_last_old):
+                temp = f"{date}: {operation_last:<5}: {round(open_price, 2):,} - Cash: {round(cash, 2):,} - Shares: {shares:,} - CURR PRICE: {round(row['close'],2):,} ({index}) - CURR POS: {round(shares * row['close'],2):,}"
+                buf.append(temp)
+            # base.logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
+
+            operation_last_old = operation_last
+                            
+            # if timeframe == '1day':  # @@@
+            #     start_date = (datetime.now() - timedelta(days=90)).date().strftime('%Y-%m-%d')  # 3개월전 트랜젝션부터 보여주기
+            #     if (operation_last != operation_last_old) and (date >= pd.to_datetime(start_date)):
+            #         base.logger2.info(f"{date}: {operation_last:<5}: {round(open_price, 2):8} - Cash: {round(cash, 2):8} - Shares: {shares:4} - CURR PRICE: {round(row['close'], 2):8} ({index}) - CURR POS: {round(shares * row['close'], 2)}")
+            #     operation_last_old = operation_last
             
             last_bar = row
 
@@ -327,9 +348,11 @@ def trend_following_strategy(ticker:str, TIMEFRAMES:list):
             shares = 0
             open_price = 0
 
-        if cash > 15000:
-            base.logger2.info(f'********** Trend Following Strategy: RESULT of {ticker} - {timeframe} Timeframe '.center(76, '*'))
-            base.logger2.info(f"Cash after Trade: {round(cash, 2):8}")
+        if cash > 1300000:
+            base.logger2.info("")
+            base.logger2.info(f" ***** Cash after Trade: {round(cash, 2):,}")
+            for b in buf:
+                base.logger2.info(b)
 
 
 '''
@@ -379,7 +402,7 @@ def control_chart_strategy(ticker):
         return df.reset_index(drop=True)
     
     # Show result based on the selected rule
-    def show_result(df, signal_field):
+    def show_result(df, signal_field:str):  # signal_field: column 명 가르킴.
         # Remove all rows without operations, rows with the same consecutive operation, first row selling, and last row buying
         ops = df[df[signal_field] != 0]
         ops = ops[ops[signal_field] != ops[signal_field].shift()]
@@ -395,8 +418,23 @@ def control_chart_strategy(ticker):
         # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
         try:
             win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
-            if win_rate >= 80:
+            if win_rate >= 80 and pnl > 1000000:
                 # Show Result
+                if signal_field == 'rule1':
+                    base.logger2.info('Rule 1 — One Point Beyond the 3σ Control Limit')
+                elif signal_field == 'rule2':
+                    base.logger2.info('Rule 2 — Eight or More Points on One Side of the Centerline Without Crossing')
+                elif signal_field == 'rule3':
+                    base.logger2.info('Rule 3 — Four out of five points in zone B or beyond')
+                elif signal_field == 'rule4':
+                    base.logger2.info('Rule 4 — Six Points or More in a Row Steadily Increasing or Decreasing')
+                elif signal_field == 'rul5':
+                    base.logger2.info('Rule 5 — Two out of three points in zone A')
+                elif signal_field == 'rule6':
+                    base.logger2.info('Rule 6 – 14 Points in a Row Alternating Up and Down')
+                else:
+                    base.logger.error('control_chart_strategy rule number is not found.')
+
                 base.logger2.info(f' Result of {ticker} for ({signal_field}) '.center(60, '*'))
                 base.logger2.info(f"* Profit / Loss  : {pnl:.2f}")
                 base.logger2.info(f"* Wins / Losses  : {wins} / {losses}")
@@ -473,16 +511,8 @@ def control_chart_strategy(ticker):
         return df.drop(['sma','1std','2std','zone'], axis=1)
 
     df = get_data(ticker, ticker_file)
-
-    base.logger2.info('         ')
-    base.logger2.info('Rule 1 — One Point Beyond the 3σ Control Limit')
-    base.logger2.info('Rule 2 — Eight or More Points on One Side of the Centerline Without Crossing')
-    base.logger2.info('Rule 3 — Four out of five points in zone B or beyond')
-    base.logger2.info('Rule 4 — Six Points or More in a Row Steadily Increasing or Decreasing')
-    base.logger2.info('Rule 5 — Two out of three points in zone A')
-    base.logger2.info('Rule 6 – 14 Points in a Row Alternating Up and Down')
     
-    df = apply_rule_1(df)
+    df = apply_rule_1(df)    
     show_result(df, 'rule1')
 
     df = apply_rule_2(df)
@@ -582,10 +612,14 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
             # Get Train and Test data for timeframe
             train, test, df = get_data(timeframe)
             # Process timeframe
-            base.logger2.info("".center(60, "*"))
-        except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
-            base.logger.error(f"Key Error: {ticker} / {timeframe}")
+            base.logger2.info(f" vb_genericAlgo_strategy: {ticker} / {timeframe}".center(60, "*"))
+        except KeyError as e: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+            base.logger.error(f"vb_genericAlgo_strategy Key Error ({ticker} / {timeframe}): {e}")
+            base.logger2.error(f"vb_genericAlgo_strategy Key Error ({ticker} / {timeframe}): {e}")
             continue
+        except Exception as e:
+            base.logger.error(f"vb_genericAlgo_strategy Error ({ticker} / {timeframe}): {e}")
+            base.logger2.error(f"vb_genericAlgo_strategy Error ({ticker} / {timeframe}): {e}")
 
         with tqdm(total=GENERATIONS) as pbar:
             # Create Genetic Algorithm
@@ -615,7 +649,7 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
             profit, wins, losses = get_result(test, solution[0], solution[1], solution[2])
 
             win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-            if win_rate >= 80 and profit > 10000:
+            if win_rate >= 80 and profit > 1000000:
                 # 최적 변수값 찾기
                 base.logger2.info(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
                 base.logger2.info(f"Min Volatility   : {solution[0]:6.4f}")
@@ -786,7 +820,7 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
         train, test, df = get_data(timeframe)
 
         # Process data
-        base.logger2.info("".center(60, "*"))
+        base.logger2.info(f" vb_genericAlgo_strategy2: {ticker} / {timeframe}".center(60, "*"))
 
         with tqdm(total=GENERATIONS) as pbar:
 
@@ -824,7 +858,7 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
         reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)
 
         win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-        if win_rate >= 80 and reward > 10000:
+        if win_rate >= 80 and reward > 1000000:
 
             base.logger2.info(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
             base.logger2.info('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
@@ -1008,7 +1042,8 @@ def gaSellHoldBuy_strategy(ticker):
         df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
         df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
     except KeyError: # 530107.KS 히스토리가 1 레코드 밖에 없음.
-        base.logger.error(f"Key Error: {ticker}")
+        base.logger.error(f"gaSellHoldBuy_strategy Key Error ({ticker} / {timeframe}): {e}")
+        base.logger2.error(f"gaSellHoldBuy_strategy Key Error ({ticker} / {timeframe}): {e}")
         return None
 
     _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
@@ -1047,7 +1082,7 @@ def gaSellHoldBuy_strategy(ticker):
         #     # Print the reward and profit
         #     print(f"Solution {sol_idx:3d} - Total Reward: {total_reward:10.2f} - Profit: {info['current_profit']:10.3f}")
         #     if sol_idx == (POPULATIONS-1):
-        #         print(f"".center(60, "*"))
+                # base.logger2.info(f" gaSellHoldBuy_strategy: {ticker} / {timeframe}".center(60, "*"))
         # except:
         #     pass
             
@@ -1121,7 +1156,7 @@ def gaSellHoldBuy_strategy(ticker):
 
     try:
         win_rate = (info['wins']/(info['wins'] + info['losses']) if info['wins'] + info['losses'] > 0 else 0) * 100
-        if win_rate >= 80:
+        if win_rate >= 80 and info['current_profit'] > 1000000:
             base.logger2.info(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
             base.logger2.info(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
             base.logger2.info(f"Fitness value of the best solution = {solution_fitness}")

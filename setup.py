@@ -35,7 +35,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='pyminerva',
-    version='0.0.146',    # version.directory.file
+    version='0.0.160',    # version.directory.file
     description='To get an insight from Financial Data Anlaysis',
     url='',
     author='Jeongmin Kang',
