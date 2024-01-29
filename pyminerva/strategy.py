@@ -93,7 +93,7 @@ def timing_strategy(ticker, short_sma, long_sma):
     day30_ago = find_30days_ago()  # 30일 이전까지 피벗날짜 없으면 실행하기 늦었다고 판단했음.
     pivot_tickers = latest_records[latest_records['Date']  >= day30_ago]  # for test: '2023-05-16'
 
-    base.logger2.info(f' {ticker} Result for timing_strategy '.center(60, '*'))
+    base.logger2.info(f' Timing_strategy: {ticker} Only 1day '.center(60, '*'))
 
     if pivot_tickers.empty:
         base.logger2.info('***** 30일 이내 피봇 전환일자 없음.')
@@ -244,7 +244,7 @@ def reversal_strategy(ticker:str, TIMEFRAMES:list):
         try:
             df['signal'] = get_reversal_signals(df)
             df2 = df[df['ticker'] == ticker]
-            base.logger2.info(f" reversal_strategy: {ticker} / {timeframe}".center(60, "*"))            
+            base.logger2.info(f" reversal_strategy: {ticker} / {timeframe} ".center(60, "*"))            
         except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
             base.logger.error(f"reversal_strategy Key Error ({ticker} / {timeframe}): {e}")
             base.logger2.error(f"reversal_strategy Key Error ({ticker} / {timeframe}): {e}")
@@ -612,7 +612,7 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
             # Get Train and Test data for timeframe
             train, test, df = get_data(timeframe)
             # Process timeframe
-            base.logger2.info(f" vb_genericAlgo_strategy: {ticker} / {timeframe}".center(60, "*"))
+            base.logger2.info(f" vb_genericAlgo_strategy: {ticker} / {timeframe} ".center(60, "*"))
         except KeyError as e: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
             base.logger.error(f"vb_genericAlgo_strategy Key Error ({ticker} / {timeframe}): {e}")
             base.logger2.error(f"vb_genericAlgo_strategy Key Error ({ticker} / {timeframe}): {e}")
@@ -820,7 +820,7 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
         train, test, df = get_data(timeframe)
 
         # Process data
-        base.logger2.info(f" vb_genericAlgo_strategy2: {ticker} / {timeframe}".center(60, "*"))
+        base.logger2.info(f" vb_genericAlgo_strategy2: {ticker} / {timeframe} ".center(60, "*"))
 
         with tqdm(total=GENERATIONS) as pbar:
 
