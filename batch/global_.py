@@ -1098,41 +1098,41 @@ Main Fuction
 
 if __name__ == "__main__":
 
-    # '''
-    # 1. Economic Area
-    # '''
-    # eco_oecd()
-    # cli()
-    # m1()
-    # cpi()
+    '''
+    1. Economic Area
+    '''
+    eco_oecd()
+    cli()
+    m1()
+    cpi()
 
-    # '''
-    # 2. Market Area
-    # '''
-    # cds()
+    '''
+    2. Market Area
+    '''
+    cds()
 
-    # '''
-    # 3. Business Area
-    # 3.1 Maximum drawdown
-    # 3.2 해상운임지수
-    # '''
+    '''
+    3. Business Area
+    3.1 Maximum drawdown
+    3.2 해상운임지수
+    '''
     
-    # for nation, assets in WATCH_TICKERS.items():  # 국가별
-    #     buf = []  # ticker 들 모두 나열
-    #     buf2 = []  # ticker 들 모두 나열한 것들의 asset 명 나열
-    #     for asset_grp in assets:  # 국가별 / 자산별 /
-    #         for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
-    #             buf.append(tickers)
-    #             for tick in tickers:
-    #                 buf2.append(asset)
+    for nation, assets in WATCH_TICKERS.items():  # 국가별
+        buf = []  # ticker 들 모두 나열
+        buf2 = []  # ticker 들 모두 나열한 것들의 asset 명 나열
+        for asset_grp in assets:  # 국가별 / 자산별 /
+            for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
+                buf.append(tickers)
+                for tick in tickers:
+                    buf2.append(asset)
 
-    #     tot_tickers = [item for subs in buf for item in subs]
+        tot_tickers = [item for subs in buf for item in subs]
         
-    #     logger2.info(tot_tickers)
-    #     max_drawdown_strategy(nation, tot_tickers, buf2) # max draw down strategy : 바닥에서 분할 매수구간 찾기
+        logger2.info(tot_tickers)
+        max_drawdown_strategy(nation, tot_tickers, buf2) # max draw down strategy : 바닥에서 분할 매수구간 찾기
 
-    # # 3.2 해상운임지수
-    # container_Freight()
+    # 3.2 해상운임지수
+    container_Freight()
 
 
     '''
