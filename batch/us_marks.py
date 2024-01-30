@@ -169,8 +169,3 @@ if __name__ == "__main__":
                 # GaMacd_strategy()
 
                 print('=== End ===')
-
-        
-
-    # 2. Bonds
-    # get_yields()

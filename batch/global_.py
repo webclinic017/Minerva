@@ -8,6 +8,7 @@ Mail: jarvisNim@gmail.com
 * investing.com/calendar 포함
 History
 20231111  Create
+20240130  Alpha 테이블 구성, 그래프 추가 
 '''
 
 import sys, os
@@ -42,6 +43,7 @@ database = 'Economics.db'
 db_file = 'database/' + database
 conn, engine = create_connection(db_file)
 
+month_terms = [0, 3, 6, 12, 18, 24]  # 현재와 n 개월 전망치 값
 
 '''
 1. Economics Area
@@ -383,7 +385,6 @@ def max_drawdown_strategy(country:str, tickers:list, assets:list):
 
 
 
-
 '''
 4. calculate trend
 - country growth, market growth, business growth
@@ -538,9 +539,9 @@ class CalcuTrend():
         else:
             export = self.get_export(conn, country_sign)
 
-        logger2.info(f' {country_sign} gdp: {round(gdp,2)} %')
-        logger2.info(f' {country_sign}  inflation: {round(inflation,2)} %')
-        logger2.info(f' {country_sign}  export: {round(export,2)} %')
+        logger2.debug(f' {country_sign} gdp: {round(gdp,2)} %')
+        logger2.debug(f' {country_sign}  inflation: {round(inflation,2)} %')
+        logger2.debug(f' {country_sign}  export: {round(export,2)} %')
         
         realGDP_rate = gdp - inflation*0.3 
         if country_sign in ['KR', 'JP', 'CN']: # 수출 주도형 국가: 한국, 일본, 중국
@@ -847,9 +848,9 @@ class CalcuTrend():
          
         result = (m2_growth * 0.6) + (asset_growth * 0.4)
         
-        logger2.info(f' {country_sign1} Market Growth: {round(result, 2)} %')           
-        logger2.info(f' {country_sign1} M2 Growth: {round(m2_growth,2)} %')
-        logger2.info(f' {country_sign1} Asset Growth: {round(asset_growth,2)} %')
+        logger2.debug(f' {country_sign1} Market Growth: {round(result, 2)} %')           
+        logger2.debug(f' {country_sign1} M2 Growth: {round(m2_growth,2)} %')
+        logger2.debug(f' {country_sign1} Asset Growth: {round(asset_growth,2)} %')
 
         return result
 
@@ -886,13 +887,6 @@ class CalcuTrend():
         return result
 
 
-
-
-
-
-
-
-
     ###################################
     '''
     IV. 국가/시장/사업단위의 성장률을 근거로 트랜드, 사이클상 현위치, 그리고 현재/6개월/12개월 전망을 도출하는 마지막 단계.
@@ -918,7 +912,7 @@ class CalcuTrend():
             return target_date2
 
         target_date2 = add_month(to_date, month_term)
-        logger2.info(f" target date: {target_date2}")
+        logger2.debug(f" target date: {target_date2}")
         
         # Gross domestic product, market prices, deflator, growth
         if country_sign3 == "China (People's Republic of)":
@@ -930,7 +924,7 @@ class CalcuTrend():
                                     AND Variable = 'Gross domestic product, market prices, deflator, growth' \
                                     AND Time = '{target_date2.year}'", conn)
         result = float(val.values)
-        logger2.info(f' {country_sign3} GDP Growth: {result} %')         
+        logger2.debug(f' {country_sign3} GDP Growth: {result} %')         
                                                         
         return result
   
@@ -947,7 +941,7 @@ class CalcuTrend():
             return target_date2
         
         target_date2 = add_month(to_date, month_term)
-        logger2.info(f" target date: {target_date2}")
+        logger2.debug(f" target date: {target_date2}")
         target_year = target_date2.year
         lei_gdp_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'NGDP_RPCH'", conn)
         lei_inflation_rate = pd.read_sql_query(f"SELECT * FROM IMF WHERE  ISO = '{country_sign2}' AND \"WEO Subject Code\" = 'PCPIPCH'", conn)
@@ -987,7 +981,7 @@ class CalcuTrend():
             return target_date2
 
         target_date2 = add_month(to_date, month_term)
-        logger2.info(f" target date: {target_date2}")
+        logger2.debug(f" target date: {target_date2}")
         
         # Gross domestic product, market prices, deflator, growth
         if country_sign3 == "United States":
@@ -1030,7 +1024,7 @@ class CalcuTrend():
 
         val = pd.read_sql_query(buff, conn)                                    
         result = float(val.values)
-        logger2.info(f' {country_sign3} GDP Growth: {round(result,2)} %')
+        logger2.debug(f' {country_sign3} GDP Growth: {round(result,2)} %')
                                                         
         return result
         
@@ -1046,8 +1040,8 @@ class CalcuTrend():
         country_sign2 = COUNTRIES[contury_sign1][0]['alpha3']  # KOR, USA, JPN....
         country_sign3 = COUNTRIES[contury_sign1][1]['name']  # Republic of Korea, United States, Japan..
 
-        logger2.info(' ')    
-        logger2.info(f'##### {contury_sign1} / {market} / {business}')               
+        logger2.debug('')    
+        logger2.debug(f'##### {contury_sign1} / {market} / {business}')               
 
         if month_term == 0:
             c_growth = self.cal_country_growth(self.conn, contury_sign1, month_term)
@@ -1081,16 +1075,185 @@ class CalcuTrend():
                 logger.error('>>> researcher is not found.')
            
     
-        logger2.info(f' {contury_sign1} Country Growth: {round(c_growth,2)} %')           
-        logger2.info(f' {contury_sign1} Market Growth: {round(m_growth,2)} %')
-        logger2.info(f' {contury_sign1} Business Growth: {round(b_growth,2)} %')    
+        logger2.debug(f' {contury_sign1} Country Growth: {round(c_growth,2)} %')           
+        logger2.debug(f' {contury_sign1} Market Growth: {round(m_growth,2)} %')
+        logger2.debug(f' {contury_sign1} Business Growth: {round(b_growth,2)} %')    
 
         trend = c_growth + m_growth*0.3 + b_growth*0.3*0.7
         
         return trend, c_growth, m_growth, b_growth
 
+# ============================= Calss End ============================= #
 
-################################################################# Class CalcuTrend 끝나는 지점. ########
+
+
+'''
+글로벌 국가들의 트랜드분석 함수
+'''
+def calculate_trend():
+
+    obj_trend = CalcuTrend()
+    # researcher = 'WorldBank'
+    # month_terms = [0, 3, 6, 12, 18, 24]  # 현재와 n 개월 전망치 값
+    df_alpha = pd.DataFrame(columns=['Country', 'Market', 'Busi', 'Researcher', 'Date', 'Country_Growth', 'Market_Growth',\
+                                'Busi_Growth', 'Trend', 'Trend_3mo', 'Trend_6mo', 'Trend_12mo', 'Trend_18mo', 'Trend_24mo'],
+                                index=['Country', 'Market', 'Busi', 'Researcher', 'Date'])
+
+    for nation, assets in WATCH_TICKERS.items():  # 국가별
+
+        if nation in ['EU']:  # 몇 가지 정보가 존재하지 않아 제외
+            continue
+            
+        for asset_grp in assets:  # 국가별 / 자산별 /
+
+            for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
+
+                for ticker in tickers:  # 국가별 / 자산별 / ETF별
+
+                    if ticker == '':
+                        continue                    
+
+                    for researcher in RESEARCHERS:  # 국가별 / 자산별 / ETF별 / 연구기관별
+
+                        _trend_0 = 0
+                        _trend_3 = 0
+                        _trend_6 = 0
+                        _trend_12 = 0
+                        _trend_18 = 0
+                        _trend_24 = 0
+
+                        for month_term in month_terms:  # 국가별 / 자산별 / ETF별 / 연구기관별 / 전망월별 (현재부터 24개월후까지 6개월간)
+
+                            trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, month_term)
+
+                            logger2.debug(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {round(trend,2)} %')
+
+                            if month_term == 0:
+                                _trend_0 = round(trend, 3)
+                            elif month_term == 3:
+                                _trend_3 = round(trend, 3)                            
+                            elif month_term == 6:
+                                _trend_6 = round(trend, 3)
+                            elif month_term == 12:
+                                _trend_12 = round(trend, 3)
+                            elif month_term == 18:
+                                _trend_18 = round(trend, 3)
+                            else:
+                                _trend_24 = round(trend, 3)
+                                
+                        buffer = pd.DataFrame()
+                        buffer['Country'] = [nation]
+                        buffer['Market'] = [asset]
+                        buffer['Busi'] = [ticker]
+                        buffer['Researcher'] = [researcher]
+                        buffer['Date'] = [pd.to_datetime(to_date2).date()]
+                        buffer['Country_Growth'] = [round(c_growth, 3)]
+                        buffer['Market_Growth'] = [round(m_growth, 3)]
+                        buffer['Busi_Growth'] = [round(b_growth, 3)]
+                        buffer['Trend'] = [_trend_0]
+                        buffer['Trend_3mo'] = [_trend_3]
+                        buffer['Trend_6mo'] = [_trend_6]
+                        buffer['Trend_12mo'] = [_trend_12]
+                        buffer['Trend_18mo'] = [_trend_18]
+                        buffer['Trend_24mo'] = [_trend_24]
+                        logger2.info(buffer)
+
+                        df_alpha = pd.concat([df_alpha, buffer])
+                    
+    return df_alpha
+
+
+
+'''
+
+'''
+def plot_alpha(conn):
+
+    M_table = 'Alpha'
+    M_countries = ['US', 'KR', 'JP', 'CN', 'DE', 'IN', 'SG']
+
+
+    def add_month(to_date2:str, term_month:int):
+        target_date = pd.to_datetime(to_date2)
+        term_month = relativedelta(weeks=term_month*4)
+        target_date2 = (target_date + term_month).date()
+        return target_date2
+    
+    for month_term in month_terms:
+        if month_term == 0:
+            col_0 = add_month(to_date_2, month_term)
+        elif month_term == 3:
+            col_3 = add_month(to_date_2, month_term)
+        elif month_term == 6:
+            col_6 = add_month(to_date_2, month_term)
+        elif month_term == 12:
+            col_12 = add_month(to_date_2, month_term)
+        elif month_term == 18:
+            col_18 = add_month(to_date_2, month_term)                                    
+        else:
+            col_24 = add_month(to_date_2, month_term)
+
+
+    for country in M_countries:
+
+            M_query = f"SELECT * from {M_table} WHERE Country = '{country}' GROUP BY Country, Market, Busi, Researcher"
+
+            try:
+                df = pd.read_sql_query(M_query, conn)
+                df = df.drop(columns=['Date', 'Country_Growth', 'Market_Growth', 'Busi_Growth'])
+                df = df.sort_values(['Country', 'Market', 'Busi', 'Researcher'], ascending=True).reset_index(drop=True)
+                df.columns = ['Country', 'Market', 'Busi', 'Researcher', f'{col_0}', f'{col_3}', f'{col_6}', f'{col_12}', f'{col_18}', f'{col_24}']
+
+                # logger2.info(df.head(5))
+                melted_df = pd.melt(df, id_vars=['Country', 'Market', 'Busi', 'Researcher'],
+                            var_name=f'{col_0}', value_name='Growth') # @@@ var_name=f'{col_0}'... 우연...
+            except Exception as e:
+                logger.error(' >>> plot_alpha Exception: {}'.format(e))
+
+            events = df['Busi'].unique()
+
+            # 전체 그림의 크기를 설정
+            plt.figure(figsize=(12, 4*len(events)))
+            for i, event in enumerate(events):
+                result = melted_df[melted_df['Busi'] == event]        
+                if result.empty:
+                    continue
+                if result['Growth'].all() == 0:
+                    continue
+                result.dropna()
+                country = result.iloc[0]['Country']
+                market = result.iloc[0]['Market']
+                busi = result.iloc[0]['Busi']
+                result.columns = ['Country','Market','Busi','Researcher','Time','Growth']
+                result = result.sort_values(['Researcher','Time'], ascending=True).reset_index(drop=True)
+                result['Time'] = pd.to_datetime(result['Time'])
+                plt.subplot(len(events), 1, i + 1)
+                for researcher in RESEARCHERS:
+                    buf = result[result['Researcher'] == researcher]
+                    if researcher == 'OECD':
+                        linestyle = '-'
+                        color = 'royalblue'
+                    elif researcher == 'IMF':
+                        linestyle = '-'
+                        color = 'green'
+                    else:
+                        linestyle = '-'
+                        color = 'gray'                        
+                    plt.plot(buf['Time'], buf['Growth'], label=researcher, linewidth=1.2, color=color, linestyle=linestyle)
+                max_val = max(result['Growth'])
+                min_val = min(result['Growth'])
+                if (max_val > 0) and (min_val < 0):       # 시각효과     
+                    plt.axhline(y=0, linestyle='--', color='red', linewidth=1)
+                plt.title(f"Alpha Expectation Outlook {country}: {market} / {busi}")
+                plt.grid()
+                plt.xlabel('Time')
+                plt.ylabel('Growth')
+                plt.legend()
+
+            plt.tight_layout()  # 서브플롯 간 간격 조절
+            plt.savefig(reports_dir + f'/global_0200_{country}.png')    
+
+
 
 '''
 Main Fuction
@@ -1138,91 +1301,6 @@ if __name__ == "__main__":
     '''
     4. Calculate Trend: 
     '''
-
-    obj_trend = CalcuTrend()
-    # researcher = 'WorldBank'
-    month_terms = [0, 3, 6, 12, 18, 24]  # 현재와 n 개월 전망치 값
-    df_alpha = pd.DataFrame(columns=['Country', 'Market', 'Busi', 'Researcher', 'Date', 'Country_Growth', 'Market_Growth',\
-                                 'Busi_Growth', 'Trend', 'Trend_3mo', 'Trend_6mo', 'Trend_12mo', 'Trend_18mo', 'Trend_24mo'],
-                                index=['Country', 'Market', 'Busi', 'Researcher', 'Date'])
-
-    for nation, assets in WATCH_TICKERS.items():  # 국가별
-
-        if nation in ['EU']:  # 몇 가지 정보가 존재하지 않아 제외
-            continue
-            
-        for asset_grp in assets:  # 국가별 / 자산별 /
-
-            for asset, tickers in asset_grp.items():  # 리스트에서 키와 아이템 분리용 => 딕셔너리 of 리스트 형태 자료구조론임.
-
-                for ticker in tickers:  # 국가별 / 자산별 / ETF별
-
-                    if ticker == '':
-                        continue                    
-
-                    for researcher in RESEARCHERS:  # 국가별 / 자산별 / ETF별 / 연구기관별
-
-                        _trend_0 = 0
-                        _trend_3 = 0
-                        _trend_6 = 0
-                        _trend_12 = 0
-                        _trend_18 = 0
-                        _trend_24 = 0
-
-                        for month_term in month_terms:  # 국가별 / 자산별 / ETF별 / 연구기관별 / 전망월별 (현재부터 24개월후까지 6개월간)
-
-                            if researcher == 'OECD':
-                                if month_term > 0 and month_term < 49:
-                                    pass
-                                else:
-                                    logger.warning(' >>> OECD month_term is not valid.')
-
-                            if researcher == 'IMF':
-                                if month_term > 0 and month_term < 61:
-                                    pass
-                                else:
-                                    logger.warning(' >>> IMF month_term is not valid.')
-
-                            if researcher == 'WorldBank':
-                                if (month_term > 0 and month_term < 49):
-                                    pass
-                                else:
-                                    logger.warning('World Bank month_term is not valid.')
-
-                            trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, month_term)
-
-                            logger2.info(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {round(trend,2)} %')
-
-                            if month_term == 0:
-                                _trend_0 = round(trend, 3)
-                            elif month_term == 3:
-                                _trend_3 = round(trend, 3)                            
-                            elif month_term == 6:
-                                _trend_6 = round(trend, 3)
-                            elif month_term == 12:
-                                _trend_12 = round(trend, 3)
-                            elif month_term == 18:
-                                _trend_18 = round(trend, 3)
-                            else:
-                                _trend_24 = round(trend, 3)
-                                
-                        buffer = pd.DataFrame()
-                        buffer['Country'] = [nation]
-                        buffer['Market'] = [asset]
-                        buffer['Busi'] = [ticker]
-                        buffer['Researcher'] = [researcher]
-                        buffer['Date'] = [pd.to_datetime(to_date2).date()]
-                        buffer['Country_Growth'] = [round(c_growth, 3)]
-                        buffer['Market_Growth'] = [round(m_growth, 3)]
-                        buffer['Busi_Growth'] = [round(b_growth, 3)]
-                        buffer['Trend'] = [_trend_0]
-                        buffer['Trend_3mo'] = [_trend_3]
-                        buffer['Trend_6mo'] = [_trend_6]
-                        buffer['Trend_12mo'] = [_trend_12]
-                        buffer['Trend_18mo'] = [_trend_18]
-                        buffer['Trend_24mo'] = [_trend_24]
-                        logger2.info(buffer)
-
-                        df_alpha = pd.concat([df_alpha, buffer])
-
-    make_alpha(df_alpha)
+    df_alpha = calculate_trend()
+    make_alpha(df_alpha)  # Alpha 테이블 구성작업
+    plot_alpha(conn)
