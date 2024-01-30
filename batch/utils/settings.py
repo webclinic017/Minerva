@@ -171,7 +171,7 @@ ASSETS = ['stock', 'bond', 'commodity', 'cash']
 WATCH_TICKERS = {
     'US':[{'stock':['SPY','QQQ','BAC','ENB','O','SCHD','SOXL','VNQ']}, {'bond':['TLT','EDV','HYG','LQD','TMF','IEF','SHV','SHY']},  
           {'commodity':['GLD']}, {'currency':['UUP']}, ],
-    'KR':[{'stock':['^KS200', '008770.KS','530107.KS','252670.KS']}, {'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']},
+    'KR':[{'stock':['^KS200', '008770.KS','530107.KS','252670.KS','088980.KS',]}, {'bond':['148070.KS','302190.KS','385560.KS','451530.KS','451670.KS','453850.KS']},
           {'commodity':[]}, {'currency':[]}, ],    
     'EU':[{'stock':['^STOXX50E']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
     'JP':[{'stock':['^N225', '1325.T','1545.T','1547.T','1571.T','1573.T','1678.T','2034.T','2563.T']}, {'bond':['1482.T','1487.T','2620.T','2621.T']},  

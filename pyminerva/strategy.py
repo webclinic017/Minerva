@@ -180,7 +180,7 @@ def volatility_bollinger_strategy(ticker:str, TIMEFRAMES:list):
         try:
             df['signal'] = get_vb_signals(df)
             base.logger2.info(f" volatility_bollinger_strategy: {ticker} / {timeframe} ".center(60, "*"))            
-        except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+        except KeyError as e: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
             base.logger.error(f"volatility_bollinger_strategy Key Error ({ticker} / {timeframe}): {e}")
             base.logger2.error(f"volatility_bollinger_strategy Key Error ({ticker} / {timeframe}): {e}")
             df['signal'] = 0
@@ -245,7 +245,7 @@ def reversal_strategy(ticker:str, TIMEFRAMES:list):
             df['signal'] = get_reversal_signals(df)
             df2 = df[df['ticker'] == ticker]
             base.logger2.info(f" reversal_strategy: {ticker} / {timeframe} ".center(60, "*"))            
-        except KeyError: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
+        except KeyError as e: # 히스토리 레코드가 1건이라 볼린저밴드 20 을 만들수 없음.
             base.logger.error(f"reversal_strategy Key Error ({ticker} / {timeframe}): {e}")
             base.logger2.error(f"reversal_strategy Key Error ({ticker} / {timeframe}): {e}")
             df['signal'] = 0
@@ -351,7 +351,7 @@ def trend_following_strategy(ticker:str, TIMEFRAMES:list):
 
         if cash > 1300000:
             base.logger2.info("")
-            base.logger2.info(f" ***** Cash after Trade: {round(cash, 2):,}")
+            base.logger2.info(f" ***** Cash after Trade {ticker} / {timeframe}: {round(cash, 2):,}")
             for b in buf:
                 base.logger2.info(b)
 
@@ -1042,9 +1042,9 @@ def gaSellHoldBuy_strategy(ticker):
         df['low_limit'] = df['BBL_20_2.0'] - (df['BBU_20_2.0'] - df['BBL_20_2.0']) / 2
         df['close_percentage'] = np.clip((df['close'] - df['low_limit']) / (df['high_limit'] - df['low_limit']), 0, 1)
         df['volatility'] = df['BBU_20_2.0'] / df['BBL_20_2.0'] - 1
-    except KeyError: # 530107.KS 히스토리가 1 레코드 밖에 없음.
-        base.logger.error(f"gaSellHoldBuy_strategy Key Error ({ticker} / {timeframe}): {e}")
-        base.logger2.error(f"gaSellHoldBuy_strategy Key Error ({ticker} / {timeframe}): {e}")
+    except KeyError as e: # 530107.KS 히스토리가 1 레코드 밖에 없음.
+        base.logger.error(f"gaSellHoldBuy_strategy Key Error ({ticker}): {e}")
+        base.logger2.error(f"gaSellHoldBuy_strategy Key Error ({ticker}): {e}")
         return None
 
     _date = (datetime.now() - timedelta(days=365)).date().strftime('%Y-%m-%d')
