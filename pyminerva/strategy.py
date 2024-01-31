@@ -159,7 +159,7 @@ def show_vb_stategy_result(timeframe, df):
 
     try:
         win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-        if win_rate >= 80 and profit > 1000000:
+        if win_rate >= 80 and profit > 1200000:
             base.logger2.info(f'********** Volatility-Bollinger Bands Strategy: Result of {ticker} - {timeframe} Timeframe '.center(60, '*'))
             base.logger2.info(f'* Profit/Loss: {profit:.2f}')
             base.logger2.info(f"* Wins: {wins} - Losses: {losses}")        
@@ -225,7 +225,7 @@ def show_reversal_stategy_result(timeframe, df):
 
     try:
         win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
-        if win_rate >= 80 and profit > 1000000:
+        if win_rate >= 80 and profit > 1200000:
             base.logger2.info(f'********** Reversal Strategy: Result of {ticker} for {timeframe} Timeframe '.center(60, '*'))
             base.logger2.info(f'* Profit/Loss: {profit:.2f}')
             base.logger2.info(f"* Wins: {wins} - Losses: {losses}")        
@@ -349,7 +349,7 @@ def trend_following_strategy(ticker:str, TIMEFRAMES:list):
             shares = 0
             open_price = 0
 
-        if cash > 1300000:
+        if cash > 1200000:
             base.logger2.info("")
             base.logger2.info(f" ***** Cash after Trade {ticker} / {timeframe}: {round(cash, 2):,}")
             for b in buf:
@@ -419,7 +419,7 @@ def control_chart_strategy(ticker):
         # logger2.info 정보가 너무 많아 TEST 결과 승률이 80% 이상인 경우만 display 하기 위하여 일부 display 순서 변경 20240122
         try:
             win_rate = ((wins/(wins + losses)) if wins + losses > 0 else 0) * 100
-            if win_rate >= 80 and pnl > 1000000:
+            if win_rate >= 80 and pnl > 1200000:
                 # Show Result
                 if signal_field == 'rule1':
                     base.logger2.info('Rule 1 — One Point Beyond the 3σ Control Limit')
@@ -650,7 +650,7 @@ def vb_genericAlgo_strategy(ticker:str, TIMEFRAMES:list):
             profit, wins, losses = get_result(test, solution[0], solution[1], solution[2])
 
             win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-            if win_rate >= 80 and profit > 1000000:
+            if win_rate >= 80 and profit > 1200000:
                 # 최적 변수값 찾기
                 base.logger2.info(f' Volatility & Bollinger Band with Generic Algorithm Strategy: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))      
                 base.logger2.info(f"Min Volatility   : {solution[0]:6.4f}")
@@ -859,7 +859,7 @@ def vb_genericAlgo_strategy2(ticker:str, TIMEFRAMES:list):
         reward, wins, losses, pnl = get_result(test, solution[0], solution[1], solution[2], solution[3], True)
 
         win_rate = (wins/(wins + losses) if wins + losses > 0 else 0) * 100
-        if win_rate >= 80 and reward > 1000000:
+        if win_rate >= 80 and reward > 1200000:
 
             base.logger2.info(f'Volatility & Bollinger Band with Generic Algorithm Strategy 2: {ticker} Best Solution Parameters for {timeframe} Timeframe '.center(60, '*'))
             base.logger2.info('기존 버전1 대비 ga 의 최적변수를 볼린저밴드의 lenth 와 std 구간을 만들어 최적화하는 변수를 찾는 방법으로 적용')
@@ -1157,7 +1157,7 @@ def gaSellHoldBuy_strategy(ticker):
 
     try:
         win_rate = (info['wins']/(info['wins'] + info['losses']) if info['wins'] + info['losses'] > 0 else 0) * 100
-        if win_rate >= 80 and info['current_profit'] > 1000000:
+        if win_rate >= 80 and info['current_profit'] > 1200000:
             base.logger2.info(f'Generic Algorithm SellHoldBuy Strategy Result of {ticker}'.center(80, '*'))    
             base.logger2.info(f"Ticker & Timeframe: {ticker} & 1 Day")  # 1min, 1hour 는  장기투자시 적절하지 않아 제외
             base.logger2.info(f"Fitness value of the best solution = {solution_fitness}")

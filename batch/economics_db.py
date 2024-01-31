@@ -399,13 +399,15 @@ def make_stock_indices(**kwargs):
 https://www.imf.org/en/Publications/SPROLLS/world-economic-outlook-databases#sort=%40imfdate%20descending 사이트에서 
 최신 업데이트 정보목록을 선택하여 들어간후, Entire Dataset 버튼 > By Country 버튼 누르면 다운로드 완료.
 Download 사이트에서 해당 파일의 이름을 IMF_outlook.xls 로 변경후 batch/reports/data/으로 이동한후 DB 업로드 프로그램 수행
-- 20240103 현재 https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx 파일이 최신임
+- 20240103 https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx 
+- 20240131 현재 https://www.imf.org/-/media/Files/Publications/WEO/2024/Update/January/English/Data/WEOJAN2024Update.ashx
 '''
 def make_imf_outlook():
 
     table_name = 'IMF'
 
-    url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
+    # url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'
+    url = 'https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2023/WEOOct2023all.ashx'    
 
     response = requests.get(url, timeout=10, verify=False)
     

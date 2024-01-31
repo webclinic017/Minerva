@@ -176,7 +176,7 @@ WATCH_TICKERS = {
     'EU':[{'stock':['^STOXX50E']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
     'JP':[{'stock':['^N225', '1325.T','1545.T','1547.T','1571.T','1573.T','1678.T','2034.T','2563.T']}, {'bond':['1482.T','1487.T','2620.T','2621.T']},  
           {'commodity':[]}, {'currency':[]}, ],
-    'CN':[{'stock':['510330.SS','002304.SZ', '^HSI', '002594.SZ']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
+    'CN':[{'stock':['510330.SS','002304.SZ', '002594.SZ', '^HSI', '0981.HK']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
     'DE':[{'stock':['BAS.DE','BNP.PA','CS.PA','GLE.PA']}, {'bond':['DBXG.DE','IBB1.DE','IS04.DE','IUSU.DE','VGEB.DE','VUTY.AS']},  
           {'commodity':[]}, {'currency':[]}, ],    
     'IN':[{'stock':['^BSESN','']}, {'bond':[]}, {'commodity':[]}, {'currency':[]}, ],
@@ -400,57 +400,57 @@ def get_bok(bok_key,stat_code,cycle_type,start_date,end_date,item_1, item_2, ite
     return df
 
 
-def _get_ema(P, last_ema, N):
-    return ((P - last_ema) * (2/(N+1)) + last_ema)
+# def _get_ema(P, last_ema, N):
+#     return ((P - last_ema) * (2/(N+1)) + last_ema)
 
 
-def get_ema(data:pd.DataFrame, N:int, key:str='Close'):
-    data['SMA_' + str(N)] = data[key].rolling(N).mean()
-    ema = np.zeros(len(data)) + np.nan
-    for i, _row in enumerate(data.iterrows()):
-        row = _row[1]
-        if np.isnan(ema[i-1]):
-            ema[i] =  row['SMA_' + str(N)]
-        else:
-            ema[i] = _get_ema(row[key], ema[i-1], N)
-#         print(ema)
-    data['EMA_' + str(N)] = ema.copy()
-    return data
+# def get_ema(data:pd.DataFrame, N:int, key:str='Close'):
+#     data['SMA_' + str(N)] = data[key].rolling(N).mean()
+#     ema = np.zeros(len(data)) + np.nan
+#     for i, _row in enumerate(data.iterrows()):
+#         row = _row[1]
+#         if np.isnan(ema[i-1]):
+#             ema[i] =  row['SMA_' + str(N)]
+#         else:
+#             ema[i] = _get_ema(row[key], ema[i-1], N)
+# #         print(ema)
+#     data['EMA_' + str(N)] = ema.copy()
+#     return data
 
 
-def get_macd(data:pd.DataFrame, N_fast:int, N_slow:int, signal_line:bool=True, N_sl:int=9):
-    assert N_fast < N_slow, ("Fast EMA must be less than slow EMA parameter.")
-    data = get_ema(data, N_fast)
-    data = get_ema(data, N_slow)
-    data['MACD'] = data[f'EMA_{N_fast}'] - data[f'EMA_{N_slow}']
-    if signal_line:
-        data = get_ema(data, N_sl, key='MACD')
-        data.rename(
-            columns={f'SMA_{N_sl}':f'SMA_MACD_{N_sl}', f'EMA_{N_sl}':f'SignalLine_{N_sl}'}, inplace=True
-        )
-    return data
+# def get_macd(data:pd.DataFrame, N_fast:int, N_slow:int, signal_line:bool=True, N_sl:int=9):
+#     assert N_fast < N_slow, ("Fast EMA must be less than slow EMA parameter.")
+#     data = get_ema(data, N_fast)
+#     data = get_ema(data, N_slow)
+#     data['MACD'] = data[f'EMA_{N_fast}'] - data[f'EMA_{N_slow}']
+#     if signal_line:
+#         data = get_ema(data, N_sl, key='MACD')
+#         data.rename(
+#             columns={f'SMA_{N_sl}':f'SMA_MACD_{N_sl}', f'EMA_{N_sl}':f'SignalLine_{N_sl}'}, inplace=True
+#         )
+#     return data
 
 
-def get_adx(high, low, close, lookback):
-    plus_dm = high.diff()
-    minus_dm = low.diff()
-    plus_dm[plus_dm < 0] = 0
-    minus_dm[minus_dm > 0] = 0
+# def get_adx(high, low, close, lookback):
+#     plus_dm = high.diff()
+#     minus_dm = low.diff()
+#     plus_dm[plus_dm < 0] = 0
+#     minus_dm[minus_dm > 0] = 0
     
-    tr1 = pd.DataFrame(high - low)
-    tr2 = pd.DataFrame(abs(high - close.shift(1)))
-    tr3 = pd.DataFrame(abs(low - close.shift(1)))
-    frames = [tr1, tr2, tr3]
-    tr = pd.concat(frames, axis=1, join='inner').max(axis=1)
-    atr = tr.rolling(lookback).mean()
+#     tr1 = pd.DataFrame(high - low)
+#     tr2 = pd.DataFrame(abs(high - close.shift(1)))
+#     tr3 = pd.DataFrame(abs(low - close.shift(1)))
+#     frames = [tr1, tr2, tr3]
+#     tr = pd.concat(frames, axis=1, join='inner').max(axis=1)
+#     atr = tr.rolling(lookback).mean()
     
-    plus_di = 100 * (plus_dm.ewm(alpha=1/lookback).mean()/atr)
-    minus_di = abs(100 * (minus_dm.ewm(alpha=1/lookback).mean()/atr))
-    dx = (abs(plus_di-minus_di) / abs(plus_di+minus_di)) * 100
-    adx = ((dx.shift(1) * (lookback - 1)) + dx) / lookback
-    adx_smooth = adx.ewm(alpha = 1/lookback).mean()
+#     plus_di = 100 * (plus_dm.ewm(alpha=1/lookback).mean()/atr)
+#     minus_di = abs(100 * (minus_dm.ewm(alpha=1/lookback).mean()/atr))
+#     dx = (abs(plus_di-minus_di) / abs(plus_di+minus_di)) * 100
+#     adx = ((dx.shift(1) * (lookback - 1)) + dx) / lookback
+#     adx_smooth = adx.ewm(alpha = 1/lookback).mean()
     
-    return plus_di, minus_di, adx_smooth
+#     return plus_di, minus_di, adx_smooth
 
 
 # --------------------------------
@@ -462,11 +462,11 @@ def get_adx(high, low, close, lookback):
 # H.HIGH = 14-day Highest High of the stock
 # L.LOW = 14-day Lowest Low of the stock
 # C.PRICE = Closing price of the stock
-def get_wr(high, low, close, lookback):
-    highh = high.rolling(lookback).max() 
-    lowl = low.rolling(lookback).min()
-    wr = -100 * ((highh - close) / (highh - lowl))
-    return wr
+# def get_wr(high, low, close, lookback):
+#     highh = high.rolling(lookback).max() 
+#     lowl = low.rolling(lookback).min()
+#     wr = -100 * ((highh - close) / (highh - lowl))
+#     return wr
 
 
 # --------------------------------
@@ -477,21 +477,21 @@ def get_wr(high, low, close, lookback):
 # DS. ACTUAL PC = Double smoothed actual price change with the length of 25 and 13
 # DS. ABSOLUTE PC = Double smoothed absolute price change with the length of 25 and 13
 # SIGNAL LINE = EXP.MA 13 [ TSI LINE ]
-def get_tsi(close, long, short, signal):
-    diff = close - close.shift(1)
-    abs_diff = abs(diff)
+# def get_tsi(close, long, short, signal):
+#     diff = close - close.shift(1)
+#     abs_diff = abs(diff)
     
-    diff_smoothed = diff.ewm(span = long, adjust = False).mean()
-    diff_double_smoothed = diff_smoothed.ewm(span = short, adjust = False).mean()
-    abs_diff_smoothed = abs_diff.ewm(span = long, adjust = False).mean()
-    abs_diff_double_smoothed = abs_diff_smoothed.ewm(span = short, adjust = False).mean()
+#     diff_smoothed = diff.ewm(span = long, adjust = False).mean()
+#     diff_double_smoothed = diff_smoothed.ewm(span = short, adjust = False).mean()
+#     abs_diff_smoothed = abs_diff.ewm(span = long, adjust = False).mean()
+#     abs_diff_double_smoothed = abs_diff_smoothed.ewm(span = short, adjust = False).mean()
     
-    tsi = (diff_double_smoothed / abs_diff_double_smoothed) * 100
-    signal = tsi.ewm(span = signal, adjust = False).mean()
-    tsi = tsi[tsi.index >= '2020-01-01'].dropna()
-    signal = signal[signal.index >= '2020-01-01'].dropna()
+#     tsi = (diff_double_smoothed / abs_diff_double_smoothed) * 100
+#     signal = tsi.ewm(span = signal, adjust = False).mean()
+#     tsi = tsi[tsi.index >= '2020-01-01'].dropna()
+#     signal = signal[signal.index >= '2020-01-01'].dropna()
     
-    return tsi, signal
+#     return tsi, signal
 
 
 # --------------------------------
@@ -767,77 +767,77 @@ def get_cot_report_by_symbol(symbol):
 #   . 85% 분포를 갖는 시그마: 1.0364333894937898
 # - BULL 장에서는 대역폭을 2시그마(+- 42.5%)로 넓혀서 매도/매수선을 확대하고,
 # - BEAR 장에서는 대역폭을 1.5시그마(+- 35%)로 좁혀서 매도/매수선을 긴축적으로 운영하고자 함.
-def get_trend(ticker):
-    country = 0 # defualt: STAY
-    market = 0  # defualt: STAY
-    country_weight = 0.667 # 가중치
-    market_weight = 0.333 # 가중치
+# def get_trend(ticker):
+#     country = 0 # defualt: STAY
+#     market = 0  # defualt: STAY
+#     country_weight = 0.667 # 가중치
+#     market_weight = 0.333 # 가중치
 
-    _gdp = f"SELECT * FROM Calendars WHERE event like 'GDP Growth Rate%' AND country = '{country_sign}' \
-            ORDER BY date DESC LIMIT 1"
-    _cpi = f"SELECT * FROM Calendars WHERE event like '%cpi%' AND country = '{country_sign}' \
-            AND estimate is NOT NULL ORDER BY date DESC LIMIT 1"
-    _m2 = f"SELECT * FROM Indicators WHERE Indicator like '%M2%' AND Country = '{country_sign}'\
-            ORDER BY date DESC LIMIT 1"
+#     _gdp = f"SELECT * FROM Calendars WHERE event like 'GDP Growth Rate%' AND country = '{country_sign}' \
+#             ORDER BY date DESC LIMIT 1"
+#     _cpi = f"SELECT * FROM Calendars WHERE event like '%cpi%' AND country = '{country_sign}' \
+#             AND estimate is NOT NULL ORDER BY date DESC LIMIT 1"
+#     _m2 = f"SELECT * FROM Indicators WHERE Indicator like '%M2%' AND Country = '{country_sign}'\
+#             ORDER BY date DESC LIMIT 1"
     
-    def read_cals():
-            try:
-                gdp = pd.read_sql_query(_gdp, conn)
-                print(gdp)
-                if gdp['actual'][0] > gdp['estimate'][0]:
-                    _multi_1 = 1.5
-                elif gdp['actual'][0] == gdp['estimate'][0]:
-                    _multi_1 = 1
-                else:
-                    _multi_1 = 0.5
-                _multi_2 = gdp['change'][0]
-                _multi_gpd = (_multi_1 + _multi_2)
-                print(_multi_gpd)
+#     def read_cals():
+#             try:
+#                 gdp = pd.read_sql_query(_gdp, conn)
+#                 print(gdp)
+#                 if gdp['actual'][0] > gdp['estimate'][0]:
+#                     _multi_1 = 1.5
+#                 elif gdp['actual'][0] == gdp['estimate'][0]:
+#                     _multi_1 = 1
+#                 else:
+#                     _multi_1 = 0.5
+#                 _multi_2 = gdp['change'][0]
+#                 _multi_gpd = (_multi_1 + _multi_2)
+#                 print(_multi_gpd)
                 
-                cpi = pd.read_sql_query(_cpi, conn)
-                print(cpi)
-                if cpi['actual'][0] > cpi['estimate'][0]:
-                    _multi_3 = 1.5
-                elif cpi['actual'][0] == cpi['estimate'][0]:
-                    _multi_3 = 1
-                else:
-                    _multi_3 = 0.5
-                _multi_4 = cpi['change'][0]
-                _multi_cpi = (_multi_3 + _multi_4)
-                print(_multi_cpi)   
+#                 cpi = pd.read_sql_query(_cpi, conn)
+#                 print(cpi)
+#                 if cpi['actual'][0] > cpi['estimate'][0]:
+#                     _multi_3 = 1.5
+#                 elif cpi['actual'][0] == cpi['estimate'][0]:
+#                     _multi_3 = 1
+#                 else:
+#                     _multi_3 = 0.5
+#                 _multi_4 = cpi['change'][0]
+#                 _multi_cpi = (_multi_3 + _multi_4)
+#                 print(_multi_cpi)   
                 
-                _multi_cont_tot = _multi_gpd - _multi_cpi
-                if _multi_cont_tot > 1.2:
-                    country = 'BULL'
-                elif _multi_cont_tot < 0.8:
-                    country = 'BEAR'
-                else:
-                    country = 'STAY'
-                print(country, _multi_cont_tot)
-            except Exception as e:
-                print('Exception: {}'.format(e))
+#                 _multi_cont_tot = _multi_gpd - _multi_cpi
+#                 if _multi_cont_tot > 1.2:
+#                     country = 'BULL'
+#                 elif _multi_cont_tot < 0.8:
+#                     country = 'BEAR'
+#                 else:
+#                     country = 'STAY'
+#                 print(country, _multi_cont_tot)
+#             except Exception as e:
+#                 print('Exception: {}'.format(e))
 
-    trend = read_cals(ticker)
-
-
+#     trend = read_cals(ticker)
 
 
 
-    if country == 'BULL':
-        value_1 = 1
-    elif country == 'BEAR':
-        value_1 = -1
-    else:
-        value_1 = 0
+
+
+#     if country == 'BULL':
+#         value_1 = 1
+#     elif country == 'BEAR':
+#         value_1 = -1
+#     else:
+#         value_1 = 0
     
-    if market == 'BULL':
-        value_2 = 1
-    elif market == 'BEAR':
-        value_2 = -1
-    else:
-        value_2 = 0 
+#     if market == 'BULL':
+#         value_2 = 1
+#     elif market == 'BEAR':
+#         value_2 = -1
+#     else:
+#         value_2 = 0 
         
-    return country_weight*value_1 + market_weight*value_2
+#     return country_weight*value_1 + market_weight*value_2
 
 
 
