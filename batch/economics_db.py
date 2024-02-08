@@ -4,7 +4,8 @@
 # Author: Jeonmin kang
 # Mail: jarvisNim@gmail.com
 # History
-# 2023/11/07  Create
+- 20231107  Create
+- 20240209  OECD update 추가
 '''
 
 import sys, os
@@ -548,6 +549,8 @@ def make_imf_outlook():
   '2023': '2023',
   '2024': '2024',
   '2025': '2025'}}
+
+6.1 Interim report update function: update_oecd_interim()
 '''
 def make_oecd_outlook():
 
@@ -587,11 +590,84 @@ def make_oecd_outlook():
     write_dump_table(table_name, df)
 
     return df
-    
-    df = pd.read_csv('./batch/reports/data/OECD.csv')
-    df = df.reset_index(drop=True)
-    write_dump_table(table_name, df)
 
+
+'''
+대상 indicator 는 inflation, gdp 
+- 20240207: OECD Economic Outlook, Interim Report February 2024: inflation, gdp
+- SELECT * FROM OECD WHERE Variable like '%Gross domestic product, volume, growth%' AND (Time = '2024' or Time = '2025')
+- SELECT * FROM OECD WHERE Variable like '%Headline inflation%' AND (Time = '2024' or Time = '2025')
+'''
+def update_oecd_interim(conn):
+    variable_gdp = "%Gross domestic product, volume, growth%"  # Source: OECD Economic Outlook, Interim Report February 2024.
+    variable_inflation = "%Headline inflation%"  # Headline Inflation, Source: OECD Economic Outlook, Interim Report February 2024.
+    gdp_update =     {
+        'Brazil%':[{'2024':1.81771723436261}, {'2025':2.02464923513675}],
+        'China%': [{'2024':4.68607906868843}, {'2025':4.24280944230372}],
+        'Euro%': [{'2024':0.635063372653745}, {'2025':1.33172323471308}],        
+        'Germany%': [{'2024':0.279680495326152}, {'2025':1.10892974166749}],
+        'India%': [{'2024':6.15974810807787}, {'2025':6.51778646588327}],
+        'Japan%': [{'2024':0.997774345949994}, {'2025':0.998694183827788}],
+        'Korea%': [{'2024':2.16269397354112}, {'2025':2.11686859085889}],
+        'United States%': [{'2024':2.1488822258862}, {'2025':1.71411734194476}],
+    }
+
+    inflation_update =     {
+        'Brazil%':[{'2024':3.28414019019374}, {'2025':2.99603206276178}],
+        'China%': [{'2024':1.04729033978783}, {'2025':1.45639190001296}],
+        'Euro%': [{'2024':0.635063372653745}, {'2025':1.33172323471308}],        
+        'Germany%': [{'2024':2.58814674906734}, {'2025':2.01387974466703}],
+        'India%': [{'2024':4.91947232367986}, {'2025':4.25901301129225}],
+        'Japan%': [{'2024':2.59695374744398}, {'2025':2.04680754163396}],
+        'Korea%': [{'2024':2.66138758411523}, {'2025':2.03949651385258}],
+        'United States%': [{'2024':2.17034237341851}, {'2025':1.9958871662692}],
+    }    
+
+    with conn:
+        cur=conn.cursor()
+        update_count = 0
+        for country in gdp_update.keys():
+            # print(x)
+            # print(oecd_update[x])
+            for i, gdp in enumerate(gdp_update[country]):
+                key = list(gdp.keys())
+                year = key[0]
+                value = gdp[key[0]]
+                # print(year)
+                # print(value)
+                if i == 0:
+                    second_year = str(int(year)+1)
+                    # print(f"SELECT * FROM OECD WHERE Country like '{country}' AND Variable like '{variable_gdp}' AND (Time = '{year}' or Time = '{second_year}') ")
+                    cur.execute(f"SELECT * FROM OECD WHERE Country like '{country}' AND Variable like '{variable_gdp}' AND (Time = '{year}' or Time = '{second_year}') ")
+
+                # print(f"update OECD set Value = {value} where Country like '{country}' AND Variable like '{variable_gdp}' and Time = {year} ")
+                cur.execute(f"update OECD set Value = {value} where Country like '{country}' AND Variable like '{variable_gdp}' and Time = {year} ")
+                update_count += 1
+        logger2.info(f"GDP Growth update count: {update_count}") 
+
+        # Inflation update
+        update_count = 0
+        for country in inflation_update.keys():
+            # print(x)
+            # print(oecd_update[x])
+            for i, inflation in enumerate(inflation_update[country]):
+                key = list(inflation.keys())
+                year = key[0]
+                value = inflation[key[0]]
+                # print(year)
+                # print(value)
+                if i == 0:
+                    second_year = str(int(year)+1)
+                    # print(f"SELECT * FROM OECD WHERE Country like '{country}' AND Variable like '{variable_inflation}' AND (Time = '{year}' or Time = '{second_year}') ")
+                    cur.execute(f"SELECT * FROM OECD WHERE Country like '{country}' AND Variable like '{variable_inflation}' AND (Time = '{year}' or Time = '{second_year}') ")
+
+                # print(f"update OECD set Value = {value} where Country like '{country}' AND Variable like '{variable_inflation}' and Time = {year} ")
+                cur.execute(f"update OECD set Value = {value} where Country like '{country}' AND Variable like '{variable_inflation}' and Time = {year} ")
+                update_count += 1
+        logger2.info(f"Inflation update count: {update_count}")            
+        
+        cur.execute('commit')
+        
 
 
 '''
@@ -745,13 +821,13 @@ if __name__ == "__main__":
     # 테이블내 데이터 만들어 넣기
     '''
     try:
-
         make_calendars(from_date, to_date)
         make_markets(**urls)
         make_indicators(**urls)
         make_stock_indices()
         make_imf_outlook()
         make_oecd_outlook()
+        update_oecd_interim(conn)
         make_worldbank_outlook()
     except Exception as e:
         logger.error(' >>> Exception: {}'.format(e))
