@@ -110,10 +110,10 @@ def COT_analyse():
     plt.figure(figsize=(16, 4*len(COT_SYMBOLS)))
     for i, cot in enumerate(COT_SYMBOLS):
         result = df[df['symbol'].str.contains(cot['symbol'], case=False, na=False)]
+        if result.empty:  # VI 에서 오류나서 pass, 원인모름.
+            continue
         result['date'] = result['date'].apply(parse_date)
         max_date = max(result['date'])
-        if result.empty:
-            continue
         name = result.iloc[0]['name']
         situation = result.iloc[0]['marketSituation']
         sentiment = result.iloc[0]['marketSentiment']
@@ -149,7 +149,11 @@ def COT_report():
     plt.figure(figsize=(16, 4*len(COT_SYMBOLS)))
     for i, cot in enumerate(COT_SYMBOLS):
         result = df[df['symbol'].str.contains(cot['symbol'], case=False, na=False)]
+        if result.empty:  # VI 에서 오류나서 pass, 원인모름.
+            continue        
         result['date'] = result['date'].apply(parse_date)
+        # print(result['symbol'])
+        # print(result['short_name'])
         name = result.iloc[0]['short_name']
 
         open_interest_all = result.iloc[0]['open_interest_all']
@@ -400,9 +404,10 @@ def option_chain_today(Symbols):
         return exp_date
     
     plt.figure(figsize=(36, 4*len(Symbols)))  # *2 는 bar chart 를 call 과 put 을 각각 먼저 그려보기 위함임. 어떤 것이 먼저 덮을지 ....
+
     for i, symbol in enumerate(Symbols):
         df = yf.Ticker(symbol)
-        df_exp = df.options
+        df_exp = df.options  # show options expirations: @@@ 20240113 이후 결과값 () 으로 오류중.
         buf = pd.DataFrame()
         for j, date in enumerate(df_exp):
         #     print(date, ' >>> ', end='')
@@ -446,6 +451,9 @@ def option_chain_today(Symbols):
         print('====== End ======')        
 
         try:
+            if buf.empty:
+                logger.error(f' >>> global_derivates.py / {symbol} DataFrame is Empty. df.options  # show options expirations: @@@ 20240113 이후 결과값 () 으로 오류중.')
+                continue
             if symbol == '^SPX':
                 buf['Option'] = buf['contractSymbol'].apply(get_option_sp500)
                 buf['Exp_date'] = buf['contractSymbol'].apply(get_expdate_sp500)
@@ -456,6 +464,7 @@ def option_chain_today(Symbols):
                 logger.error(f'Symbol not found: {symbol}')
         except Exception as e:
             logger.error(' >>> global_derivates.py Exception: {}'.format(e))
+            continue
 
         buf_pivot = pd.pivot_table(buf, index=['Option','Exp_date'], values=['volume'], aggfunc=np.sum, fill_value=0)
         # logger2.info(buf_pivot)
