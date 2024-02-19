@@ -68,17 +68,27 @@ def eco_calendars(from_date, to_date):
         result = cals[cals['event'].str.contains(event, case=False, na=False)]
         if result.empty:
             continue
-        result['date'] = result['date'].apply(parse_date)
+        result['Date'] = result['date'].apply(parse_date)
+        result['Actual'] = result['actual'].astype('float')
+        result['Estimate'] = result['estimate'].astype('float')
+        result['Diff'] = result['Actual'] - result['Estimate']
+        result = result.dropna(subset=['Actual'])
+        result['Date'].reset_index()
+
         plt.subplot(len(events), 1, i + 1)
-        plt.plot(result['date'], result['actual'])
-        max_val = max(result['actual'])
-        min_val = min(result['actual'])
-        if (max_val > 0) and (min_val < 0):       # 시각효과     
-            plt.axhline(y=0, linestyle='--', color='red', linewidth=1)            
+        plt.plot(result['Date'], result['Actual'])
+        plt.bar(result['Date'], result['Diff'], width=20, color='darkgray')        
+        if not(result['Actual'].empty):
+            max_val = max(result['Actual'])
+            min_val = min(result['Actual'])
+            if (max_val > 0) and (min_val < 0):       # 시각효과     
+                plt.axhline(y=0, linestyle='--', color='red', linewidth=1)
+        else:
+            pass         
         plt.title(event)
         plt.grid()
-        plt.xlabel('date')
-        plt.ylabel('actual')
+        plt.xlabel('Date')
+        plt.ylabel('Actual')
 
     plt.tight_layout()  # 서브플롯 간 간격 조절
     plt.savefig(reports_dir + '/in_e0000.png')
