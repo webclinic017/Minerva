@@ -8,7 +8,7 @@ Mail: jarvisNim@gmail.com
 * investing.com/calendar 포함
 History
 20231111  Create
-20240130  Alpha 테이블 구성, 그래프 추가 
+20240130  Alpha 테이블 구성, 그래프 추가
 '''
 
 import sys, os
@@ -45,12 +45,87 @@ conn, engine = create_connection(db_file)
 
 month_terms = [0, 3, 6, 12, 18, 24]  # 현재와 n 개월 전망치 값
 
+
+def get_copper():
+    copper = fred.get_series(series_id='PCOPPUSDM', observation_start=from_date_MT)
+    result = (copper[-1] - copper[0]) / copper[0]
+    return result + 1
+
+
+def wgbonds_10y(country_sign):
+    if country_sign == 'KR':
+        url = "https://www.worldgovernmentbonds.com/bond-forecast/south-korea/10-years/"
+    elif country_sign == 'JP':
+        url = "https://www.worldgovernmentbonds.com/bond-forecast/japan/10-years/"
+    elif country_sign == 'CN':
+        url = "https://www.worldgovernmentbonds.com/bond-forecast/china/10-years/"
+    elif country_sign == 'BR':
+        url = "https://www.worldgovernmentbonds.com/bond-forecast/brazil/10-years/"
+    elif country_sign == 'DE':
+        url = "https://www.worldgovernmentbonds.com/bond-forecast/germany/10-years/"
+    elif country_sign == 'SG':
+        url = "https://www.worldgovernmentbonds.com/bond-forecast/singapore/10-years/"
+    elif country_sign == 'IN':
+        url = "https://www.worldgovernmentbonds.com/bond-forecast/india/10-years/"           
+    else:
+        url =""
+
+    page = requests.get(url)
+    soup = bs(page.text, "html.parser")
+    # print(soup)
+    tables = soup.find_all('table')
+    # print(tables)
+    # 멀티 헤더의 첫번째 헤더 제거
+    y10 = pd.read_html(str(tables))[0]
+    column_to_remove = y10.columns[0]
+
+    index = y10.columns
+    second_indices = [idx[1] for idx in index]
+    logger2.info(y10)
+    logger2.info('')
+    result = pd.DataFrame(columns=['Date', 'Yield_10y'])
+    data = []
+
+    for i in range(len(index)):
+        my_dict = {}
+        try:
+            _date = datetime.strptime(second_indices[i], '%d %b %Y')
+        except:  # 'Jun 2024'
+            _date = datetime.strptime(second_indices[i], '%b %Y')
+        finally:
+            date = _date.strftime('%Y-%m-%d')
+
+        string = y10.iloc[0,i]
+        idx = string.find("%")  # '%' 문자의 인덱스 찾기
+        if idx != -1:  # '%' 문자가 발견되었다면
+            yield_10y = string[:idx]  # '%' 문자의 앞 글자 추출
+        else:
+            logger.error(">>> global_.py 에서 '%'' 문자를 찾을 수 없습니다.")
+
+        my_dict['Date'] = date
+        my_dict['Yield_10y'] = yield_10y
+        # print(my_dict)        
+        data.append(my_dict)
+
+    result = pd.DataFrame().from_records(data)
+    result['Date'] = pd.to_datetime(result['Date']).dt.date
+    result['Yield_10y'] = pd.to_numeric(result['Yield_10y'])
+    result['Date'].reset_index()
+    print(result)
+
+    logger2.info('')
+    logger2.info(f'##### World Government Bonds: {country_sign} #####')
+    logger2.info('10Year bond yield: \n' + str(result))
+
+    return result
+
+
 '''
 1. Economics Area
 1.1 Leading Indicators OECD: CLI (Composite leading indicator)
 '''
 
-def eco_oecd():
+def oecd_cli():
 
     # Economics database 에서 쿼리후 시작하는 루틴
     M_table = 'OECD'
@@ -97,7 +172,7 @@ def eco_oecd():
     return df
 
 
-def cli():
+def fed_cli():
     CLI_OECD_Total = fred.get_series(series_id='OECDLOLITONOSTSAM', observation_start=from_date_MT)
     CLI_OECD_Total_Plus_Six = fred.get_series(series_id='ONMLOLITONOSTSAM', observation_start=from_date_MT)
     CLI_Usa = fred.get_series(series_id='USALOLITONOSTSAM', observation_start=from_date_MT)
@@ -135,7 +210,7 @@ def cli():
 '''
 1.2 M1
 '''
-def m1():
+def fed_m1():
 
     fig, ax = plt.subplots(figsize=(18, 6 * 2))
     # logn term view
@@ -186,7 +261,7 @@ def m1():
 '''
 1.3 CPI (Consumer Price Indices)
 '''
-def cpi():
+def fed_cpi():
     cpi_us = fred.get_series(series_id='CPIAUCSL', observation_start=from_date_MT).pct_change(periods=12)*100
     cpi_japan = fred.get_series(series_id='JPNCPIALLMINMEI', observation_start=from_date_MT).pct_change(periods=12)*100
     cpi_euro = fred.get_series(series_id='CP0000EZ19M086NEST', observation_start=from_date_MT).pct_change(periods=12)*100
@@ -221,7 +296,7 @@ def cpi():
 2. Market Area
 2.1 Sovereign CDS
 '''
-def cds():
+def sovereign_cds():
     page = requests.get("https://www.worldgovernmentbonds.com/sovereign-cds/")
     soup = bs(page.text, "html.parser")
 
@@ -247,11 +322,9 @@ def cds():
 3. Business Area
 3.1 Containerized Freight Index
 - 해상운임지수: 경기가 다시 활성화 되는지 여부 모니터링 (20220906)
-3.2 Max Draw Down 
-- 
 '''
 
-def container_Freight():
+def container_Freight_index():
     # CCFI (China Containerized Freight Index)
     # 중국컨테이너운임지수는 중국 교통부가 주관하고 상하이 항운교역소가 집계하는 중국발 컨테이너운임지수로 1998년 4월 13일 처음 공시되었다. 
     # 세계컨테이너시황을 객관적으로 반영한 지수이자 중국 해운시황을 나타내는 주요 지수로 평가받고 있다.
@@ -412,39 +485,38 @@ class CalcuTrend():
 
 
     def get_GDP_rate(self, conn, country_sign): # rate 로 측정되는 값은 'actual' 값을 기준으로 가감을 하고,             
-            if country_sign in ['US', 'JP']:
-                gdp = pd.read_sql_query(f"SELECT * FROM Calendars WHERE event like 'GDP Growth Rate QoQ%'  AND country = '{country_sign}' \
-                    ORDER BY date DESC LIMIT 2", conn)
-                # print(gdp)
-            elif country_sign in ['KR', 'CN', 'DE', 'IN', 'SG', 'BR', 'IN']:
-                gdp = pd.read_sql_query(f"SELECT * FROM Calendars WHERE event like '%GDP Growth Rate YoY%'  AND country = '{country_sign}' \
-                                        ORDER BY date DESC LIMIT 2", conn)
-                # print(gdp)
-            else:
-                logger.error(f' >>> Country Sign is not found: {country_sign}' )
 
-            
-            try:
-                if np.isnan(gdp['estimate'][0]) or np.isnan(gdp['actual'][0]):
-                    idx = 1
-                else:
-                    idx = 0
-            except:
-                result = gdp['actual'][0]
-                return result
-            
-            # 보정 1: 지난 값대비 변화율로 가감점
-            mul_1 = (gdp['change'][idx] / 100)
-            
-            # 보정 2: 예측치 대비 실측치로 가감점
-            mul_2 = (gdp['actual'][idx] - gdp['estimate'][idx]) / 100
-            
-            logger2.debug('mul_1: ' + str(mul_1))
-            logger2.debug('mul_2: ' + str(mul_2))
-            
-            result = gdp['actual'][idx] + mul_1 + mul_2
-            
-            return result
+        idx = 0
+        if country_sign in ['US', 'JP']:
+            gdp = pd.read_sql_query(f"SELECT * FROM Calendars WHERE event like 'GDP Growth Rate QoQ%'  AND country = '{country_sign}' \
+                ORDER BY date DESC LIMIT 2", conn)
+            # print(gdp)
+        elif country_sign in ['KR', 'CN', 'DE', 'IN', 'SG', 'BR', 'IN']:
+            gdp = pd.read_sql_query(f"SELECT * FROM Calendars WHERE event like '%GDP Growth Rate YoY%'  AND country = '{country_sign}' \
+                                    ORDER BY date DESC LIMIT 2", conn)
+            # print(gdp)
+        else:
+            logger.error(f' >>> Country Sign is not found: {country_sign}' )
+
+        
+        if np.isnan(gdp['actual'][0]):
+            idx = 1
+
+        # 보정 1: 지난 값대비 변화율로 가감점
+        mul_1 = (gdp['change'][idx] / 100)
+        
+        # 보정 2: 예측치 대비 실측치로 가감점
+        if np.isnan(gdp['estimate'][idx]):  # gdp['estimate'][idx] is nan 인 경우 초기괎 0 셋팅
+            mul_2 = 0
+        else:
+            mul_2 = (gdp['actual'][idx] - gdp['estimate'][idx]) / 100  
+        
+        logger2.debug('mul_1: ' + str(mul_1))
+        logger2.debug('mul_2: ' + str(mul_2))
+        
+        result = gdp['actual'][idx] + mul_1 + mul_2
+        
+        return result
     
     
     def get_inflation(self, conn, country_sign): # inflation mom : price 로 측정되는 값은 'change' 값을 기준으로 가감함.
@@ -562,7 +634,8 @@ class CalcuTrend():
         - CN: SHANHAE/SIMCHUN, x, x, x, x
         - IN: NIFTY, x, x, x, x
     '''
-    def cal_market_growth(self, conn, country_sign1:str, market_name:str, month_term:int):
+    def cal_market_growth(self, conn, country_sign1:str, market_name:str, month_term:int): 
+        # stock, bond, commidity, currency 별 성장률을 계산하되, bond 는 채권수익률로 계산하는 것임. 채권가격은 보여주는 단에서만.
     
         try:
             # 2.1 M2
@@ -593,54 +666,49 @@ class CalcuTrend():
                 ticker = yf.Ticker(ticker)
                 nasdaq = ticker.history(period='3mo')['Close']
                 nasdaq = nasdaq.dropna()
-                growth_2 = (nasdaq[-1] - nasdaq[0]) / nasdaq[0]
+                growth_2 = (nasdaq[-1] - nasdaq[0]) / nasdaq[0]  # 최근 것에서 예전 것을 빼고, 이것을 예전 것으로 나누면 성장률
 
                 asset_growth = (growth_1 + growth_2) / 2 * 100
                 
-            elif market_name == 'bond':
+            elif market_name == 'bond':  # 10년물 시장금리 기준으로 주식시장과 역의 상관관계로 가정함.
+                sleep(0.1)                
                 y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
+                asset_growth = (y10[0] - y10[-1]) / y10[-1]  # 예전 것에서 최근 것을 뺴고, 이것을 최근 것으로 나누면 채권가격 성장률
+
                 
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
-                # print(asset_growth)
+                asset_growth = get_copper()  # 원자재 특히 구리는 미국원자재시장으로 기준으로 한다고 가정
             elif market_name == 'currency':
+                sleep(0.1)                
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                asset_growth = (currency[0] - currency[-1]) / len(currency) 
-                # print(asset_growth)
+                asset_growth = (currency[0] - currency[-1]) / currency[-1]
             else:
                 logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset')        
             
         elif country_sign1 == 'KR':
             if market_name == 'stock':
-                ticker = '^KS11'
+                ticker = '^KS200'
                 ticker = yf.Ticker(ticker)
-                kospi = ticker.history(period='3mo')['Close']                
+                kospi = ticker.history(period='12mo')['Close']                
                 kospi = kospi.dropna()
                 growth_1 = (kospi[-1] - kospi[0]) / kospi[0]
                 
-                ticker = '^KQ11'
+                ticker = '^KQ100'
                 ticker = yf.Ticker(ticker)
-                kosdaq = ticker.history(period='3mo')['Close']
+                kosdaq = ticker.history(period='12mo')['Close']
                 kosdaq = kosdaq.dropna()
                 growth_2 = (kosdaq[-1] - kosdaq[0]) / kosdaq[0]
 
                 asset_growth = (growth_1 + growth_2) / 2 * 100
                 
             elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
-                
+                y10 = wgbonds_10y('KR')
+                asset_growth = (y10.iloc[-1,1] - y10.iloc[0,1]) / y10.iloc[0,1] # 역의 상관관계
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
-                # print(asset_growth)
+                asset_growth = get_copper()
             elif market_name == 'currency':
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
-                asset_growth = (currency[0] - currency[-1]) / len(currency) 
+                asset_growth = (currency[0] - currency[-1]) / len(currency)  # 역의 상관관계
                 # print(asset_growth)
             else:
                 logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset')        
@@ -652,19 +720,14 @@ class CalcuTrend():
                 nikkei = ticker.history(period='3mo')['Close']                
                 nikkei = nikkei.dropna()
                 growth_1 = (nikkei[-1] - nikkei[0]) / nikkei[0]
-
                 asset_growth = (growth_1) * 100
-                
             elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
-                
+                y10 = wgbonds_10y('JP')
+                asset_growth = (y10.iloc[-1,1] - y10.iloc[0,1]) / y10.iloc[0,1] # 역의 상관관계            
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
-                # print(asset_growth)
+                asset_growth = get_copper()
             elif market_name == 'currency':
+                sleep(0.1)                
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
@@ -683,7 +746,7 @@ class CalcuTrend():
                 else:
                     logger2.info("global_.py Error: No data available for the given period.")
                 # growth_1 = (shanghai[-1] - shanghai[0]) / shanghai[0]
-                
+                    
                 ticker = '399001.SZ'
                 ticker = yf.Ticker(ticker)
                 Shenzhen = ticker.history(period='3mo')['Close']
@@ -696,17 +759,16 @@ class CalcuTrend():
                 # growth_2 = (Shenzhen[-1] - Shenzhen[0]) / Shenzhen[0]
 
                 asset_growth = (growth_1 + growth_2) / 2 * 100
-                
+
             elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
-                
+                y10 = wgbonds_10y('CN')
+                asset_growth = (y10.iloc[-1,1] - y10.iloc[0,1]) / y10.iloc[0,1] # 역의 상관관계
+              
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                asset_growth = get_copper()
                 # print(asset_growth)
             elif market_name == 'currency':
+                sleep(0.1)                
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
@@ -723,17 +785,15 @@ class CalcuTrend():
 
                 asset_growth = (growth_1) * 100
                 
-            elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
+            elif market_name == 'bond':  # yield
+                y10 = wgbonds_10y('DE')
+                asset_growth = (y10.iloc[-1,1] - y10.iloc[0,1]) / y10.iloc[0,1] # 역의 상관관계
                 
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                asset_growth = get_copper()
                 # print(asset_growth)
             elif market_name == 'currency':
-                currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
+                currency = fred.get_series(series_id='EXUSEU', observation_start=from_date_MT)
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
@@ -750,16 +810,17 @@ class CalcuTrend():
                 asset_growth = (growth_1) * 100
                 
             elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
+                sleep(0.1)
+                y10 = fred.get_series(series_id='IRLTLT01EZM156N', observation_start=from_date_ST)
                 asset_growth = (y10[0] - y10[-1]) / len(y10) 
                 # print(asset_growth) 
                 
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                asset_growth = get_copper()
                 # print(asset_growth)
             elif market_name == 'currency':
-                currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
+                sleep(0.1)                
+                currency = fred.get_series(series_id='EXUSEU', observation_start=from_date_MT)
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
@@ -776,22 +837,21 @@ class CalcuTrend():
                 asset_growth = (growth_1) * 100
                 
             elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
+                y10 = wgbonds_10y('SG')
+                asset_growth = (y10.iloc[-1,1] - y10.iloc[0,1]) / y10.iloc[0,1] # 역의 상관관계
                 
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                asset_growth = get_copper()
                 # print(asset_growth)
             elif market_name == 'currency':
+                sleep(0.1)                
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
             else:
                 logger.error(f' >>> Error: {country_sign1}  {market_name} Not found Asset') 
 
-        elif country_sign1 == 'BR':
+        elif country_sign1 == 'BR':  # Brazil
             if market_name == 'stock':
                 ticker = '^FTSE'
                 ticker = yf.Ticker(ticker)
@@ -802,15 +862,14 @@ class CalcuTrend():
                 asset_growth = (growth_1) * 100
                 
             elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
+                y10 = wgbonds_10y('BR')
+                asset_growth = (y10.iloc[-1,1] - y10.iloc[0,1]) / y10.iloc[0,1] # 역의 상관관계
                 
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                asset_growth = get_copper()
                 # print(asset_growth)
             elif market_name == 'currency':
+                sleep(0.1)                
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
@@ -828,15 +887,14 @@ class CalcuTrend():
                 asset_growth = (growth_1) * 100
                 
             elif market_name == 'bond':
-                y10 = fred.get_series(series_id='DGS10', observation_start=from_date_ST)
-                asset_growth = (y10[0] - y10[-1]) / len(y10) 
-                # print(asset_growth) 
+                y10 = wgbonds_10y('IN')
+                asset_growth = (y10.iloc[-1,1] - y10.iloc[0,1]) / y10.iloc[0,1] # 역의 상관관계
                 
             elif market_name == 'commodity':
-                gold = fred.get_series(series_id='PPIACO', observation_start=from_date_MT)
-                asset_growth = (gold[0] - gold[-1]) / len(gold) 
+                asset_growth = get_copper()
                 # print(asset_growth)
             elif market_name == 'currency':
+                sleep(0.1)                
                 currency = fred.get_series(series_id='RTWEXBGS', observation_start=from_date_MT)
                 asset_growth = (currency[0] - currency[-1]) / len(currency) 
                 # print(asset_growth)
@@ -1124,8 +1182,8 @@ def calculate_trend():
 
                         for month_term in month_terms:  # 국가별 / 자산별 / ETF별 / 연구기관별 / 전망월별 (현재부터 24개월후까지 6개월간)
 
-                            trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, month_term)
-
+                            # trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, month_term)
+                            trend, c_growth, m_growth, b_growth = obj_trend.cal_trend(nation, asset, ticker, researcher, 0)
                             logger2.debug(f'##### {researcher} total Trend {nation}/{asset}/{ticker} : {round(trend,2)} %')
 
                             if month_term == 0:
@@ -1167,7 +1225,7 @@ def calculate_trend():
 '''
 
 '''
-def plot_alpha(conn):
+def plot_alpha_tickers(conn):
 
     M_table = 'Alpha'
     M_countries = ['US', 'KR', 'JP', 'CN', 'DE', 'IN', 'SG']
@@ -1208,7 +1266,7 @@ def plot_alpha(conn):
                 melted_df = pd.melt(df, id_vars=['Country', 'Market', 'Busi', 'Researcher'],
                             var_name=f'{col_0}', value_name='Growth') # @@@ var_name=f'{col_0}'... 우연...
             except Exception as e:
-                logger.error(' >>> plot_alpha Exception: {}'.format(e))
+                logger.error(' >>> plot_alpha_tickers Exception: {}'.format(e))
 
             events = df['Busi'].unique()
 
@@ -1261,25 +1319,34 @@ Main Fuction
 
 if __name__ == "__main__":
 
+
+    '''
+    0. 공통 함수
+    '''
+    df_alpha = calculate_trend()
+    make_alpha(df_alpha)  # Alpha 테이블 구성작업
+
     '''
     1. Economic Area
     '''
-    eco_oecd()
-    cli()
-    m1()
-    cpi()
-
+    oecd_cli()
+    fed_cli()
+    fed_m1()
+    fed_cpi()
+    sovereign_cds()
+    
     '''
     2. Market Area
+    2.1 해상운임지수
     '''
-    cds()
+    container_Freight_index()    
+
+
 
     '''
     3. Business Area
-    3.1 Maximum drawdown
-    3.2 해상운임지수
+    3.1 국가별 Maximum drawdown
     '''
-    
     for nation, assets in WATCH_TICKERS.items():  # 국가별
         buf = []  # ticker 들 모두 나열
         buf2 = []  # ticker 들 모두 나열한 것들의 asset 명 나열
@@ -1294,13 +1361,11 @@ if __name__ == "__main__":
         logger2.info(tot_tickers)
         max_drawdown_strategy(nation, tot_tickers, buf2) # max draw down strategy : 바닥에서 분할 매수구간 찾기
 
-    # 3.2 해상운임지수
-    container_Freight()
+
 
 
     '''
-    4. Calculate Trend: 
+    3.2 국가별 트랜드 분석 with OECD, IMF, WorldBank 기준으로 ticker 별 현재/3/6/12/18/24 개월후 전망분석
+    next time: GS, JPM...
     '''
-    df_alpha = calculate_trend()
-    make_alpha(df_alpha)  # Alpha 테이블 구성작업
-    plot_alpha(conn)
+    plot_alpha_tickers(conn)
