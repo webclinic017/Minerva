@@ -1137,7 +1137,12 @@ class CalcuTrend():
         logger2.debug(f' {contury_sign1} Market Growth: {round(m_growth,2)} %')
         logger2.debug(f' {contury_sign1} Business Growth: {round(b_growth,2)} %')    
 
-        trend = c_growth + m_growth*0.3 + b_growth*0.3*0.7
+        # m_growth 0.3 의 비중으로, b_growth 0.3*0.7= 0.21 의 비중으로 경험치 산정하였음, 추후 알고리즘으로 다이나믹 상수로 만들 예정. 20240220
+        # m_growth 에서 bond 마켓은 수익률로 음의 값이 긍정이므로 이에 대한 역보정을 해야 TLT,TMF 의 가격이 긍정으로 작용토록 함.
+        if market == 'bond':
+            trend = c_growth + (m_growth*0.3)*-1 + b_growth*0.3*0.7
+        else:
+            trend = c_growth + m_growth*0.3 + b_growth*0.3*0.7
         
         return trend, c_growth, m_growth, b_growth
 
